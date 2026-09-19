@@ -1,12 +1,14 @@
 package dev.bimo.tallyhopper.session;
 
 import dev.bimo.tallyhopper.TallyHopper;
+import dev.bimo.tallyhopper.credit.CreditReport;
 import dev.bimo.tallyhopper.offline.OfflineWindow;
 import dev.bimo.tallyhopper.offline.SessionClock;
 import dev.bimo.tallyhopper.registry.TallyHopperGameRules;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.InstantSource;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import org.jspecify.annotations.Nullable;
 
@@ -24,7 +26,8 @@ public final class OfflineSession {
     /** A started session. Hoppers credit {@code window} once, and remember {@code id} to not do it again. */
     public record Current(long id, OfflineWindow window) {}
 
-    private record Running(SessionClock clock, SessionData data, TickTime tickTime, Current current) {}
+    private record Running(
+            SessionClock clock, SessionData data, TickTime tickTime, Current current, RejoinSummary summary) {}
 
     private static @Nullable Running running;
 
@@ -43,7 +46,7 @@ public final class OfflineSession {
         OfflineWindow window =
                 clock.startSession(Duration.ofHours(server.getGameRules().get(TallyHopperGameRules.MAX_OFFLINE_HOURS)));
         data.update(clock);
-        running = new Running(clock, data, tickTime, new Current(clock.sessionId(), window));
+        running = new Running(clock, data, tickTime, new Current(clock.sessionId(), window), new RejoinSummary());
         TallyHopper.LOG.info(
                 "Session {} started; the world was closed for {} ({} credited{})",
                 clock.sessionId(),
@@ -58,9 +61,20 @@ public final class OfflineSession {
             return;
         }
         now.tickTime().set(Instant.now());
+        if (now.summary().isSettled()) {
+            now.summary().send(server, now.current().window());
+        }
         if (now.clock().isHeartbeatDue()) {
             now.clock().heartbeat();
             now.data().update(now.clock());
+        }
+    }
+
+    /** Called by a hopper that just credited something, to be told to players as one grouped line. */
+    public static void reportCredit(BlockPos pos, CreditReport report) {
+        Running now = running;
+        if (now != null && !report.isEmpty()) {
+            now.summary().add(pos, report);
         }
     }
 

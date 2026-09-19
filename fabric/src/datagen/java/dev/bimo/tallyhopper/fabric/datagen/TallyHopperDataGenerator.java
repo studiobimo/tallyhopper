@@ -5,13 +5,20 @@ import dev.bimo.tallyhopper.crafting.ShapelessKeepRecipe;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
 import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
+import net.fabricmc.fabric.api.datagen.v1.provider.FabricAdvancementProvider;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricBlockLootSubProvider;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagsProvider;
 import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.AdvancementType;
+import net.minecraft.advancements.triggers.CriteriaTriggers;
+import net.minecraft.advancements.triggers.Criterion;
+import net.minecraft.advancements.triggers.ImpossibleTrigger;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
@@ -19,6 +26,8 @@ import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.RecipeUnlockAdvancementBuilder;
 import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
@@ -45,6 +54,7 @@ public final class TallyHopperDataGenerator implements DataGeneratorEntrypoint {
         FabricDataGenerator.Pack pack = generator.createPack();
         pack.addProvider(Recipes::new);
         pack.addProvider(LootTables::new);
+        pack.addProvider(Advancements::new);
         pack.addProvider(BlockTagProvider::new);
     }
 
@@ -88,6 +98,32 @@ public final class TallyHopperDataGenerator implements DataGeneratorEntrypoint {
         @Override
         public String getName() {
             return "Tally Hopper recipes";
+        }
+    }
+
+    private static final class Advancements extends FabricAdvancementProvider {
+
+        Advancements(FabricPackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
+            super(output, registries);
+        }
+
+        // Onboarding: the first credit explains itself. It is granted in code, so the criterion never fires.
+        @Override
+        public void generateAdvancement(HolderLookup.Provider registries, Consumer<AdvancementHolder> consumer) {
+            Advancement.Builder.advancement()
+                    .rootDisplay(
+                            TallyHopperContent.item(),
+                            Component.translatable("advancements.tallyhopper.sleep_mode.title"),
+                            Component.translatable("advancements.tallyhopper.sleep_mode.description"),
+                            Identifier.withDefaultNamespace("textures/block/smooth_stone.png"),
+                            AdvancementType.TASK,
+                            true,
+                            true,
+                            false)
+                    .addCriterion(
+                            "credited",
+                            new Criterion<>(CriteriaTriggers.IMPOSSIBLE, new ImpossibleTrigger.TriggerInstance()))
+                    .save(consumer, TallyHopperContent.SLEEP_MODE_ADVANCEMENT);
         }
     }
 

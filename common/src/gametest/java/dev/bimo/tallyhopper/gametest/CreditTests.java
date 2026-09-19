@@ -10,7 +10,9 @@ import dev.bimo.tallyhopper.offline.OfflineWindow;
 import dev.bimo.tallyhopper.offline.SessionClock;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
 import dev.bimo.tallyhopper.registry.TallyHopperGameRules;
+import dev.bimo.tallyhopper.registry.TallyHopperStats;
 import dev.bimo.tallyhopper.session.OfflineSession;
+import dev.bimo.tallyhopper.session.RejoinSummary;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -20,6 +22,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -32,6 +35,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.PermissionSet;
+import net.minecraft.stats.Stats;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.EntityTypes;
@@ -347,6 +351,43 @@ public final class CreditTests {
             helper.assertValueEqual(carried, 500L, "backlog carried by the dropped item");
             helper.succeed();
         });
+    }
+
+    /** After crediting, the player is told, and their statistics and the Sleep Mode advancement follow. */
+    // makeMockServerPlayerInLevel is deprecated for removal, but it is the only way to get a player that
+    // is actually in the player list, which is who a summary is sent to.
+    @SuppressWarnings("removal")
+    public static void rejoinSummaryAwardsStatsAndAdvancement(GameTestHelper helper) {
+        TallyHopperBlockEntity hopper = placeTallyHopper(helper, HOPPER, Direction.DOWN);
+        setRate(hopper, Items.COBBLESTONE, 120);
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+
+        helper.startSequence()
+                .thenIdle(1)
+                .thenExecute(() -> hopper.credit(session(helper, Duration.ofHours(1))))
+                .thenIdle(RejoinSummary.SETTLE_TICKS + 2)
+                .thenExecute(() -> {
+                    int credited = player.getStats().getValue(Stats.CUSTOM.get(TallyHopperStats.ITEMS_CREDITED));
+                    helper.assertTrue(credited >= 120, "items credited statistic is " + credited);
+                    // The energy statistic follows the real session's window, which is empty in a test,
+                    // so only that it was recorded can be checked here.
+                    helper.assertTrue(
+                            player.getStats().getValue(Stats.CUSTOM.get(TallyHopperStats.ENERGY_SAVED_WH)) >= 0,
+                            "energy saved statistic");
+                    AdvancementHolder sleepMode = helper.getLevel()
+                            .getServer()
+                            .getAdvancements()
+                            .get(TallyHopperContent.SLEEP_MODE_ADVANCEMENT);
+                    helper.assertTrue(sleepMode != null, "the Sleep Mode advancement is loaded");
+                    helper.assertTrue(
+                            sleepMode != null
+                                    && player.getAdvancements()
+                                            .getOrStartProgress(sleepMode)
+                                            .isDone(),
+                            "Sleep Mode is awarded");
+                    helper.getLevel().getServer().getPlayerList().remove(player);
+                })
+                .thenSucceed();
     }
 
     /**

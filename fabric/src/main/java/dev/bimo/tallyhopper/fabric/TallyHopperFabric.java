@@ -6,6 +6,7 @@ import dev.bimo.tallyhopper.conversion.ClockConversion;
 import dev.bimo.tallyhopper.crafting.ShapelessKeepRecipe;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
 import dev.bimo.tallyhopper.registry.TallyHopperGameRules;
+import dev.bimo.tallyhopper.registry.TallyHopperStats;
 import dev.bimo.tallyhopper.session.OfflineSession;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -24,6 +25,7 @@ public final class TallyHopperFabric implements ModInitializer {
     public void onInitialize() {
         TallyHopper.init();
 
+        TallyHopperStats.register();
         TallyHopperGameRules.ALL.forEach((id, rule) -> Registry.register(BuiltInRegistries.GAME_RULE, id, rule));
         Registry.register(
                 BuiltInRegistries.DATA_COMPONENT_TYPE,
