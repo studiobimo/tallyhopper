@@ -27,7 +27,12 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * The Tally Hopper's screen, built from the parts vanilla already uses: the villager screen's bar for
- * calibration, the brewing stand's fuel meter for the saplings it costs, and the padlock button.
+ * calibration, the brewing stand's apparatus for the saplings it burns through, and the padlock
+ * button.
+ *
+ * <p>The brewing stand's coil, bubbles and base are drawn straight out of vanilla's own texture
+ * rather than copied into this mod, so a resource pack restyles this screen along with the brewing
+ * stand. That one region carries the sapling slot's frame with it.
  *
  * <p>The panel says only what a glance needs; the numbers behind it are a tooltip on the bar. Rates
  * are still set through the {@code /tallyhopper rate} command, so the server decides in one place who
@@ -49,25 +54,57 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
             Identifier.withDefaultNamespace("container/villager/experience_bar_current");
 
     private static final Identifier FUEL = Identifier.withDefaultNamespace("container/brewing_stand/fuel_length");
+    private static final Identifier BUBBLES = Identifier.withDefaultNamespace("container/brewing_stand/bubbles");
 
-    private static final int BAR_X = 34;
-    private static final int BAR_Y = 32;
-    private static final int BAR_WIDTH = 102;
-    private static final int BAR_HEIGHT = 5;
+    /** Vanilla's brewing stand background, which the apparatus is lifted from. */
+    private static final Identifier BREWING_STAND =
+            Identifier.withDefaultNamespace("textures/gui/container/brewing_stand.png");
 
-    private static final int FUEL_X = 7;
-    private static final int FUEL_Y = 46;
+    /**
+     * The apparatus in that texture: the blaze slot's frame, the coil, the bubbles and the base. It
+     * stops one pixel short of the ingredient slot's frame, and one row short of the tubes that run
+     * down to the bottles.
+     */
+    private static final int STAND_U = 16;
+
+    private static final int STAND_V = 14;
+    private static final int STAND_WIDTH = 62;
+    private static final int STAND_HEIGHT = 35;
+    private static final int STAND_X = 7;
+    private static final int STAND_Y = 23;
+
+    /** Where vanilla draws each moving part, kept as offsets into the region above. */
+    private static final int FUEL_X = STAND_X + (60 - STAND_U);
+
+    private static final int FUEL_Y = STAND_Y + (44 - STAND_V);
     private static final int FUEL_WIDTH = 18;
     private static final int FUEL_HEIGHT = 4;
+
+    private static final int BUBBLES_X = STAND_X + (63 - STAND_U);
+    private static final int BUBBLES_Y = STAND_Y + (14 - STAND_V);
+    private static final int BUBBLES_WIDTH = 12;
+    private static final int BUBBLES_HEIGHT = 29;
+
+    /** The heights vanilla's bubbles cycle through, which makes them look like they rise. */
+    private static final int[] BUBBLE_HEIGHTS = {29, 24, 20, 16, 11, 6, 0};
 
     /** How many saplings fill the meter, as twenty blaze powder fill a brewing stand's. */
     private static final int FUEL_FULL = 16;
 
-    private static final int LOCK_X = 140;
-    private static final int LOCK_Y = 40;
+    private static final int BAR_X = 80;
+    private static final int BAR_Y = 37;
 
-    private static final int STATUS_X = 34;
-    private static final int STATUS_Y = 20;
+    /** Narrower than the villager screen's bar, so it is drawn as its two rounded halves. */
+    private static final int BAR_WIDTH = 88;
+
+    private static final int BAR_SPRITE_WIDTH = 102;
+    private static final int BAR_HEIGHT = 5;
+
+    private static final int LOCK_X = 146;
+    private static final int LOCK_Y = 4;
+
+    private static final int STATUS_X = 80;
+    private static final int STATUS_Y = 25;
 
     private static final int TEXT_COLOR = 0xFF404040;
     private static final int CALIBRATING_TINT = 0xFFFFD83D;
@@ -109,8 +146,8 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
         graphics.blit(
                 RenderPipelines.GUI_TEXTURED, BACKGROUND, leftPos, topPos, 0, 0, imageWidth, imageHeight, 256, 256);
         GuiState state = state();
+        extractStand(graphics, state);
         extractBar(graphics, state);
-        extractFuel(graphics, state);
         LockIconButton button = lock;
         if (button != null) {
             button.setLocked(state.ready());
@@ -118,38 +155,25 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
         }
     }
 
-    /** The villager screen's bar: white while it fills, green once the rate can be trusted. */
-    private void extractBar(GuiGraphicsExtractor graphics, GuiState state) {
-        int x = leftPos + BAR_X;
-        int y = topPos + BAR_Y;
-        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BAR_BACKGROUND, x, y, BAR_WIDTH, BAR_HEIGHT);
-        int filled = Math.round(BAR_WIDTH * state.progress());
-        if (filled <= 0) {
-            return;
-        }
-        if (state.ready()) {
-            graphics.blitSprite(
-                    RenderPipelines.GUI_TEXTURED, BAR_READY, BAR_WIDTH, BAR_HEIGHT, 0, 0, x, y, filled, BAR_HEIGHT);
-        } else {
-            graphics.blitSprite(
-                    RenderPipelines.GUI_TEXTURED,
-                    BAR_CALIBRATING,
-                    BAR_WIDTH,
-                    BAR_HEIGHT,
-                    0,
-                    0,
-                    x,
-                    y,
-                    filled,
-                    BAR_HEIGHT,
-                    CALIBRATING_TINT);
-        }
-    }
-
-    /** The brewing stand's fuel meter, counting saplings instead of blaze powder. */
-    private void extractFuel(GuiGraphicsExtractor graphics, GuiState state) {
-        int width = Math.round(FUEL_WIDTH * Math.min(1.0F, (float) state.saplings() / FUEL_FULL));
-        if (width > 0) {
+    /**
+     * The brewing stand's apparatus, straight from vanilla's texture: the sapling slot's frame, the
+     * coil, the bubble trail and the base with the fuel groove under it. The saplings left fill that
+     * groove, and the bubbles only rise while the hopper is actually watching its farm.
+     */
+    private void extractStand(GuiGraphicsExtractor graphics, GuiState state) {
+        graphics.blit(
+                RenderPipelines.GUI_TEXTURED,
+                BREWING_STAND,
+                leftPos + STAND_X,
+                topPos + STAND_Y,
+                STAND_U,
+                STAND_V,
+                STAND_WIDTH,
+                STAND_HEIGHT,
+                256,
+                256);
+        int fuel = Math.round(FUEL_WIDTH * Math.min(1.0F, (float) state.saplings() / FUEL_FULL));
+        if (fuel > 0) {
             graphics.blitSprite(
                     RenderPipelines.GUI_TEXTURED,
                     FUEL,
@@ -159,8 +183,75 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
                     0,
                     leftPos + FUEL_X,
                     topPos + FUEL_Y,
-                    width,
+                    fuel,
                     FUEL_HEIGHT);
+        }
+        if (state.isCalibrating() && minecraft != null && minecraft.level != null) {
+            int phase = (int) (minecraft.level.getGameTime() / 2 % BUBBLE_HEIGHTS.length);
+            int height = BUBBLE_HEIGHTS[phase];
+            if (height > 0) {
+                graphics.blitSprite(
+                        RenderPipelines.GUI_TEXTURED,
+                        BUBBLES,
+                        BUBBLES_WIDTH,
+                        BUBBLES_HEIGHT,
+                        0,
+                        BUBBLES_HEIGHT - height,
+                        leftPos + BUBBLES_X,
+                        topPos + BUBBLES_Y + BUBBLES_HEIGHT - height,
+                        BUBBLES_WIDTH,
+                        height);
+            }
+        }
+    }
+
+    /** The villager screen's bar: yellow while it fills, green once the rate can be trusted. */
+    private void extractBar(GuiGraphicsExtractor graphics, GuiState state) {
+        barHalves(graphics, BAR_BACKGROUND, BAR_WIDTH, 0);
+        int filled = Math.round(BAR_WIDTH * state.progress());
+        if (filled > 0) {
+            barHalves(
+                    graphics,
+                    state.ready() ? BAR_READY : BAR_CALIBRATING,
+                    filled,
+                    state.ready() ? 0 : CALIBRATING_TINT);
+        }
+    }
+
+    /**
+     * Draws {@code width} pixels of a bar sprite as its left and right halves, so a bar narrower than
+     * vanilla's keeps both rounded ends instead of being cut off square.
+     */
+    private void barHalves(GuiGraphicsExtractor graphics, Identifier sprite, int width, int tint) {
+        int half = BAR_WIDTH / 2;
+        int left = Math.min(width, half);
+        if (left > 0) {
+            blitBar(graphics, sprite, 0, leftPos + BAR_X, left, tint);
+        }
+        if (width > half) {
+            // The right half is the sprite's own right half, so its rounded end is kept.
+            blitBar(graphics, sprite, BAR_SPRITE_WIDTH - half, leftPos + BAR_X + half, width - half, tint);
+        }
+    }
+
+    private void blitBar(GuiGraphicsExtractor graphics, Identifier sprite, int u, int x, int width, int tint) {
+        int y = topPos + BAR_Y;
+        if (tint == 0) {
+            graphics.blitSprite(
+                    RenderPipelines.GUI_TEXTURED, sprite, BAR_SPRITE_WIDTH, BAR_HEIGHT, u, 0, x, y, width, BAR_HEIGHT);
+        } else {
+            graphics.blitSprite(
+                    RenderPipelines.GUI_TEXTURED,
+                    sprite,
+                    BAR_SPRITE_WIDTH,
+                    BAR_HEIGHT,
+                    u,
+                    0,
+                    x,
+                    y,
+                    width,
+                    BAR_HEIGHT,
+                    tint);
         }
     }
 
@@ -175,7 +266,7 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
         super.extractTooltip(graphics, mouseX, mouseY);
         if (isOver(mouseX, mouseY, BAR_X, BAR_Y, BAR_WIDTH, BAR_HEIGHT)) {
             graphics.setComponentTooltipForNextFrame(font, details(state()), mouseX, mouseY);
-        } else if (isOver(mouseX, mouseY, FUEL_X, FUEL_Y, FUEL_WIDTH, FUEL_HEIGHT)) {
+        } else if (isOver(mouseX, mouseY, STAND_X, STAND_Y, STAND_WIDTH, STAND_HEIGHT)) {
             graphics.setComponentTooltipForNextFrame(font, List.of(fuelLine(state())), mouseX, mouseY);
         } else if (lock != null && lock.isHovered()) {
             graphics.setComponentTooltipForNextFrame(font, lockLines(), mouseX, mouseY);
