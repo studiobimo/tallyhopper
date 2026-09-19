@@ -31,7 +31,15 @@ public final class TallyHopperGameTests {
             Map.entry(id("dispenser_farm_measured"), MeasurementTests::dispenserFarm),
             Map.entry(id("gui_inserts_not_counted"), MeasurementTests::guiInsertsNotCounted),
             Map.entry(id("only_default_components_counted"), MeasurementTests::onlyDefaultComponentsCounted),
-            Map.entry(id("rate_override_command"), MeasurementTests::rateOverrideCommand));
+            Map.entry(id("rate_override_command"), MeasurementTests::rateOverrideCommand),
+            Map.entry(id("credit_fills_double_chest"), CreditTests::fillsDoubleChest),
+            Map.entry(id("credit_backlog_drains_to_minecart"), CreditTests::fullTargetBacklogsAndMinecartDrains),
+            Map.entry(id("credit_line_mode_vanilla_speed"), CreditTests::lineModeFlowsAtVanillaSpeed),
+            Map.entry(id("credit_once_per_session"), CreditTests::creditsEachSessionOnce),
+            Map.entry(id("credit_only_running_hoppers"), CreditTests::onlyRunningHoppersAreEligible),
+            Map.entry(id("credit_hundred_days"), CreditTests::hundredDaysAtAMillion),
+            Map.entry(id("break_keeps_backlog"), CreditTests::breakingKeepsTheBacklog),
+            Map.entry(id("creative_break_keeps_backlog"), CreditTests::creativeBreakKeepsTheBacklog));
 
     private TallyHopperGameTests() {}
 

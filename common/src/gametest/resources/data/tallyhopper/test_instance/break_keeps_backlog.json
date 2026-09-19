@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:break_keeps_backlog",
+  "max_ticks": 20,
+  "structure": "tallyhopper:platform"
+}

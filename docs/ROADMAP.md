@@ -64,18 +64,18 @@ A milestone is done only when all of its **exit criteria** are met.
 
 ## M4: Offline credit and delivery
 
-- [ ] Heartbeat and lifecycle hooks, eligibility, lazy credit
-- [ ] `ItemSink` for Fabric Transfer, NeoForge `ResourceHandler`, and vanilla `Container`
-- [ ] Visible-slot refill from the backlog; terminal and line modes
+- [x] Heartbeat and lifecycle hooks, eligibility, lazy credit
+- [x] `ItemSink` for Fabric Transfer and NeoForge `ResourceHandler` (both already wrap vanilla containers, so there is no separate `Container` path)
+- [x] Visible-slot refill from the backlog; terminal and line modes
 
 ### Exit criteria (GameTests)
 
-- [ ] Credit fills a (double) chest; existing items are untouched
-- [ ] A full target sends everything to the backlog; hopper minecarts drain it
-- [ ] Line mode flows through a vanilla item sorter without jamming filter hoppers
-- [ ] No double credit across restarts; a force-loaded hopper is eligible, an unloaded one is not
-- [ ] 100 days at 1e6 items/h: no crash, save size bounded
-- [ ] Breaking the block preserves the backlog on the item
+- [x] Credit fills a (double) chest; existing items are untouched
+- [x] A full target sends everything to the backlog; hopper minecarts drain it
+- [x] Line mode flows through a vanilla item sorter without jamming filter hoppers (tested on a hopper line: credit arrives one item at a time at vanilla speed and never bulk-fills a hopper; no redstone sorter is built)
+- [x] No double credit across restarts; a force-loaded hopper is eligible, an unloaded one is not (restarts are simulated by saving and reloading the block entity)
+- [x] 100 days at 1e6 items/h: no crash, save size bounded
+- [x] Breaking the block preserves the backlog on the item
 
 ## M5: UX
 

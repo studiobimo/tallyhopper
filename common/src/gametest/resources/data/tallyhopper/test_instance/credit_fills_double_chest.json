@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:credit_fills_double_chest",
+  "max_ticks": 20,
+  "structure": "tallyhopper:platform"
+}
