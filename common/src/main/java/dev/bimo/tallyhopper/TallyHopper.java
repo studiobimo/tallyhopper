@@ -1,5 +1,6 @@
 package dev.bimo.tallyhopper;
 
+import dev.bimo.tallyhopper.platform.Services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +15,6 @@ public final class TallyHopper {
 
     /** Called once by each loader's entry point during mod construction. */
     public static void init() {
-        LOG.info("{} initializing", MOD_NAME);
+        LOG.info("{} initializing on {}", MOD_NAME, Services.PLATFORM.getPlatformName());
     }
 }

@@ -24,3 +24,5 @@ plugins {
 rootProject.name = 'tallyhopper'
 includeBuild('build-logic')
 include('common')
+include('fabric')
+include('neoforge')
