@@ -13,7 +13,7 @@ export SSL_CERT_FILE ?= $(shell $(UV) run --frozen python -c 'import certifi; pr
 GRADLE := cd $(ROOT) && JAVA_HOME="$$(/usr/libexec/java_home -v $$(cat .java-version) 2>/dev/null || echo $$JAVA_HOME)" ./gradlew
 
 .DEFAULT_GOAL := help
-.PHONY: help setup fmt lint test build check scan lock run-fabric run-neoforge run-fabric-server run-neoforge-server clean
+.PHONY: help setup fmt lint test build check client-test scan lock run-fabric run-neoforge run-fabric-server run-neoforge-server clean
 
 help: ## List targets
 	@grep -hE '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -36,6 +36,9 @@ build: ## Compile, lint (Error Prone), test and package both loaders
 	$(GRADLE) build
 
 check: lint build ## Everything CI runs
+
+client-test: ## Screenshot the GUI in a real client (opens a window, so it is not part of check)
+	$(GRADLE) :fabric:runClientGameTest
 
 scan: ## Secret and workflow security scans
 	cd $(ROOT) && $(PRE_COMMIT) run gitleaks --all-files

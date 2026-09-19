@@ -28,7 +28,7 @@ fabricApi {
         createSourceSet = true
         modId = "${mod_id}_gametest"
         enableGameTests = true
-        enableClientGameTests = false
+        enableClientGameTests = true
     }
 }
 sourceSets.gametest {

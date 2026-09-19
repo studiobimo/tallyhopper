@@ -5,7 +5,12 @@
   "name": "Tally Hopper GameTests",
   "environment": "*",
   "entrypoints": {
-    "main": ["dev.bimo.tallyhopper.fabric.gametest.TallyHopperFabricGameTests"]
+    "main": [
+      "dev.bimo.tallyhopper.fabric.gametest.TallyHopperFabricGameTests"
+    ],
+    "fabric-client-gametest": [
+      "dev.bimo.tallyhopper.fabric.gametest.TallyHopperScreenClientTest"
+    ]
   },
   "depends": {
     "tallyhopper": "*"
