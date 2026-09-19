@@ -1,8 +1,18 @@
 package dev.bimo.tallyhopper.neoforge;
 
 import dev.bimo.tallyhopper.TallyHopper;
+import dev.bimo.tallyhopper.registry.TallyHopperContent;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.registries.RegisterEvent;
+import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
 
 /** NeoForge entry point; delegates to common code. */
 @Mod(TallyHopper.MOD_ID)
@@ -10,5 +20,39 @@ public final class TallyHopperNeoForge {
 
     public TallyHopperNeoForge(IEventBus modBus) {
         TallyHopper.init();
+        modBus.addListener(TallyHopperNeoForge::register);
+        modBus.addListener(TallyHopperNeoForge::addToCreativeTab);
+        modBus.addListener(TallyHopperNeoForge::registerCapabilities);
+    }
+
+    // NeoForge fires this once per registry, blocks first and items second.
+    private static void register(RegisterEvent event) {
+        event.register(
+                Registries.BLOCK,
+                helper -> helper.register(TallyHopperContent.BLOCK_KEY, TallyHopperContent.createBlock()));
+        event.register(
+                Registries.ITEM,
+                helper -> helper.register(TallyHopperContent.ITEM_KEY, TallyHopperContent.createItem()));
+        event.register(
+                Registries.BLOCK_ENTITY_TYPE,
+                helper -> helper.register(
+                        TallyHopperContent.BLOCK_ENTITY_KEY, TallyHopperContent.createBlockEntityType()));
+    }
+
+    private static void addToCreativeTab(BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey().equals(TallyHopperContent.REDSTONE_BLOCKS_TAB)) {
+            event.insertAfter(
+                    new ItemStack(Items.HOPPER),
+                    new ItemStack(TallyHopperContent.item()),
+                    CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS);
+        }
+    }
+
+    // NeoForge exposes vanilla hoppers to pipes and other mods' transfer code; do the same for ours.
+    private static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(
+                Capabilities.Item.BLOCK,
+                TallyHopperContent.blockEntityType(),
+                (hopper, side) -> VanillaContainerWrapper.of(hopper));
     }
 }
