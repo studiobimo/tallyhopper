@@ -97,4 +97,43 @@ class OfflineWindowTest {
         assertThat(window.isEligible(T0.minus(Duration.ofMinutes(2)).minusMillis(1)))
                 .isFalse();
     }
+
+    @Test
+    void hopperRunningAtCloseEarnsTheWholeWindow() {
+        OfflineWindow window = OfflineWindow.between(T0, T0.plus(Duration.ofHours(8)), DAY);
+
+        assertThat(window.creditFor(T0.minusSeconds(20))).isEqualTo(Duration.ofHours(8));
+        assertThat(window.creditFor(T0.minus(OfflineWindow.ELIGIBILITY_GRACE))).isEqualTo(Duration.ofHours(8));
+    }
+
+    @Test
+    void hopperUnloadedAtCloseEarnsNothing() {
+        OfflineWindow window = OfflineWindow.between(T0, T0.plus(Duration.ofHours(8)), DAY);
+
+        assertThat(window.creditFor(T0.minus(Duration.ofMinutes(3)))).isZero();
+    }
+
+    @Test
+    void hopperNeverEarnsTimeBeforeItsOwnLastTick() {
+        OfflineWindow window = OfflineWindow.between(T0, T0.plus(Duration.ofHours(8)), DAY);
+
+        // It ran for an hour into the window, e.g. because a crash lost the session data.
+        assertThat(window.creditFor(T0.plus(Duration.ofHours(1)))).isEqualTo(Duration.ofHours(7));
+        assertThat(window.creditFor(T0.plus(Duration.ofHours(9)))).isZero();
+    }
+
+    @Test
+    void cappedWindowCreditsAtMostTheCap() {
+        OfflineWindow window = OfflineWindow.between(T0, T0.plus(Duration.ofDays(3)), DAY);
+
+        assertThat(window.creditFor(T0)).isEqualTo(DAY);
+        assertThat(window.creditFor(T0.plus(Duration.ofDays(2).plusHours(1)))).isEqualTo(Duration.ofHours(23));
+    }
+
+    @Test
+    void shortOrFirstWindowCreditsNothing() {
+        assertThat(OfflineWindow.none(T0).creditFor(T0)).isZero();
+        assertThat(OfflineWindow.between(T0, T0.plusSeconds(30), DAY).creditFor(T0))
+                .isZero();
+    }
 }
