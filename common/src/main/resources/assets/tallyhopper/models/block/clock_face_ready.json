@@ -1,0 +1,6 @@
+{
+  "parent": "tallyhopper:block/clock_face",
+  "textures": {
+    "face": "tallyhopper:block/clock_face_ready"
+  }
+}
