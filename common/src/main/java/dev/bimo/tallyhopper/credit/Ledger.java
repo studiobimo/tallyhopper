@@ -77,6 +77,16 @@ public final class Ledger {
         return false;
     }
 
+    /** Replaces the backlog, for a hopper placed from an item that carried one. */
+    public void restoreBacklog(StoredBacklog stored) {
+        backlog = new Backlog<>(stored.counts(), Backlog.DEFAULT_CAP);
+    }
+
+    /** Leaves the backlog out of block entity data that is saved alongside the item's own component. */
+    public static void discardBacklog(ValueOutput output) {
+        output.discard(BACKLOG_KEY);
+    }
+
     public void save(ValueOutput output) {
         if (!backlog.isEmpty()) {
             output.store(BACKLOG_KEY, COUNTS_CODEC, backlog.contents());

@@ -3,7 +3,9 @@ package dev.bimo.tallyhopper.registry;
 import dev.bimo.tallyhopper.TallyHopper;
 import dev.bimo.tallyhopper.block.TallyHopperBlock;
 import dev.bimo.tallyhopper.block.TallyHopperBlockEntity;
+import dev.bimo.tallyhopper.credit.StoredBacklog;
 import java.util.Set;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -21,12 +23,13 @@ import net.minecraft.world.level.material.MapColor;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The mod's block, item and block entity type.
+ * The mod's block, item, block entity type and backlog component.
  *
  * <p>Each loader calls the {@code create…} methods from inside its registration phase, in the order
  * block, item, block entity type, and registers the result under the matching key. It also
  * registers {@link dev.bimo.tallyhopper.crafting.ShapelessKeepRecipe#SERIALIZER} under
- * {@link #SHAPELESS_KEEP_KEY}. Objects are
+ * {@link #SHAPELESS_KEEP_KEY}, and the backlog component from {@link #createBacklogComponent()} under
+ * {@link #BACKLOG_COMPONENT_KEY}. Objects are
  * created there, not in static initializers, because NeoForge only allows registry objects to be
  * built while its registries are open.
  */
@@ -40,6 +43,8 @@ public final class TallyHopperContent {
     public static final ResourceKey<RecipeSerializer<?>> SHAPELESS_KEEP_KEY = ResourceKey.create(
             Registries.RECIPE_SERIALIZER,
             Identifier.fromNamespaceAndPath(TallyHopper.MOD_ID, "crafting_shapeless_keep"));
+    public static final ResourceKey<DataComponentType<?>> BACKLOG_COMPONENT_KEY = ResourceKey.create(
+            Registries.DATA_COMPONENT_TYPE, Identifier.fromNamespaceAndPath(TallyHopper.MOD_ID, "backlog"));
 
     /** Vanilla keeps its own copy of this key private. */
     public static final ResourceKey<CreativeModeTab> REDSTONE_BLOCKS_TAB =
@@ -48,6 +53,7 @@ public final class TallyHopperContent {
     private static @Nullable Block block;
     private static @Nullable Item item;
     private static @Nullable BlockEntityType<TallyHopperBlockEntity> blockEntityType;
+    private static @Nullable DataComponentType<StoredBacklog> backlogComponent;
 
     private TallyHopperContent() {}
 
@@ -84,6 +90,15 @@ public final class TallyHopperContent {
         return created;
     }
 
+    public static DataComponentType<StoredBacklog> createBacklogComponent() {
+        DataComponentType<StoredBacklog> created = DataComponentType.<StoredBacklog>builder()
+                .persistent(StoredBacklog.CODEC)
+                .networkSynchronized(StoredBacklog.STREAM_CODEC)
+                .build();
+        backlogComponent = created;
+        return created;
+    }
+
     public static Block block() {
         return registered(block, "block");
     }
@@ -94,6 +109,10 @@ public final class TallyHopperContent {
 
     public static BlockEntityType<TallyHopperBlockEntity> blockEntityType() {
         return registered(blockEntityType, "block entity type");
+    }
+
+    public static DataComponentType<StoredBacklog> backlogComponent() {
+        return registered(backlogComponent, "backlog component");
     }
 
     private static <T> T registered(@Nullable T value, String what) {

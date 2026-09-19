@@ -49,6 +49,10 @@ public final class TallyHopperNeoForge {
     // NeoForge fires this once per registry, blocks first and items second.
     private static void register(RegisterEvent event) {
         event.register(
+                Registries.DATA_COMPONENT_TYPE,
+                helper -> helper.register(
+                        TallyHopperContent.BACKLOG_COMPONENT_KEY, TallyHopperContent.createBacklogComponent()));
+        event.register(
                 Registries.BLOCK,
                 helper -> helper.register(TallyHopperContent.BLOCK_KEY, TallyHopperContent.createBlock()));
         event.register(

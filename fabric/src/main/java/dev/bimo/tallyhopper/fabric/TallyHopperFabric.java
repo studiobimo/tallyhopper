@@ -23,6 +23,10 @@ public final class TallyHopperFabric implements ModInitializer {
     public void onInitialize() {
         TallyHopper.init();
 
+        Registry.register(
+                BuiltInRegistries.DATA_COMPONENT_TYPE,
+                TallyHopperContent.BACKLOG_COMPONENT_KEY,
+                TallyHopperContent.createBacklogComponent());
         Registry.register(BuiltInRegistries.BLOCK, TallyHopperContent.BLOCK_KEY, TallyHopperContent.createBlock());
         Registry.register(BuiltInRegistries.ITEM, TallyHopperContent.ITEM_KEY, TallyHopperContent.createItem());
         Registry.register(
