@@ -4,6 +4,7 @@ import dev.bimo.tallyhopper.TallyHopper;
 import dev.bimo.tallyhopper.block.TallyHopperBlock;
 import dev.bimo.tallyhopper.block.TallyHopperBlockEntity;
 import dev.bimo.tallyhopper.credit.StoredBacklog;
+import dev.bimo.tallyhopper.item.TallyHopperItem;
 import java.util.Set;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
@@ -75,7 +76,7 @@ public final class TallyHopperContent {
     }
 
     public static Item createItem() {
-        BlockItem created = new BlockItem(
+        BlockItem created = new TallyHopperItem(
                 block(),
                 new Item.Properties()
                         .component(DataComponents.CONTAINER, ItemContainerContents.EMPTY)

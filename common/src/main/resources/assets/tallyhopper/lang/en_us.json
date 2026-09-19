@@ -44,5 +44,8 @@
   "stat.tallyhopper.items_credited": "Items credited while away",
   "stat.tallyhopper.energy_saved_wh": "Energy not used (Wh)",
   "advancements.tallyhopper.sleep_mode.title": "Sleep Mode",
-  "advancements.tallyhopper.sleep_mode.description": "Let a Tally Hopper run your farm while your computer was off"
+  "advancements.tallyhopper.sleep_mode.description": "Let a Tally Hopper run your farm while your computer was off",
+  "item.tallyhopper.tally_hopper.backlog": "Backlog: %s items",
+  "item.tallyhopper.tally_hopper.backlog_line": "  %s × %s",
+  "item.tallyhopper.tally_hopper.backlog_more": "  …and %s more kinds"
 }

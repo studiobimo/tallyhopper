@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:backlog_tooltip",
+  "max_ticks": 20,
+  "structure": "tallyhopper:platform"
+}
