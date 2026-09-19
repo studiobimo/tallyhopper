@@ -9,6 +9,18 @@ dependencies {
     implementation("net.fabricmc.fabric-api:fabric-api:${fabric_version}")
 }
 
+// Datagen lives in its own source set (kept out of the release jar) and writes into common, so both
+// loaders ship identical data. Regenerate with `./gradlew :fabric:runDatagen` and commit the result.
+fabricApi {
+    configureDataGeneration {
+        createSourceSet = true
+        modId = "${mod_id}_datagen"
+        outputDirectory = project(':common').file('src/generated/resources')
+        addToResources = false
+        client = false
+    }
+}
+
 loom {
     def aw = project(':common').file("src/main/resources/${mod_id}.accesswidener")
     if (aw.exists()) {

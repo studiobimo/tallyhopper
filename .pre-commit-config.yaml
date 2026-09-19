@@ -9,7 +9,7 @@ default_language_version:
   python: python3.14
   node: 24.21.0
   golang: 1.27.1
-exclude: ^(gradle/verification-metadata\.xml|.*gradle\.lockfile|gradlew(\.bat)?)$
+exclude: ^(gradle/verification-metadata\.xml|.*gradle\.lockfile|gradlew(\.bat)?|common/src/generated/.*)$
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
