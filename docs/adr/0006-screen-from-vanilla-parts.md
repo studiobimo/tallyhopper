@@ -19,8 +19,12 @@ Build the screen out of vanilla parts, and keep the panel at the ordinary 176×1
 - **Calibration progress** is the villager screen's experience bar. It fills white-yellow while the
   hopper watches (the white `experience_bar_result` sprite with a yellow tint) and turns green
   (`experience_bar_current`) when the rate can be trusted.
-- **The sapling a calibration run costs** sits in a slot of its own with the brewing stand's
-  `fuel_length` meter under it.
+- **The sapling a calibration run costs** sits in the brewing stand's apparatus, blitted out of
+  vanilla's own `textures/gui/container/brewing_stand.png` at runtime rather than copied into this
+  mod: the blaze slot's frame becomes the sapling slot, and the coil, bubble trail, base and fuel
+  groove come with it. The `fuel_length` meter fills that groove with the saplings left, and the
+  `bubbles` sprite rises while the hopper is watching, exactly as it does while a potion brews. A
+  resource pack restyles this screen along with the brewing stand.
 - **State** is vanilla's `LockIconButton`: open while the hopper is still watching, closed once it is
   ready. Pressing it spends a sapling and measures again from nothing, through
   `AbstractContainerMenu#clickMenuButton`, the same path the lectern and the stonecutter use.

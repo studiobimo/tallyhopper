@@ -24,9 +24,9 @@ public final class TallyHopperMenu extends AbstractContainerMenu {
     public static final int RECALIBRATE_BUTTON = 0;
 
     /** Where the five hopper slots start, and where the sapling slot sits. */
-    private static final int SLOTS_X = 34;
+    private static final int SLOTS_X = 80;
 
-    private static final int SLOTS_Y = 44;
+    private static final int SLOTS_Y = 48;
     private static final int SAPLING_X = 8;
     private static final int SAPLING_Y = 26;
 

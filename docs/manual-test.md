@@ -43,10 +43,11 @@ Record the loader, the mod version and the world name in your notes.
 2. **Expect:** "Needs a sapling", an empty bar, an empty sapling slot on the left and an open padlock.
    Hovering the empty meter says what goes there.
 3. Put a stack of saplings in the slot.
-4. **Expect:** one sapling is taken straight away, the meter fills to match what is left, and the
-   status becomes "Calibrating".
+4. **Expect:** one sapling is taken straight away, the meter under the stand fills to match what is
+   left, the bubbles start rising, and the status becomes "Calibrating".
 5. Feed the hopper from a working farm, or drop stacks in by hand at a steady pace, and watch the bar.
-6. **Expect:** the bar fills yellow as the minute passes, then turns green and the padlock closes.
+6. **Expect:** the bar fills yellow as the minute passes, then turns green, the bubbles stop and the
+   padlock closes.
 7. Hover the bar.
 8. **Expect:** a tooltip with the status, one line per item with a plausible per-hour rate, the
    delivery mode and — for a hopper feeding a line — where that line ends.
