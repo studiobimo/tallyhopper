@@ -79,16 +79,16 @@ A milestone is done only when all of its **exit criteria** are met.
 
 ## M5: UX
 
-- [ ] GUI with network sync: rates, status, mode, drain estimate, chain analysis, override field
-- [ ] Rejoin chat summary with energy/CO₂/water/tree-day estimate; custom statistics
-- [ ] `config/tallyhopper.json`, gamerules, tooltip, block-state visuals, advancement
-- [ ] Methodology page for the environmental estimate
+- [x] GUI with network sync: rates, status, mode, drain estimate, chain analysis, override field
+- [x] Rejoin chat summary with energy/CO₂/water/tree-day estimate; custom statistics
+- [x] `config/tallyhopper.json`, gamerules, tooltip, block-state visuals, advancement
+- [x] Methodology page for the environmental estimate
 
 ### Exit criteria
 
-- [ ] A Fabric client GameTest screenshots the GUI in the calibrating and ready states
-- [ ] All strings are in `en_us.json`
-- [ ] The manual test script passes on both loaders
+- [x] A Fabric client GameTest screenshots the GUI in the calibrating and ready states
+- [x] All strings are in `en_us.json`
+- [ ] The [manual test script](manual-test.md) passes on both loaders
 
 ## M6: Compatibility
 
