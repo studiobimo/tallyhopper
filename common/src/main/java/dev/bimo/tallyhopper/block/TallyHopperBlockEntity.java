@@ -7,26 +7,33 @@ import dev.bimo.tallyhopper.measure.Measurement;
 import dev.bimo.tallyhopper.measure.MeasurementClock;
 import dev.bimo.tallyhopper.offline.Backlog;
 import dev.bimo.tallyhopper.offline.SaturatingMath;
+import dev.bimo.tallyhopper.platform.Services;
+import dev.bimo.tallyhopper.platform.services.ItemSinks;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
 import dev.bimo.tallyhopper.session.OfflineSession;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.HopperBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A vanilla hopper block entity under its own type.
@@ -96,6 +103,9 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
     /**
      * Credits this hopper for {@code session}'s offline window at its effective rates. Called once per
      * session, on the hopper's first tick.
+     *
+     * <p>In terminal mode the credit, and any backlog left from before, goes straight into the storage
+     * the hopper faces; the rest goes to the backlog.
      */
     public CreditReport credit(OfflineSession.Current session) {
         Map<Item, Long> earned = ledger.earn(session, measurement.effectiveRates());
@@ -103,14 +113,45 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         if (earned.isEmpty()) {
             return CreditReport.NONE;
         }
-        long total = 0;
-        for (long count : earned.values()) {
-            total = SaturatingMath.add(total, count);
+        Backlog<Item> backlog = ledger.backlog();
+        Map<Item, Long> remainder = earned;
+        long delivered = 0;
+        ItemSinks.@Nullable ItemSink sink = getLevel() instanceof ServerLevel level ? terminalSink(level) : null;
+        if (sink != null) {
+            backlog.contents().forEach((item, count) -> backlog.take(item, sink.insert(item, count)));
+            remainder = new LinkedHashMap<>();
+            for (Map.Entry<Item, Long> entry : earned.entrySet()) {
+                long inserted = sink.insert(entry.getKey(), entry.getValue());
+                delivered = SaturatingMath.add(delivered, inserted);
+                if (inserted < entry.getValue()) {
+                    remainder.put(entry.getKey(), entry.getValue() - inserted);
+                }
+            }
         }
-        long refused = ledger.backlog().addAll(earned);
-        CreditReport report = new CreditReport(earned, 0, total - refused, refused);
+        long left = 0;
+        for (long count : remainder.values()) {
+            left = SaturatingMath.add(left, count);
+        }
+        long refused = backlog.addAll(remainder);
+        CreditReport report = new CreditReport(earned, delivered, left - refused, refused);
         TallyHopper.LOG.info("Tally Hopper at {} credited {}", getBlockPos().toShortString(), report);
         return report;
+    }
+
+    /**
+     * The storage credit is bulk-filled into, or {@code null} in line mode.
+     *
+     * <p>A hopper that faces another hopper feeds a line, such as an item sorter. Filling that hopper
+     * in bulk would jam the sorter's filters, so credit waits in the backlog and flows down the line at
+     * vanilla speed. A hopper facing no storage at all works the same way.
+     */
+    public ItemSinks.@Nullable ItemSink terminalSink(ServerLevel level) {
+        Direction facing = getBlockState().getValue(HopperBlock.FACING);
+        BlockPos target = getBlockPos().relative(facing);
+        if (level.getBlockEntity(target) instanceof HopperBlockEntity) {
+            return null;
+        }
+        return Services.ITEM_SINKS.find(level, target, facing.getOpposite());
     }
 
     public Ledger ledger() {
