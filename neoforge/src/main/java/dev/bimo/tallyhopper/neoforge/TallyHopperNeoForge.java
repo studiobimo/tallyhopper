@@ -1,6 +1,7 @@
 package dev.bimo.tallyhopper.neoforge;
 
 import dev.bimo.tallyhopper.TallyHopper;
+import dev.bimo.tallyhopper.crafting.ShapelessKeepRecipe;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.CreativeModeTab;
@@ -37,6 +38,9 @@ public final class TallyHopperNeoForge {
                 Registries.BLOCK_ENTITY_TYPE,
                 helper -> helper.register(
                         TallyHopperContent.BLOCK_ENTITY_KEY, TallyHopperContent.createBlockEntityType()));
+        event.register(
+                Registries.RECIPE_SERIALIZER,
+                helper -> helper.register(TallyHopperContent.SHAPELESS_KEEP_KEY, ShapelessKeepRecipe.SERIALIZER));
     }
 
     private static void addToCreativeTab(BuildCreativeModeTabContentsEvent event) {

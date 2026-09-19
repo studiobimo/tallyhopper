@@ -11,8 +11,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -24,7 +24,9 @@ import org.jspecify.annotations.Nullable;
  * The mod's block, item and block entity type.
  *
  * <p>Each loader calls the {@code create…} methods from inside its registration phase, in the order
- * block, item, block entity type, and registers the result under the matching key. Objects are
+ * block, item, block entity type, and registers the result under the matching key. It also
+ * registers {@link dev.bimo.tallyhopper.crafting.ShapelessKeepRecipe#SERIALIZER} under
+ * {@link #SHAPELESS_KEEP_KEY}. Objects are
  * created there, not in static initializers, because NeoForge only allows registry objects to be
  * built while its registries are open.
  */
@@ -35,6 +37,9 @@ public final class TallyHopperContent {
     public static final ResourceKey<Item> ITEM_KEY = ResourceKey.create(Registries.ITEM, TALLY_HOPPER);
     public static final ResourceKey<BlockEntityType<?>> BLOCK_ENTITY_KEY =
             ResourceKey.create(Registries.BLOCK_ENTITY_TYPE, TALLY_HOPPER);
+    public static final ResourceKey<RecipeSerializer<?>> SHAPELESS_KEEP_KEY = ResourceKey.create(
+            Registries.RECIPE_SERIALIZER,
+            Identifier.fromNamespaceAndPath(TallyHopper.MOD_ID, "crafting_shapeless_keep"));
 
     /** Vanilla keeps its own copy of this key private. */
     public static final ResourceKey<CreativeModeTab> REDSTONE_BLOCKS_TAB =
@@ -64,8 +69,6 @@ public final class TallyHopperContent {
                 block(),
                 new Item.Properties()
                         .component(DataComponents.CONTAINER, ItemContainerContents.EMPTY)
-                        // Un-crafting gives back the hopper and leaves the clock in the grid.
-                        .craftRemainder(Items.CLOCK)
                         .useBlockDescriptionPrefix()
                         .setId(ITEM_KEY));
         // Vanilla does this in Items.registerItem; it makes block.asItem() work. Repeating it is harmless.

@@ -1,10 +1,12 @@
 {
-  "type": "minecraft:crafting_shapeless",
+  "type": "tallyhopper:crafting_shapeless_keep",
   "category": "redstone",
   "ingredients": [
     "minecraft:hopper",
-    "minecraft:clock"
+    "minecraft:clock",
+    "#minecraft:saplings"
   ],
+  "kept": "minecraft:clock",
   "result": {
     "id": "tallyhopper:tally_hopper"
   }
