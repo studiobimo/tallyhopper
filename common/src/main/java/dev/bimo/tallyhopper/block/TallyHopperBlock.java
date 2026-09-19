@@ -8,7 +8,6 @@ import net.minecraft.world.level.block.HopperBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -44,6 +43,6 @@ public final class TallyHopperBlock extends HopperBlock {
             Level level, BlockState state, BlockEntityType<T> type) {
         return level.isClientSide()
                 ? null
-                : createTickerHelper(type, TallyHopperContent.blockEntityType(), HopperBlockEntity::pushItemsTick);
+                : createTickerHelper(type, TallyHopperContent.blockEntityType(), TallyHopperBlockEntity::serverTick);
     }
 }

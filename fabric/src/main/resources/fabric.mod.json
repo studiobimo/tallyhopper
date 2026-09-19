@@ -12,6 +12,7 @@
   },
   "license": "${license}",
   "environment": "*",
+  "mixins": ["tallyhopper.mixins.json"],
   "entrypoints": {
     "main": ["dev.bimo.tallyhopper.fabric.TallyHopperFabric"]
   },
