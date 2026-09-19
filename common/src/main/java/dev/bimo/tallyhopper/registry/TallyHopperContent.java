@@ -46,6 +46,10 @@ public final class TallyHopperContent {
     public static final ResourceKey<DataComponentType<?>> BACKLOG_COMPONENT_KEY = ResourceKey.create(
             Registries.DATA_COMPONENT_TYPE, Identifier.fromNamespaceAndPath(TallyHopper.MOD_ID, "backlog"));
 
+    /** Awarded the first time a hopper credits offline time. */
+    public static final Identifier SLEEP_MODE_ADVANCEMENT =
+            Identifier.fromNamespaceAndPath(TallyHopper.MOD_ID, "sleep_mode");
+
     /** Vanilla keeps its own copy of this key private. */
     public static final ResourceKey<CreativeModeTab> REDSTONE_BLOCKS_TAB =
             ResourceKey.create(Registries.CREATIVE_MODE_TAB, Identifier.withDefaultNamespace("redstone_blocks"));

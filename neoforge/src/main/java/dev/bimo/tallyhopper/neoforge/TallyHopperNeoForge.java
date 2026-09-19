@@ -6,6 +6,7 @@ import dev.bimo.tallyhopper.conversion.ClockConversion;
 import dev.bimo.tallyhopper.crafting.ShapelessKeepRecipe;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
 import dev.bimo.tallyhopper.registry.TallyHopperGameRules;
+import dev.bimo.tallyhopper.registry.TallyHopperStats;
 import dev.bimo.tallyhopper.session.OfflineSession;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.InteractionResult;
@@ -49,6 +50,7 @@ public final class TallyHopperNeoForge {
 
     // NeoForge fires this once per registry, blocks first and items second.
     private static void register(RegisterEvent event) {
+        event.register(Registries.CUSTOM_STAT, helper -> TallyHopperStats.register());
         event.register(Registries.GAME_RULE, helper -> TallyHopperGameRules.ALL.forEach(helper::register));
         event.register(
                 Registries.DATA_COMPONENT_TYPE,

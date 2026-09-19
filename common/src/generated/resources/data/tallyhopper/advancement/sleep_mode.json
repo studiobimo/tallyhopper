@@ -1,0 +1,25 @@
+{
+  "criteria": {
+    "credited": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "background": "minecraft:textures/block/smooth_stone.png",
+    "description": {
+      "translate": "advancements.tallyhopper.sleep_mode.description"
+    },
+    "icon": {
+      "id": "tallyhopper:tally_hopper"
+    },
+    "title": {
+      "translate": "advancements.tallyhopper.sleep_mode.title"
+    }
+  },
+  "requirements": [
+    [
+      "credited"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

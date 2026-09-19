@@ -25,6 +25,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -38,6 +39,7 @@ import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -147,6 +149,11 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         long refused = backlog.addAll(remainder);
         CreditReport report = new CreditReport(earned, delivered, left - refused, refused);
         TallyHopper.LOG.info("Tally Hopper at {} credited {}", getBlockPos().toShortString(), report);
+        OfflineSession.reportCredit(getBlockPos(), report);
+        if (getLevel() instanceof ServerLevel level) {
+            Vec3 above = Vec3.atCenterOf(getBlockPos()).add(0, 0.5, 0);
+            level.sendParticles(ParticleTypes.HAPPY_VILLAGER, above.x, above.y, above.z, 8, 0.25, 0.25, 0.25, 0);
+        }
         return report;
     }
 

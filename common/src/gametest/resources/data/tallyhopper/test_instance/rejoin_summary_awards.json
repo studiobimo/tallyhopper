@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:rejoin_summary_awards",
+  "max_ticks": 120,
+  "structure": "tallyhopper:platform"
+}
