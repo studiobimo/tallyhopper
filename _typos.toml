@@ -1,0 +1,10 @@
+[files]
+extend-exclude = [
+  "gradle/verification-metadata.xml",
+  "*.lockfile",
+  "*.jar",
+]
+
+[default.extend-words]
+# Python CA bundle package name
+certifi = "certifi"

@@ -1,0 +1,126 @@
+# Hook revs are frozen to commit SHAs (`pre-commit autoupdate --freeze`);
+# Dependabot's pre-commit ecosystem keeps them current.
+# Install: make -C .devtools setup
+default_install_hook_types: [pre-commit, commit-msg, pre-push]
+default_stages: [pre-commit]
+# Toolchains pre-commit provisions for hooks (python: shellcheck/typos/zizmor/…,
+# node: markdownlint-cli2, golang: gitleaks/actionlint). Pinned for reproducibility.
+default_language_version:
+  python: python3.14
+  node: 24.21.0
+  golang: 1.27.1
+exclude: ^(gradle/verification-metadata\.xml|.*gradle\.lockfile|gradlew(\.bat)?)$
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+        exclude: \.bat$
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=512]
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+        # Contains ${...} Gradle template placeholders; valid TOML only after processResources.
+        exclude: ^neoforge/src/main/resources/META-INF/neoforge\.mods\.toml$
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: detect-private-key
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: 83d9cd684c87d95d656c1458ef04895a7f1cbd8e  # frozen: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: 914e7df21a07ef503a81201c76d2b11c789d3fca  # frozen: v1.7.12
+    hooks:
+      - id: actionlint
+
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: fa412071e4f5d44d44f9e365f4676f9df92456a2  # frozen: v1.30.1
+    hooks:
+      - id: zizmor
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: 745eface02aef23e168a8afb6b5737818efbea95  # frozen: v0.11.0.1
+    hooks:
+      - id: shellcheck
+
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: b82a6c8896e491b9cb377a99ff3412131920681b  # frozen: v0.23.2
+    hooks:
+      - id: markdownlint-cli2
+
+  - repo: https://github.com/crate-ci/typos
+    rev: 512fc24f32f44ab01972217aaaf3dc86ec234d53  # frozen: v1.50.2
+    hooks:
+      - id: typos
+
+  - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
+    rev: e8b4e28241a9ae8296ba6e4a491b5da4eda73283  # frozen: 3.11.1
+    hooks:
+      - id: editorconfig-checker
+        alias: ec
+        exclude: \.(jar|png)$
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 12e63946db2c5cfcc9030fac21c3883ba88c6ed8  # frozen: 0.38.0
+    hooks:
+      - id: check-github-workflows
+      - id: check-dependabot
+      - id: check-jsonschema
+        name: check fabric.mod.json
+        files: ^fabric/src/main/resources/fabric\.mod\.json$
+        args: [--schemafile, "https://json.schemastore.org/fabric.mod.json"]
+
+  - repo: https://github.com/lycheeverse/lychee
+    rev: 2bba271688c1abb1503097a064e6c3bc1d1b6a9b  # frozen: lychee-v0.24.2
+    hooks:
+      - id: lychee
+        args: [--no-progress, --config, lychee.toml]
+        types: [markdown]
+        stages: [pre-push, manual]
+
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: 91ab4bf57e58b32adf1a122681f6ebe164d081c8  # frozen: v4.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: [--strict, build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test]
+
+  - repo: local
+    hooks:
+      - id: spotless
+        name: spotless (palantir-java-format)
+        entry: bash -c 'JAVA_HOME="$(/usr/libexec/java_home -v 25 2>/dev/null || echo "$JAVA_HOME")" ./gradlew spotlessApply -q'
+        language: system
+        files: \.java$
+        pass_filenames: false
+      - id: conventional-branch
+        name: conventional branch name
+        entry: .devtools/scripts/check-branch-name.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push, manual]
+      - id: pr-size
+        name: PR size (max 20 files)
+        entry: .devtools/scripts/check-pr-size.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push, manual]
+      - id: gradle-check
+        name: gradle build (compile, Error Prone, tests)
+        entry: bash -c 'JAVA_HOME="$(/usr/libexec/java_home -v 25 2>/dev/null || echo "$JAVA_HOME")" ./gradlew build -q'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

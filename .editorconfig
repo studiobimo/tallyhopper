@@ -13,6 +13,8 @@ indent_size = 2
 
 [*.md]
 trim_trailing_whitespace = false
+# List continuation and nested content follow Markdown, not code, indentation.
+indent_size = unset
 
 [*.bat]
 end_of_line = crlf
