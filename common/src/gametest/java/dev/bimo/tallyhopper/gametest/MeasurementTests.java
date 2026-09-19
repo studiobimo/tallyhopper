@@ -3,6 +3,7 @@ package dev.bimo.tallyhopper.gametest;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.bimo.tallyhopper.block.TallyHopperBlock;
 import dev.bimo.tallyhopper.block.TallyHopperBlockEntity;
+import dev.bimo.tallyhopper.command.TallyHopperCommand;
 import dev.bimo.tallyhopper.measure.Measurement;
 import dev.bimo.tallyhopper.offline.Rate;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
@@ -165,27 +166,32 @@ public final class MeasurementTests {
                 .withLevel(helper.getLevel())
                 .withPermission(PermissionSet.ALL_PERMISSIONS);
 
-        assertRefused(helper, playerSource, "tallyhopper rate set minecraft:diamond 100", "raise above measured");
-        run(helper, playerSource, "tallyhopper rate set minecraft:diamond 0");
+        assertRefused(
+                helper,
+                playerSource,
+                TallyHopperCommand.NAME + " rate set minecraft:diamond 100",
+                "raise above measured");
+        run(helper, playerSource, TallyHopperCommand.NAME + " rate set minecraft:diamond 0");
         helper.assertValueEqual(hopper.measurement().overrides(), Map.of(Items.DIAMOND, 0L), "overrides");
         helper.assertBlockProperty(HOPPER, TallyHopperBlock.READY, false);
 
-        run(helper, operator, "tallyhopper rate set " + at + " minecraft:emerald 500");
+        run(helper, operator, TallyHopperCommand.NAME + " rate set " + at + " minecraft:emerald 500");
         helper.assertValueEqual(
                 hopper.measurement().effectiveRates(),
                 Map.of(Items.EMERALD, Rate.perHour(500), Items.DIAMOND, Rate.perHour(0)),
                 "effective rates");
         helper.assertBlockProperty(HOPPER, TallyHopperBlock.READY, true);
-        helper.assertValueEqual(run(helper, playerSource, "tallyhopper info"), 2, "info lines");
+        helper.assertValueEqual(run(helper, playerSource, TallyHopperCommand.NAME + " info"), 2, "info lines");
 
         player.snapTo(above.x + 20, above.y, above.z, 0, 90);
         CommandSourceStack farAway = player.createCommandSourceStack()
                 .withPermission(PermissionSet.NO_PERMISSIONS)
                 .withSuppressedOutput();
-        assertRefused(helper, farAway, "tallyhopper info " + at, "info from 20 blocks away");
-        assertRefused(helper, farAway, "tallyhopper rate clear " + at, "clear from 20 blocks away");
+        assertRefused(helper, farAway, TallyHopperCommand.NAME + " info " + at, "info from 20 blocks away");
+        assertRefused(helper, farAway, TallyHopperCommand.NAME + " rate clear " + at, "clear from 20 blocks away");
 
-        helper.assertValueEqual(run(helper, operator, "tallyhopper rate clear " + at), 2, "overrides cleared");
+        helper.assertValueEqual(
+                run(helper, operator, TallyHopperCommand.NAME + " rate clear " + at), 2, "overrides cleared");
         helper.assertValueEqual(hopper.measurement().overrides(), Map.<Item, Long>of(), "overrides");
         helper.assertBlockProperty(HOPPER, TallyHopperBlock.READY, false);
         helper.succeed();

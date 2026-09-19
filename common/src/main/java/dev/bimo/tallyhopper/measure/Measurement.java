@@ -30,8 +30,8 @@ public final class Measurement {
 
     public static final Duration WARM_UP = RateTracker.DEFAULT_WARM_UP;
 
-    private static final String BUCKETS_KEY = "tallyhopper_rate";
-    private static final String OVERRIDES_KEY = "tallyhopper_overrides";
+    private static final String BUCKETS_KEY = TallyHopper.MOD_ID + "_rate";
+    private static final String OVERRIDES_KEY = TallyHopper.MOD_ID + "_overrides";
     private static final Codec<Map<Item, Long>> OVERRIDES_CODEC =
             Codec.unboundedMap(BuiltInRegistries.ITEM.byNameCodec(), ExtraCodecs.NON_NEGATIVE_LONG);
     private static final Codec<RateTracker.Bucket<Item>> BUCKET_CODEC = RecordCodecBuilder.create(i -> i.group(

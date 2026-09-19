@@ -7,6 +7,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import dev.bimo.tallyhopper.TallyHopper;
 import dev.bimo.tallyhopper.block.TallyHopperBlockEntity;
 import dev.bimo.tallyhopper.measure.Measurement;
 import dev.bimo.tallyhopper.offline.Rate;
@@ -38,6 +39,9 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class TallyHopperCommand {
 
+    /** The root command, {@code /tallyhopper}. */
+    public static final String NAME = TallyHopper.MOD_ID;
+
     /** How far away a hopper can be targeted, by looking or, for non-operators, at all. */
     static final double REACH = 8;
 
@@ -68,7 +72,7 @@ public final class TallyHopperCommand {
     private static final Target AT_POS = context -> BlockPosArgument.getLoadedBlockPos(context, "pos");
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
-        dispatcher.register(Commands.literal("tallyhopper")
+        dispatcher.register(Commands.literal(NAME)
                 .then(Commands.literal("info")
                         .executes(c -> info(c, LOOKED_AT))
                         .then(Commands.argument("pos", BlockPosArgument.blockPos())

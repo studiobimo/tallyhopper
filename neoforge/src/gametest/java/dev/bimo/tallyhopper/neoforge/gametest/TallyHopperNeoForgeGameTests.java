@@ -1,5 +1,6 @@
 package dev.bimo.tallyhopper.neoforge.gametest;
 
+import dev.bimo.tallyhopper.TallyHopper;
 import dev.bimo.tallyhopper.gametest.TallyHopperGameTests;
 import dev.bimo.tallyhopper.measure.MeasurementClock;
 import net.minecraft.core.registries.Registries;
@@ -8,7 +9,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
 /** Registers the shared GameTest functions. The test instances come from the data pack. */
-@Mod("tallyhopper_gametest")
+@Mod(TallyHopper.MOD_ID + "_gametest")
 public final class TallyHopperNeoForgeGameTests {
 
     public TallyHopperNeoForgeGameTests(IEventBus modBus) {
