@@ -10,7 +10,7 @@ PRE_COMMIT := $(UV) run pre-commit
 # to certifi's bundle unless one is already configured.
 export SSL_CERT_FILE ?= $(shell $(UV) run --frozen python -c 'import certifi; print(certifi.where())' 2>/dev/null)
 
-GRADLE := cd $(ROOT) && JAVA_HOME="$$(/usr/libexec/java_home -v 25 2>/dev/null || echo $$JAVA_HOME)" ./gradlew
+GRADLE := cd $(ROOT) && JAVA_HOME="$$(/usr/libexec/java_home -v $$(cat .java-version) 2>/dev/null || echo $$JAVA_HOME)" ./gradlew
 
 .DEFAULT_GOAL := help
 .PHONY: help setup fmt lint test build check scan lock run-fabric run-neoforge run-fabric-server run-neoforge-server clean
