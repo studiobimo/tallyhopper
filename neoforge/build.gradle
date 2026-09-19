@@ -3,11 +3,31 @@ plugins {
     id 'net.neoforged.moddev'
 }
 
+// GameTests run as a separate mod from the gametest source set, which adds the shared tests from
+// common. `./gradlew :neoforge:runGameTestServer` runs them headless; `check` runs them too.
+sourceSets {
+    gametest {
+        java.srcDir(project(':common').file('src/gametest/java'))
+        resources.srcDir(project(':common').file('src/gametest/resources'))
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
 neoForge {
     version = neoforge_version
+    addModdingDependenciesTo(sourceSets.gametest)
     def at = project(':common').file('src/main/resources/META-INF/accesstransformer.cfg')
     if (at.exists()) {
         accessTransformers.from(at.absolutePath)
+    }
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+        "${mod_id}_gametest" {
+            sourceSet sourceSets.gametest
+        }
     }
     runs {
         configureEach {
@@ -23,12 +43,17 @@ neoForge {
             programArgument('--nogui')
             gameDirectory = this.mkdir(this.file('runs/server'))
         }
-    }
-    mods {
-        "${mod_id}" {
-            sourceSet sourceSets.main
+        gameTestServer {
+            type = 'gameTestServer'
+            sourceSet = sourceSets.gametest
+            loadedMods = [mods."${mod_id}", mods."${mod_id}_gametest"]
+            gameDirectory = this.mkdir(this.file('build/run/gameTest'))
         }
     }
+}
+
+tasks.named('check') {
+    dependsOn('runGameTestServer')
 }
 
 // mcgradleconventions loader attribute

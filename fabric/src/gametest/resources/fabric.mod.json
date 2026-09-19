@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "tallyhopper_gametest",
+  "version": "0.0.0",
+  "name": "Tally Hopper GameTests",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["dev.bimo.tallyhopper.fabric.gametest.TallyHopperFabricGameTests"]
+  },
+  "depends": {
+    "tallyhopper": "*"
+  }
+}

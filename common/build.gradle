@@ -18,6 +18,19 @@ neoForge {
 sourceSets.main.resources.srcDir('src/generated/resources')
 sourceSets.main.resources.exclude('.cache/**')
 
+// GameTests shared by both loaders. Compiled here against vanilla to keep them loader-agnostic;
+// each loader compiles them again into its own GameTest mod, which is never part of a release jar.
+sourceSets {
+    gametest {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+configurations {
+    gametestCompileOnly.extendsFrom(compileOnly)
+}
+neoForge.addModdingDependenciesTo(sourceSets.gametest)
+
 dependencies {
     // Fabric and NeoForge both bundle Mixin and MixinExtras, so common may use them.
     compileOnly(libs.mixin)
