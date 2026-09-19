@@ -1,0 +1,15 @@
+* text=auto eol=lf
+
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+
+gradlew text eol=lf
+
+*.jar  binary
+*.png  binary
+*.ogg  binary
+*.nbt  binary
+*.zip  binary
+
+# Datagen output: collapse in PR diffs
+common/src/generated/** linguist-generated=true
