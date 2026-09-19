@@ -35,7 +35,9 @@ dependencyLocking {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.release = javaVersion
-    options.compilerArgs.addAll(['-Xlint:all,-processing,-serial', '-Werror'])
+    // -classfile: third-party jars (e.g. Guava via Minecraft) reference annotations that aren't on
+    // the classpath. Nothing we can fix, and -Werror would turn it into a build failure.
+    options.compilerArgs.addAll(['-Xlint:all,-processing,-serial,-classfile', '-Werror'])
     options.errorprone {
         disableWarningsInGeneratedCode = true
         excludedPaths = '.*/build/generated/.*'
