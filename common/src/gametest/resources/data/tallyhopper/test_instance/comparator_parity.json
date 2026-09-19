@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:comparator_parity",
+  "max_ticks": 120,
+  "structure": "tallyhopper:platform"
+}

@@ -21,6 +21,21 @@ fabricApi {
     }
 }
 
+// GameTests run as a separate mod from the gametest source set, which adds the shared tests from
+// common. `./gradlew :fabric:runGameTest` runs them headless; `check` runs them too.
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = "${mod_id}_gametest"
+        enableGameTests = true
+        enableClientGameTests = false
+    }
+}
+sourceSets.gametest {
+    java.srcDir(project(':common').file('src/gametest/java'))
+    resources.srcDir(project(':common').file('src/gametest/resources'))
+}
+
 loom {
     def aw = project(':common').file("src/main/resources/${mod_id}.accesswidener")
     if (aw.exists()) {

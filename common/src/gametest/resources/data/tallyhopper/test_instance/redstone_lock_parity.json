@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:redstone_lock_parity",
+  "max_ticks": 60,
+  "structure": "tallyhopper:platform"
+}
