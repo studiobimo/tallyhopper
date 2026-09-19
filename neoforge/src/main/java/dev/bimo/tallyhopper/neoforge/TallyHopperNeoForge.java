@@ -1,9 +1,11 @@
 package dev.bimo.tallyhopper.neoforge;
 
 import dev.bimo.tallyhopper.TallyHopper;
+import dev.bimo.tallyhopper.conversion.ClockConversion;
 import dev.bimo.tallyhopper.crafting.ShapelessKeepRecipe;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -11,7 +13,9 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
 
@@ -24,6 +28,7 @@ public final class TallyHopperNeoForge {
         modBus.addListener(TallyHopperNeoForge::register);
         modBus.addListener(TallyHopperNeoForge::addToCreativeTab);
         modBus.addListener(TallyHopperNeoForge::registerCapabilities);
+        NeoForge.EVENT_BUS.addListener(TallyHopperNeoForge::onRightClickBlock);
     }
 
     // NeoForge fires this once per registry, blocks first and items second.
@@ -41,6 +46,15 @@ public final class TallyHopperNeoForge {
         event.register(
                 Registries.RECIPE_SERIALIZER,
                 helper -> helper.register(TallyHopperContent.SHAPELESS_KEEP_KEY, ShapelessKeepRecipe.SERIALIZER));
+    }
+
+    private static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        InteractionResult result =
+                ClockConversion.onUseBlock(event.getEntity(), event.getLevel(), event.getHand(), event.getHitVec());
+        if (!(result instanceof InteractionResult.Pass)) {
+            event.setCanceled(true);
+            event.setCancellationResult(result);
+        }
     }
 
     private static void addToCreativeTab(BuildCreativeModeTabContentsEvent event) {

@@ -1,4 +1,8 @@
 {
   "block.tallyhopper.tally_hopper": "Tally Hopper",
-  "container.tallyhopper.tally_hopper": "Tally Hopper"
+  "container.tallyhopper.tally_hopper": "Tally Hopper",
+  "message.tallyhopper.chain_loops": "This hopper chain loops back on itself, so it has no end to convert",
+  "message.tallyhopper.chain_too_long": "This hopper chain is too long to follow",
+  "message.tallyhopper.chain_end_converted": "The end of this chain is already a Tally Hopper",
+  "message.tallyhopper.chain_end_unsupported": "The end of this chain can't be converted"
 }

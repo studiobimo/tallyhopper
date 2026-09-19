@@ -1,10 +1,12 @@
 package dev.bimo.tallyhopper.fabric;
 
 import dev.bimo.tallyhopper.TallyHopper;
+import dev.bimo.tallyhopper.conversion.ClockConversion;
 import dev.bimo.tallyhopper.crafting.ShapelessKeepRecipe;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
+import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Items;
@@ -29,5 +31,7 @@ public final class TallyHopperFabric implements ModInitializer {
 
         CreativeModeTabEvents.modifyOutputEvent(TallyHopperContent.REDSTONE_BLOCKS_TAB)
                 .register(output -> output.insertAfter(Items.HOPPER, TallyHopperContent.item()));
+
+        UseBlockCallback.EVENT.register(ClockConversion::onUseBlock);
     }
 }
