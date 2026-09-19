@@ -15,16 +15,19 @@ import net.minecraft.resources.Identifier;
  */
 public final class TallyHopperGameTests {
 
-    public static final Map<Identifier, Consumer<GameTestHelper>> FUNCTIONS = Map.of(
-            id("push_parity"), HopperParityTests::push,
-            id("pull_parity"), HopperParityTests::pull,
-            id("pickup_parity"), HopperParityTests::pickup,
-            id("redstone_lock_parity"), HopperParityTests::redstoneLock,
-            id("comparator_parity"), HopperParityTests::comparator,
-            id("chain_parity"), HopperParityTests::chain,
-            id("convert_keeps_contents"), ConversionTests::keepsContentsAndFacing,
-            id("sneak_converts_chain_end"), ConversionTests::sneakConvertsChainEnd,
-            id("sneak_stops_on_loop"), ConversionTests::sneakStopsOnLoop);
+    public static final Map<Identifier, Consumer<GameTestHelper>> FUNCTIONS = Map.ofEntries(
+            Map.entry(id("push_parity"), HopperParityTests::push),
+            Map.entry(id("pull_parity"), HopperParityTests::pull),
+            Map.entry(id("pickup_parity"), HopperParityTests::pickup),
+            Map.entry(id("redstone_lock_parity"), HopperParityTests::redstoneLock),
+            Map.entry(id("comparator_parity"), HopperParityTests::comparator),
+            Map.entry(id("chain_parity"), HopperParityTests::chain),
+            Map.entry(id("convert_keeps_contents"), ConversionTests::keepsContentsAndFacing),
+            Map.entry(id("sneak_converts_chain_end"), ConversionTests::sneakConvertsChainEnd),
+            Map.entry(id("sneak_stops_on_loop"), ConversionTests::sneakStopsOnLoop),
+            Map.entry(id("convert_needs_sapling"), ConversionTests::needsSapling),
+            Map.entry(id("recipe_keeps_clock"), CraftingTests::keepsTheClock),
+            Map.entry(id("recipe_has_no_uncraft"), CraftingTests::noOtherRecipes));
 
     private TallyHopperGameTests() {}
 

@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:recipe_keeps_clock",
+  "max_ticks": 20,
+  "structure": "tallyhopper:platform"
+}
