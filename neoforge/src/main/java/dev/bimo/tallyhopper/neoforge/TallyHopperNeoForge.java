@@ -1,6 +1,7 @@
 package dev.bimo.tallyhopper.neoforge;
 
 import dev.bimo.tallyhopper.TallyHopper;
+import dev.bimo.tallyhopper.command.TallyHopperCommand;
 import dev.bimo.tallyhopper.conversion.ClockConversion;
 import dev.bimo.tallyhopper.crafting.ShapelessKeepRecipe;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
@@ -15,6 +16,7 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
@@ -29,6 +31,9 @@ public final class TallyHopperNeoForge {
         modBus.addListener(TallyHopperNeoForge::addToCreativeTab);
         modBus.addListener(TallyHopperNeoForge::registerCapabilities);
         NeoForge.EVENT_BUS.addListener(TallyHopperNeoForge::onRightClickBlock);
+        NeoForge.EVENT_BUS.addListener(
+                RegisterCommandsEvent.class,
+                event -> TallyHopperCommand.register(event.getDispatcher(), event.getBuildContext()));
     }
 
     // NeoForge fires this once per registry, blocks first and items second.

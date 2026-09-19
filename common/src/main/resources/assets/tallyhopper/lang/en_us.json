@@ -5,5 +5,21 @@
   "message.tallyhopper.chain_too_long": "This hopper chain is too long to follow",
   "message.tallyhopper.chain_end_converted": "The end of this chain is already a Tally Hopper",
   "message.tallyhopper.chain_end_unsupported": "The end of this chain can't be converted",
-  "message.tallyhopper.needs_sapling": "You need a sapling to convert a hopper"
+  "message.tallyhopper.needs_sapling": "You need a sapling to convert a hopper",
+  "commands.tallyhopper.info.header": "Tally Hopper at %s, %s, %s: %s",
+  "commands.tallyhopper.info.ready": "ready",
+  "commands.tallyhopper.info.calibrating": "calibrating, %s of %s min watched",
+  "commands.tallyhopper.info.measured": "%s: %s/h measured",
+  "commands.tallyhopper.info.override": "%s: %s/h override",
+  "commands.tallyhopper.info.nothing": "Nothing counted yet",
+  "commands.tallyhopper.rate.set": "%s is now credited at %s/h",
+  "commands.tallyhopper.rate.cleared": "Removed the override for %s",
+  "commands.tallyhopper.rate.cleared_all": "Removed %s overrides",
+  "commands.tallyhopper.error.not_looking": "Look at a Tally Hopper within 8 blocks, or give its position",
+  "commands.tallyhopper.error.not_a_tally_hopper": "That block is not a Tally Hopper",
+  "commands.tallyhopper.error.too_far": "That Tally Hopper is more than 8 blocks away",
+  "commands.tallyhopper.error.no_access": "You can't change that Tally Hopper",
+  "commands.tallyhopper.error.plain_items": "Overrides are per item; leave out the components",
+  "commands.tallyhopper.error.above_measured": "Only operators can set a rate above what this hopper measured (%s/h)",
+  "commands.tallyhopper.error.no_override": "%s has no override"
 }

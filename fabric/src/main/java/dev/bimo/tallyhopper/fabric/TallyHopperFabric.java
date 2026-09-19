@@ -1,10 +1,12 @@
 package dev.bimo.tallyhopper.fabric;
 
 import dev.bimo.tallyhopper.TallyHopper;
+import dev.bimo.tallyhopper.command.TallyHopperCommand;
 import dev.bimo.tallyhopper.conversion.ClockConversion;
 import dev.bimo.tallyhopper.crafting.ShapelessKeepRecipe;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.core.Registry;
@@ -33,5 +35,7 @@ public final class TallyHopperFabric implements ModInitializer {
                 .register(output -> output.insertAfter(Items.HOPPER, TallyHopperContent.item()));
 
         UseBlockCallback.EVENT.register(ClockConversion::onUseBlock);
+        CommandRegistrationCallback.EVENT.register(
+                (dispatcher, context, selection) -> TallyHopperCommand.register(dispatcher, context));
     }
 }
