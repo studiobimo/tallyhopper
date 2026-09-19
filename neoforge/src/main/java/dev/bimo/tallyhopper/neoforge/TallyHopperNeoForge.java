@@ -5,6 +5,7 @@ import dev.bimo.tallyhopper.command.TallyHopperCommand;
 import dev.bimo.tallyhopper.conversion.ClockConversion;
 import dev.bimo.tallyhopper.crafting.ShapelessKeepRecipe;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
+import dev.bimo.tallyhopper.session.OfflineSession;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.CreativeModeTab;
@@ -18,6 +19,9 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
 
@@ -34,6 +38,12 @@ public final class TallyHopperNeoForge {
         NeoForge.EVENT_BUS.addListener(
                 RegisterCommandsEvent.class,
                 event -> TallyHopperCommand.register(event.getDispatcher(), event.getBuildContext()));
+        NeoForge.EVENT_BUS.addListener(
+                ServerStartedEvent.class, event -> OfflineSession.onServerStarted(event.getServer()));
+        NeoForge.EVENT_BUS.addListener(
+                ServerTickEvent.Post.class, event -> OfflineSession.onServerTick(event.getServer()));
+        NeoForge.EVENT_BUS.addListener(
+                ServerStoppingEvent.class, event -> OfflineSession.onServerStopping(event.getServer()));
     }
 
     // NeoForge fires this once per registry, blocks first and items second.

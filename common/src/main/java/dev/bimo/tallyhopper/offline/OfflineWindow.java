@@ -69,4 +69,22 @@ public record OfflineWindow(Instant from, Instant to, Duration credited, boolean
     public boolean isEligible(Instant lastTick) {
         return !lastTick.isBefore(from.minus(ELIGIBILITY_GRACE));
     }
+
+    /**
+     * How much of this window a hopper that last ticked at {@code lastTick} earns.
+     *
+     * <p>Nothing if it wasn't running when the world closed. Otherwise the credited time, but never
+     * time before the hopper's own last tick: a hopper that already ran after this window began (it was
+     * credited, or the session data was lost in a crash) can't earn the same span twice.
+     */
+    public Duration creditFor(Instant lastTick) {
+        if (credited.isZero() || !isEligible(lastTick)) {
+            return Duration.ZERO;
+        }
+        Duration own = Duration.between(lastTick.isAfter(from) ? lastTick : from, to);
+        if (own.isNegative()) {
+            return Duration.ZERO;
+        }
+        return own.compareTo(credited) < 0 ? own : credited;
+    }
 }
