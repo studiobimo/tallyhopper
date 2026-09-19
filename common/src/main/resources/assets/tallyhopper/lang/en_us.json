@@ -12,6 +12,7 @@
   "commands.tallyhopper.info.measured": "%s: %s/h measured",
   "commands.tallyhopper.info.override": "%s: %s/h override",
   "commands.tallyhopper.info.nothing": "Nothing counted yet",
+  "commands.tallyhopper.info.backlog": "Backlog: %s items, handed out at hopper speed",
   "commands.tallyhopper.rate.set": "%s is now credited at %s/h",
   "commands.tallyhopper.rate.cleared": "Removed the override for %s",
   "commands.tallyhopper.rate.cleared_all": "Removed %s overrides",

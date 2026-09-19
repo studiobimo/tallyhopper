@@ -105,7 +105,8 @@ public final class TallyHopperCommand {
     private static int info(CommandContext<CommandSourceStack> context, Target target) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
         BlockPos pos = target.find(context);
-        Measurement measurement = hopper(source, pos, false).measurement();
+        TallyHopperBlockEntity hopper = hopper(source, pos, false);
+        Measurement measurement = hopper.measurement();
 
         Component status = measurement.isReady()
                 ? Component.translatable("commands.tallyhopper.info.ready")
@@ -132,6 +133,10 @@ public final class TallyHopperCommand {
             source.sendSuccess(() -> Component.translatable("commands.tallyhopper.info.nothing"), false);
         }
         lines.values().forEach(line -> source.sendSuccess(() -> line, false));
+        long backlog = hopper.ledger().backlog().total();
+        if (backlog > 0) {
+            source.sendSuccess(() -> Component.translatable("commands.tallyhopper.info.backlog", backlog), false);
+        }
         return lines.size();
     }
 

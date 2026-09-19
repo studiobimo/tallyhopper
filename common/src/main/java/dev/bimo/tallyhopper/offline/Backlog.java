@@ -3,6 +3,7 @@ package dev.bimo.tallyhopper.offline;
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Credited items that didn't fit downstream yet, stored as {@code item → count}.
@@ -84,6 +85,11 @@ public final class Backlog<K> {
         }
         total -= taken;
         return taken;
+    }
+
+    /** The item stored longest, which is the next to hand out, or {@code null} when empty. */
+    public @Nullable K peek() {
+        return counts.isEmpty() ? null : counts.keySet().iterator().next();
     }
 
     public long get(K item) {
