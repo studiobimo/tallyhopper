@@ -116,4 +116,16 @@ class BacklogTest {
         assertThatThrownBy(() -> backlog.take("iron", -1)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new Backlog<>(credit("iron", -1), 10)).isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    void peekHandsOutTheOldestItemFirst() {
+        Backlog<String> backlog = new Backlog<>(Backlog.DEFAULT_CAP);
+        assertThat(backlog.peek()).isNull();
+
+        backlog.addAll(credit("iron", 3, "poppy", 2));
+        assertThat(backlog.peek()).isEqualTo("iron");
+
+        backlog.take("iron", 3);
+        assertThat(backlog.peek()).isEqualTo("poppy");
+    }
 }

@@ -1,13 +1,24 @@
 package dev.bimo.tallyhopper.block;
 
+import dev.bimo.tallyhopper.TallyHopper;
+import dev.bimo.tallyhopper.credit.CreditReport;
+import dev.bimo.tallyhopper.credit.Ledger;
 import dev.bimo.tallyhopper.measure.Measurement;
 import dev.bimo.tallyhopper.measure.MeasurementClock;
+import dev.bimo.tallyhopper.offline.Backlog;
+import dev.bimo.tallyhopper.offline.SaturatingMath;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
+import dev.bimo.tallyhopper.session.OfflineSession;
+import java.time.Instant;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -34,15 +45,32 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
     private static final int READY_CHECK_TICKS = 20;
 
     private final Measurement measurement = new Measurement();
+    private final Ledger ledger = new Ledger();
 
     public TallyHopperBlockEntity(BlockPos pos, BlockState state) {
         super(pos, state);
     }
 
-    /** Runs the vanilla hopper tick, then measures. */
+    /**
+     * Credits the session once, refills the visible slots from the backlog, runs the vanilla hopper
+     * tick, then measures.
+     */
     public static void serverTick(Level level, BlockPos pos, BlockState state, TallyHopperBlockEntity hopper) {
+        OfflineSession.Current session = OfflineSession.current();
+        if (session != null && hopper.ledger.needsCredit(session)) {
+            hopper.credit(session);
+        }
+        hopper.refillFromBacklog();
         HopperBlockEntity.pushItemsTick(level, pos, state, hopper);
-        hopper.measurement.tick(MeasurementClock.now(level));
+
+        Instant now = MeasurementClock.now(level);
+        if (hopper.isMeasuring()) {
+            hopper.measurement.tick(now);
+        }
+        // Before a session starts there is no window to be eligible for, so the last tick waits too.
+        if (session != null && hopper.ledger.ticked(now)) {
+            hopper.setChanged();
+        }
         if (level.getGameTime() % READY_CHECK_TICKS == 0) {
             hopper.updateClockFace(level, pos);
         }
@@ -51,8 +79,71 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
     /** Called for every automated insert; see {@code HopperBlockEntityMixin}. */
     public void recordIntake(ItemStack stack, int count) {
         Level level = getLevel();
-        if (level != null && !level.isClientSide() && Measurement.isCountable(stack)) {
+        if (level != null && !level.isClientSide() && isMeasuring() && Measurement.isCountable(stack)) {
             measurement.recordIntake(stack.getItem(), count, MeasurementClock.now(level));
+        }
+    }
+
+    /**
+     * Whether the hopper is measuring its farm. While the backlog drains, backlogged items share the
+     * slots with farm output and slow its intake, so measuring would understate the farm; the rate
+     * measured before stays in place until the backlog is empty.
+     */
+    public boolean isMeasuring() {
+        return ledger.backlog().isEmpty();
+    }
+
+    /**
+     * Credits this hopper for {@code session}'s offline window at its effective rates. Called once per
+     * session, on the hopper's first tick.
+     */
+    public CreditReport credit(OfflineSession.Current session) {
+        Map<Item, Long> earned = ledger.earn(session, measurement.effectiveRates());
+        setChanged();
+        if (earned.isEmpty()) {
+            return CreditReport.NONE;
+        }
+        long total = 0;
+        for (long count : earned.values()) {
+            total = SaturatingMath.add(total, count);
+        }
+        long refused = ledger.backlog().addAll(earned);
+        CreditReport report = new CreditReport(earned, 0, total - refused, refused);
+        TallyHopper.LOG.info("Tally Hopper at {} credited {}", getBlockPos().toShortString(), report);
+        return report;
+    }
+
+    public Ledger ledger() {
+        return ledger;
+    }
+
+    /**
+     * Tops up the five visible slots from the backlog, so anything that pulls from or is pushed to by
+     * this hopper drains it at vanilla speed. Only adds: slots holding other items are left alone.
+     */
+    private void refillFromBacklog() {
+        Backlog<Item> backlog = ledger.backlog();
+        NonNullList<ItemStack> items = getItems();
+        boolean changed = false;
+        for (int slot = 0; slot < items.size() && !backlog.isEmpty(); slot++) {
+            ItemStack stack = items.get(slot);
+            if (stack.isEmpty()) {
+                Item next = Objects.requireNonNull(backlog.peek());
+                ItemStack fresh = new ItemStack(next);
+                fresh.setCount((int) backlog.take(next, getMaxStackSize(fresh)));
+                items.set(slot, fresh);
+                changed = true;
+            } else if (Measurement.isCountable(stack)) {
+                int room = getMaxStackSize(stack) - stack.getCount();
+                long taken = room > 0 ? backlog.take(stack.getItem(), room) : 0;
+                if (taken > 0) {
+                    stack.grow((int) taken);
+                    changed = true;
+                }
+            }
+        }
+        if (changed) {
+            setChanged();
         }
     }
 
@@ -83,12 +174,14 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
         measurement.load(input);
+        ledger.load(input);
     }
 
     @Override
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
         measurement.save(output);
+        ledger.save(output);
     }
 
     @Override
