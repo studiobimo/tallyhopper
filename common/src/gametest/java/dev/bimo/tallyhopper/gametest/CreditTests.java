@@ -1,5 +1,6 @@
 package dev.bimo.tallyhopper.gametest;
 
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.bimo.tallyhopper.block.TallyHopperBlockEntity;
 import dev.bimo.tallyhopper.credit.CreditReport;
 import dev.bimo.tallyhopper.credit.StoredBacklog;
@@ -8,6 +9,7 @@ import dev.bimo.tallyhopper.offline.Backlog;
 import dev.bimo.tallyhopper.offline.OfflineWindow;
 import dev.bimo.tallyhopper.offline.SessionClock;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
+import dev.bimo.tallyhopper.registry.TallyHopperGameRules;
 import dev.bimo.tallyhopper.session.OfflineSession;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -18,14 +20,18 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.EntityTypes;
@@ -41,6 +47,7 @@ import net.minecraft.world.level.block.HopperBlock;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.block.state.properties.ChestType;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.storage.TagValueInput;
 import org.jspecify.annotations.Nullable;
 
@@ -340,6 +347,38 @@ public final class CreditTests {
             helper.assertValueEqual(carried, 500L, "backlog carried by the dropped item");
             helper.succeed();
         });
+    }
+
+    /**
+     * The gamerules are registered and start at their defaults. Changing them would affect the other
+     * tests, which share one world, so only the defaults are checked here.
+     */
+    public static void gameRulesHaveDefaults(GameTestHelper helper) {
+        GameRules rules = helper.getLevel().getGameRules();
+        helper.assertValueEqual(rules.get(TallyHopperGameRules.MAX_OFFLINE_HOURS), 24, "max offline hours");
+        helper.assertValueEqual(rules.get(TallyHopperGameRules.BACKLOG_CAP), 1_000_000, "backlog cap");
+        helper.assertValueEqual(rules.get(TallyHopperGameRules.MIN_OBSERVATION_MINUTES), 5, "minutes to calibrate");
+        helper.assertValueEqual(rules.get(TallyHopperGameRules.REJOIN_SUMMARY), true, "rejoin summary");
+        for (Identifier id : TallyHopperGameRules.ALL.keySet()) {
+            helper.assertTrue(BuiltInRegistries.GAME_RULE.containsKey(id), id + " is registered");
+        }
+        // Querying through /gamerule returns the value.
+        CommandSourceStack operator = helper.getLevel()
+                .getServer()
+                .createCommandSourceStack()
+                .withPermission(PermissionSet.ALL_PERMISSIONS)
+                .withSuppressedOutput();
+        try {
+            int cap = helper.getLevel()
+                    .getServer()
+                    .getCommands()
+                    .getDispatcher()
+                    .execute("gamerule tallyhopper:backlog_cap", operator);
+            helper.assertValueEqual(cap, 1_000_000, "/gamerule tallyhopper:backlog_cap");
+        } catch (CommandSyntaxException e) {
+            throw helper.assertionException(Component.literal("/gamerule failed: " + e.getMessage()));
+        }
+        helper.succeed();
     }
 
     private static int serializedSize(CompoundTag tag) {

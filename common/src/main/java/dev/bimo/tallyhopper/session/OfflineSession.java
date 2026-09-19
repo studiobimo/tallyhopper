@@ -3,6 +3,8 @@ package dev.bimo.tallyhopper.session;
 import dev.bimo.tallyhopper.TallyHopper;
 import dev.bimo.tallyhopper.offline.OfflineWindow;
 import dev.bimo.tallyhopper.offline.SessionClock;
+import dev.bimo.tallyhopper.registry.TallyHopperGameRules;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.InstantSource;
 import net.minecraft.server.MinecraftServer;
@@ -38,7 +40,8 @@ public final class OfflineSession {
         SessionData data = server.getDataStorage().computeIfAbsent(SessionData.TYPE);
         TickTime tickTime = new TickTime(Instant.now());
         SessionClock clock = new SessionClock(tickTime, data.lastHeartbeat(), data.sessionId());
-        OfflineWindow window = clock.startSession(SessionClock.DEFAULT_MAX_OFFLINE);
+        OfflineWindow window =
+                clock.startSession(Duration.ofHours(server.getGameRules().get(TallyHopperGameRules.MAX_OFFLINE_HOURS)));
         data.update(clock);
         running = new Running(clock, data, tickTime, new Current(clock.sessionId(), window));
         TallyHopper.LOG.info(

@@ -11,7 +11,9 @@ import dev.bimo.tallyhopper.offline.SaturatingMath;
 import dev.bimo.tallyhopper.platform.Services;
 import dev.bimo.tallyhopper.platform.services.ItemSinks;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
+import dev.bimo.tallyhopper.registry.TallyHopperGameRules;
 import dev.bimo.tallyhopper.session.OfflineSession;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -66,6 +68,10 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
      * tick, then measures.
      */
     public static void serverTick(Level level, BlockPos pos, BlockState state, TallyHopperBlockEntity hopper) {
+        if (level instanceof ServerLevel server) {
+            hopper.measurement.setWarmUp(
+                    Duration.ofMinutes(server.getGameRules().get(TallyHopperGameRules.MIN_OBSERVATION_MINUTES)));
+        }
         OfflineSession.Current session = OfflineSession.current();
         if (session != null && hopper.ledger.needsCredit(session)) {
             hopper.credit(session);
@@ -117,6 +123,9 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
             return CreditReport.NONE;
         }
         Backlog<Item> backlog = ledger.backlog();
+        if (getLevel() instanceof ServerLevel level) {
+            backlog.setCap(level.getGameRules().get(TallyHopperGameRules.BACKLOG_CAP));
+        }
         Map<Item, Long> remainder = earned;
         long delivered = 0;
         ItemSinks.@Nullable ItemSink sink = getLevel() instanceof ServerLevel level ? terminalSink(level) : null;

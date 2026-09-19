@@ -28,8 +28,6 @@ import net.minecraft.world.level.storage.ValueOutput;
  */
 public final class Measurement {
 
-    public static final Duration WARM_UP = RateTracker.DEFAULT_WARM_UP;
-
     private static final String BUCKETS_KEY = TallyHopper.MOD_ID + "_rate";
     private static final String OVERRIDES_KEY = TallyHopper.MOD_ID + "_overrides";
     private static final Codec<Map<Item, Long>> OVERRIDES_CODEC =
@@ -43,6 +41,7 @@ public final class Measurement {
             .apply(i, RateTracker.Bucket::new));
 
     private RateTracker<Item> tracker = new RateTracker<>();
+    private Duration warmUp = RateTracker.DEFAULT_WARM_UP;
     private final Map<Item, Long> overridesPerHour = new LinkedHashMap<>();
 
     /** Whether a stack may be counted and later extrapolated. */
@@ -70,8 +69,17 @@ public final class Measurement {
         return tracker.observed();
     }
 
+    /** How long the hopper must watch before its measured rate counts; set from a gamerule. */
+    public Duration warmUp() {
+        return warmUp;
+    }
+
+    public void setWarmUp(Duration warmUp) {
+        this.warmUp = warmUp;
+    }
+
     public boolean isWarmedUp() {
-        return tracker.isWarmedUp(WARM_UP);
+        return tracker.isWarmedUp(warmUp);
     }
 
     /**
