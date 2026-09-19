@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_tally_hopper": {
+      "conditions": {
+        "items": [
+          {
+            "items": "tallyhopper:tally_hopper"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipes": "tallyhopper:hopper_from_tally_hopper"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_tally_hopper"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "tallyhopper:hopper_from_tally_hopper"
+    ]
+  }
+}

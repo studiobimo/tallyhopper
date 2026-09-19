@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "tallyhopper_datagen",
+  "version": "0.0.0",
+  "name": "Tally Hopper data generators",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-datagen": ["dev.bimo.tallyhopper.fabric.datagen.TallyHopperDataGenerator"]
+  },
+  "depends": {
+    "tallyhopper": "*"
+  }
+}

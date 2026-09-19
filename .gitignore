@@ -34,3 +34,6 @@ Thumbs.db
 
 # Local agent settings (shared settings are committed)
 .claude/settings.local.json
+
+# Datagen cache
+common/src/generated/resources/.cache/

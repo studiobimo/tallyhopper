@@ -11,6 +11,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
@@ -63,6 +64,8 @@ public final class TallyHopperContent {
                 block(),
                 new Item.Properties()
                         .component(DataComponents.CONTAINER, ItemContainerContents.EMPTY)
+                        // Un-crafting gives back the hopper and leaves the clock in the grid.
+                        .craftRemainder(Items.CLOCK)
                         .useBlockDescriptionPrefix()
                         .setId(ITEM_KEY));
         // Vanilla does this in Items.registerItem; it makes block.asItem() work. Repeating it is harmless.
