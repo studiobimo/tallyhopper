@@ -1,6 +1,7 @@
 package dev.bimo.tallyhopper.neoforge.gametest;
 
 import dev.bimo.tallyhopper.gametest.TallyHopperGameTests;
+import dev.bimo.tallyhopper.measure.MeasurementClock;
 import net.minecraft.core.registries.Registries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
@@ -11,6 +12,8 @@ import net.neoforged.neoforge.registries.RegisterEvent;
 public final class TallyHopperNeoForgeGameTests {
 
     public TallyHopperNeoForgeGameTests(IEventBus modBus) {
+        // The GameTest server ticks as fast as it can, so measure in game time.
+        MeasurementClock.useGameTime();
         modBus.addListener(TallyHopperNeoForgeGameTests::register);
     }
 

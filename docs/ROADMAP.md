@@ -54,13 +54,13 @@ A milestone is done only when all of its **exit criteria** are met.
 
 ## M3: Measurement
 
-- [ ] Intake counting, pause detection, and the default-components-only rule
-- [ ] Per-hopper rate override, basic `/tallyhopper info`
+- [x] Intake counting, pause detection, and the default-components-only rule
+- [x] Per-hopper rate override, basic `/tallyhopper info`
 
 ### Exit criteria
 
-- [ ] A GameTest dispenser-clock "farm" is measured within ±5% of its true rate
-- [ ] Items inserted through the GUI are not counted
+- [x] A GameTest dispenser-clock "farm" is measured within ±5% of its true rate
+- [x] Items inserted through the GUI are not counted
 
 ## M4: Offline credit and delivery
 

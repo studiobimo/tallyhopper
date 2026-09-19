@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:dispenser_farm_measured",
+  "max_ticks": 6200,
+  "structure": "tallyhopper:platform"
+}
