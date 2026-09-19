@@ -67,6 +67,9 @@ public final class TallyHopperNeoForge {
                 helper -> helper.register(
                         TallyHopperContent.BLOCK_ENTITY_KEY, TallyHopperContent.createBlockEntityType()));
         event.register(
+                Registries.MENU,
+                helper -> helper.register(TallyHopperContent.MENU_KEY, TallyHopperContent.createMenuType()));
+        event.register(
                 Registries.RECIPE_SERIALIZER,
                 helper -> helper.register(TallyHopperContent.SHAPELESS_KEEP_KEY, ShapelessKeepRecipe.SERIALIZER));
     }

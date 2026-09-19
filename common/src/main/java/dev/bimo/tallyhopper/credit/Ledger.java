@@ -31,6 +31,7 @@ public final class Ledger {
     private static final String CARRY_KEY = TallyHopper.MOD_ID + "_carry";
     private static final String LAST_TICK_KEY = TallyHopper.MOD_ID + "_last_tick";
     private static final String CREDITED_SESSION_KEY = TallyHopper.MOD_ID + "_credited_session";
+    private static final String LAST_CREDIT_KEY = TallyHopper.MOD_ID + "_last_credit";
 
     /** How often the last tick is written to the chunk; well inside the eligibility grace. */
     private static final Duration LAST_TICK_SAVE_INTERVAL = SessionClock.HEARTBEAT_INTERVAL;
@@ -40,6 +41,7 @@ public final class Ledger {
     private @Nullable Instant lastTick;
     private @Nullable Instant lastTickSaved;
     private long creditedSession;
+    private long lastCredit;
 
     public Backlog<Item> backlog() {
         return backlog;
@@ -61,6 +63,15 @@ public final class Ledger {
             return Map.of();
         }
         return carry.accrue(rates, session.window().creditFor(last));
+    }
+
+    /** How many items the last credit came to, for the screen. */
+    public long lastCredit() {
+        return lastCredit;
+    }
+
+    public void setLastCredit(long items) {
+        lastCredit = items;
     }
 
     /**
@@ -100,6 +111,7 @@ public final class Ledger {
             output.putLong(LAST_TICK_KEY, last.toEpochMilli());
         }
         output.putLong(CREDITED_SESSION_KEY, creditedSession);
+        output.putLong(LAST_CREDIT_KEY, lastCredit);
     }
 
     public void load(ValueInput input) {
@@ -114,5 +126,6 @@ public final class Ledger {
         lastTick = input.getLong(LAST_TICK_KEY).map(Instant::ofEpochMilli).orElse(null);
         lastTickSaved = lastTick;
         creditedSession = input.getLongOr(CREDITED_SESSION_KEY, 0);
+        lastCredit = input.getLongOr(LAST_CREDIT_KEY, 0);
     }
 }
