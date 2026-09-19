@@ -10,9 +10,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -35,8 +37,9 @@ import org.jspecify.annotations.Nullable;
  *   <li>Sneak-use: follows the chain the clicked hopper feeds and converts the hopper at its end.
  * </ul>
  *
- * <p>Contents, custom name, lock and facing are kept, and the clock is used up. Each loader calls
- * {@link #onUseBlock} from its right-click-block event, before vanilla handles the click.
+ * <p>It costs the same as crafting: one sapling from the player's inventory, while the clock is
+ * kept. Contents, custom name, lock and facing carry over. Each loader calls {@link #onUseBlock}
+ * from its right-click-block event, before vanilla handles the click.
  */
 public final class ClockConversion {
 
@@ -62,11 +65,10 @@ public final class ClockConversion {
             return InteractionResult.SUCCESS;
         }
         if (!chain) {
-            convert(serverLevel, clicked, player, clock);
-            return InteractionResult.SUCCESS;
+            return convertPaying(serverLevel, clicked, player);
         }
         return switch (HopperChain.findEnd(clicked, pos -> nextHopper(serverLevel, pos))) {
-            case HopperChain.Result.End<BlockPos> end -> convertChainEnd(serverLevel, end.pos(), player, clock);
+            case HopperChain.Result.End<BlockPos> end -> convertChainEnd(serverLevel, end.pos(), player);
             case HopperChain.Result.Loop<BlockPos> loop -> refuse(player, "message.tallyhopper.chain_loops");
             case HopperChain.Result.TooLong<BlockPos> tooLong -> refuse(player, "message.tallyhopper.chain_too_long");
         };
@@ -81,7 +83,7 @@ public final class ClockConversion {
         return target;
     }
 
-    private static InteractionResult convertChainEnd(ServerLevel level, BlockPos end, Player player, ItemStack clock) {
+    private static InteractionResult convertChainEnd(ServerLevel level, BlockPos end, Player player) {
         BlockState state = level.getBlockState(end);
         if (state.getBlock() instanceof TallyHopperBlock) {
             return refuse(player, "message.tallyhopper.chain_end_converted");
@@ -89,12 +91,35 @@ public final class ClockConversion {
         if (!state.is(Blocks.HOPPER) || !level.mayInteract(player, end)) {
             return refuse(player, "message.tallyhopper.chain_end_unsupported");
         }
-        convert(level, end, player, clock);
+        return convertPaying(level, end, player);
+    }
+
+    /** Converts the hopper if the player can pay a sapling, and takes the sapling. */
+    private static InteractionResult convertPaying(ServerLevel level, BlockPos pos, Player player) {
+        int saplingSlot = findSapling(player);
+        if (!player.hasInfiniteMaterials() && saplingSlot < 0) {
+            return refuse(player, "message.tallyhopper.needs_sapling");
+        }
+        convert(level, pos, player);
+        if (!player.hasInfiniteMaterials()) {
+            player.getInventory().removeItem(saplingSlot, 1);
+        }
         return InteractionResult.SUCCESS;
     }
 
+    /** The first inventory slot holding a sapling, or -1. */
+    private static int findSapling(Player player) {
+        Inventory inventory = player.getInventory();
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            if (inventory.getItem(slot).is(ItemTags.SAPLINGS)) {
+                return slot;
+            }
+        }
+        return -1;
+    }
+
     /** Replaces a vanilla hopper with a Tally Hopper, carrying over its saved data. */
-    static void convert(ServerLevel level, BlockPos pos, Player player, ItemStack clock) {
+    static void convert(ServerLevel level, BlockPos pos, Player player) {
         BlockState old = level.getBlockState(pos);
         if (!old.is(Blocks.HOPPER) || !(level.getBlockEntity(pos) instanceof HopperBlockEntity hopper)) {
             return;
@@ -113,7 +138,6 @@ public final class ClockConversion {
             }
             tally.setChanged();
         }
-        clock.consume(1, player);
         level.playSound(null, pos, SoundEvents.SMITHING_TABLE_USE, SoundSource.BLOCKS, 1.0F, 1.0F);
         level.gameEvent(player, GameEvent.BLOCK_CHANGE, pos);
     }
