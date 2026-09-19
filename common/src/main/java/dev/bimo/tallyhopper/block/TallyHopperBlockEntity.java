@@ -4,6 +4,7 @@ import dev.bimo.tallyhopper.TallyHopper;
 import dev.bimo.tallyhopper.credit.CreditReport;
 import dev.bimo.tallyhopper.credit.Ledger;
 import dev.bimo.tallyhopper.credit.StoredBacklog;
+import dev.bimo.tallyhopper.gui.GuiState;
 import dev.bimo.tallyhopper.measure.Measurement;
 import dev.bimo.tallyhopper.measure.MeasurementClock;
 import dev.bimo.tallyhopper.offline.Backlog;
@@ -16,19 +17,26 @@ import dev.bimo.tallyhopper.session.OfflineSession;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -58,8 +66,15 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
     /** How often the clock face is brought up to date. */
     private static final int READY_CHECK_TICKS = 20;
 
+    private static final String GUI_STATE_KEY = "tallyhopper_gui";
+
+    /** How often an open screen is brought up to date. */
+    private static final int SYNC_TICKS = 20;
+
     private final Measurement measurement = new Measurement();
     private final Ledger ledger = new Ledger();
+    private GuiState clientState = GuiState.EMPTY;
+    private int viewers;
 
     public TallyHopperBlockEntity(BlockPos pos, BlockState state) {
         super(pos, state);
@@ -91,6 +106,9 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         }
         if (level.getGameTime() % READY_CHECK_TICKS == 0) {
             hopper.updateClockFace(level, pos);
+        }
+        if (hopper.viewers > 0 && level.getGameTime() % SYNC_TICKS == 0) {
+            hopper.syncToClients(level, pos);
         }
     }
 
@@ -147,6 +165,7 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
             left = SaturatingMath.add(left, count);
         }
         long refused = backlog.addAll(remainder);
+        ledger.setLastCredit(delivered + left - refused);
         CreditReport report = new CreditReport(earned, delivered, left - refused, refused);
         TallyHopper.LOG.info("Tally Hopper at {} credited {}", getBlockPos().toShortString(), report);
         OfflineSession.reportCredit(getBlockPos(), report);
@@ -171,6 +190,59 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
             return null;
         }
         return Services.ITEM_SINKS.find(level, target, facing.getOpposite());
+    }
+
+    /** What an open screen shows. Built on the server, read on the client. */
+    public GuiState guiState() {
+        Level level = getLevel();
+        if (level != null && level.isClientSide()) {
+            return clientState;
+        }
+        Map<Item, Long> rates = new LinkedHashMap<>();
+        measurement.effectiveRates().forEach((item, rate) -> rates.put(item, Math.round(rate.itemsPerHour())));
+        return new GuiState(
+                rates,
+                List.copyOf(measurement.overrides().keySet()),
+                (int) measurement.observed().toSeconds(),
+                (int) measurement.warmUp().toSeconds(),
+                measurement.isReady(),
+                ledger.backlog().total(),
+                ledger.lastCredit(),
+                level instanceof ServerLevel server && terminalSink(server) != null);
+    }
+
+    @Override
+    public void startOpen(ContainerUser user) {
+        super.startOpen(user);
+        viewers++;
+        Level level = getLevel();
+        if (level != null && !level.isClientSide()) {
+            syncToClients(level, getBlockPos());
+        }
+    }
+
+    @Override
+    public void stopOpen(ContainerUser user) {
+        super.stopOpen(user);
+        viewers = Math.max(0, viewers - 1);
+    }
+
+    private void syncToClients(Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+    }
+
+    @Override
+    public @Nullable Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    /** Only the screen's summary travels, not the measurement behind it, which is much larger. */
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        CompoundTag tag = new CompoundTag();
+        tag.store(GUI_STATE_KEY, GuiState.CODEC, guiState());
+        return tag;
     }
 
     public Ledger ledger() {
@@ -262,6 +334,7 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         super.loadAdditional(input);
         measurement.load(input);
         ledger.load(input);
+        input.read(GUI_STATE_KEY, GuiState.CODEC).ifPresent(state -> clientState = state);
     }
 
     @Override

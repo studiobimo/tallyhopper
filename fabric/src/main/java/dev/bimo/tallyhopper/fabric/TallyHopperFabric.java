@@ -37,6 +37,7 @@ public final class TallyHopperFabric implements ModInitializer {
                 BuiltInRegistries.BLOCK_ENTITY_TYPE,
                 TallyHopperContent.BLOCK_ENTITY_KEY,
                 TallyHopperContent.createBlockEntityType());
+        Registry.register(BuiltInRegistries.MENU, TallyHopperContent.MENU_KEY, TallyHopperContent.createMenuType());
         Registry.register(
                 BuiltInRegistries.RECIPE_SERIALIZER,
                 TallyHopperContent.SHAPELESS_KEEP_KEY,

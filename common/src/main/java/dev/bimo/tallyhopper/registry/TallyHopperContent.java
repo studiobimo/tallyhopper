@@ -4,13 +4,16 @@ import dev.bimo.tallyhopper.TallyHopper;
 import dev.bimo.tallyhopper.block.TallyHopperBlock;
 import dev.bimo.tallyhopper.block.TallyHopperBlockEntity;
 import dev.bimo.tallyhopper.credit.StoredBacklog;
+import dev.bimo.tallyhopper.gui.TallyHopperMenu;
 import dev.bimo.tallyhopper.item.TallyHopperItem;
+import dev.bimo.tallyhopper.platform.Services;
 import java.util.Set;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -47,6 +50,8 @@ public final class TallyHopperContent {
     public static final ResourceKey<DataComponentType<?>> BACKLOG_COMPONENT_KEY = ResourceKey.create(
             Registries.DATA_COMPONENT_TYPE, Identifier.fromNamespaceAndPath(TallyHopper.MOD_ID, "backlog"));
 
+    public static final ResourceKey<MenuType<?>> MENU_KEY = ResourceKey.create(Registries.MENU, TALLY_HOPPER);
+
     /** Awarded the first time a hopper credits offline time. */
     public static final Identifier SLEEP_MODE_ADVANCEMENT =
             Identifier.fromNamespaceAndPath(TallyHopper.MOD_ID, "sleep_mode");
@@ -59,6 +64,7 @@ public final class TallyHopperContent {
     private static @Nullable Item item;
     private static @Nullable BlockEntityType<TallyHopperBlockEntity> blockEntityType;
     private static @Nullable DataComponentType<StoredBacklog> backlogComponent;
+    private static @Nullable MenuType<TallyHopperMenu> menuType;
 
     private TallyHopperContent() {}
 
@@ -104,6 +110,13 @@ public final class TallyHopperContent {
         return created;
     }
 
+    /** Loader-specific, because the position has to travel with the screen; see {@code MenuTypes}. */
+    public static MenuType<TallyHopperMenu> createMenuType() {
+        MenuType<TallyHopperMenu> created = Services.MENUS.createMenuType();
+        menuType = created;
+        return created;
+    }
+
     public static Block block() {
         return registered(block, "block");
     }
@@ -114,6 +127,10 @@ public final class TallyHopperContent {
 
     public static BlockEntityType<TallyHopperBlockEntity> blockEntityType() {
         return registered(blockEntityType, "block entity type");
+    }
+
+    public static MenuType<TallyHopperMenu> menuType() {
+        return registered(menuType, "menu type");
     }
 
     public static DataComponentType<StoredBacklog> backlogComponent() {
