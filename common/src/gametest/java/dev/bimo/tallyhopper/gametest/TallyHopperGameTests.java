@@ -39,7 +39,8 @@ public final class TallyHopperGameTests {
             Map.entry(id("credit_only_running_hoppers"), CreditTests::onlyRunningHoppersAreEligible),
             Map.entry(id("credit_hundred_days"), CreditTests::hundredDaysAtAMillion),
             Map.entry(id("break_keeps_backlog"), CreditTests::breakingKeepsTheBacklog),
-            Map.entry(id("creative_break_keeps_backlog"), CreditTests::creativeBreakKeepsTheBacklog));
+            Map.entry(id("creative_break_keeps_backlog"), CreditTests::creativeBreakKeepsTheBacklog),
+            Map.entry(id("gamerules_have_defaults"), CreditTests::gameRulesHaveDefaults));
 
     private TallyHopperGameTests() {}
 

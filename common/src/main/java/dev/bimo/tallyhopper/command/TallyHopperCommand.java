@@ -113,7 +113,7 @@ public final class TallyHopperCommand {
                 : Component.translatable(
                         "commands.tallyhopper.info.calibrating",
                         measurement.observed().toMinutes(),
-                        Measurement.WARM_UP.toMinutes());
+                        measurement.warmUp().toMinutes());
         source.sendSuccess(
                 () -> Component.translatable(
                         "commands.tallyhopper.info.header", pos.getX(), pos.getY(), pos.getZ(), status),
