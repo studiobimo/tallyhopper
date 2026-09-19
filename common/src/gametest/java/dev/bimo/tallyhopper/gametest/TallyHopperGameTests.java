@@ -21,7 +21,10 @@ public final class TallyHopperGameTests {
             id("pickup_parity"), HopperParityTests::pickup,
             id("redstone_lock_parity"), HopperParityTests::redstoneLock,
             id("comparator_parity"), HopperParityTests::comparator,
-            id("chain_parity"), HopperParityTests::chain);
+            id("chain_parity"), HopperParityTests::chain,
+            id("convert_keeps_contents"), ConversionTests::keepsContentsAndFacing,
+            id("sneak_converts_chain_end"), ConversionTests::sneakConvertsChainEnd,
+            id("sneak_stops_on_loop"), ConversionTests::sneakStopsOnLoop);
 
     private TallyHopperGameTests() {}
 

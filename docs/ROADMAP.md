@@ -41,16 +41,16 @@ A milestone is done only when all of its **exit criteria** are met.
 
 ## M2: Block parity
 
-- [ ] Block, block entity and registration on both loaders
-- [ ] Model and textures (clock face tinted calibrating/ready), lang
-- [ ] Datagen: recipe `hopper + clock`, un-craft recipe, loot table
-- [ ] Use a clock on a hopper to convert it in place; sneak-use converts the end of the chain
+- [x] Block, block entity and registration on both loaders
+- [x] Model and textures (clock face tinted calibrating/ready), lang
+- [x] Datagen: recipe `hopper + clock`, un-craft recipe, loot table
+- [x] Use a clock on a hopper to convert it in place; sneak-use converts the end of the chain
 
 ### Exit criteria
 
-- [ ] GameTests show vanilla hopper parity on both loaders: push, pull, pickup, redstone lock, comparator
-- [ ] Conversion keeps contents and facing
-- [ ] Sneak-use finds the correct end hopper on a 10-hopper chain and stops on loops
+- [x] GameTests show vanilla hopper parity on both loaders: push, pull, pickup, redstone lock, comparator
+- [x] Conversion keeps contents and facing
+- [x] Sneak-use finds the correct end hopper on a 10-hopper chain and stops on loops
 
 ## M3: Measurement
 
