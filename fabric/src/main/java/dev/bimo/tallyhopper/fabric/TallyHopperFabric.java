@@ -1,6 +1,7 @@
 package dev.bimo.tallyhopper.fabric;
 
 import dev.bimo.tallyhopper.TallyHopper;
+import dev.bimo.tallyhopper.crafting.ShapelessKeepRecipe;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
@@ -21,6 +22,10 @@ public final class TallyHopperFabric implements ModInitializer {
                 BuiltInRegistries.BLOCK_ENTITY_TYPE,
                 TallyHopperContent.BLOCK_ENTITY_KEY,
                 TallyHopperContent.createBlockEntityType());
+        Registry.register(
+                BuiltInRegistries.RECIPE_SERIALIZER,
+                TallyHopperContent.SHAPELESS_KEEP_KEY,
+                ShapelessKeepRecipe.SERIALIZER);
 
         CreativeModeTabEvents.modifyOutputEvent(TallyHopperContent.REDSTONE_BLOCKS_TAB)
                 .register(output -> output.insertAfter(Items.HOPPER, TallyHopperContent.item()));
