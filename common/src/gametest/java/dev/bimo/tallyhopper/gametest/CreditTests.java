@@ -80,7 +80,10 @@ public final class CreditTests {
 
     private static TallyHopperBlockEntity placeTallyHopper(GameTestHelper helper, BlockPos pos, Direction facing) {
         helper.setBlock(pos, TallyHopperContent.block().defaultBlockState().setValue(HopperBlock.FACING, facing));
-        return helper.getBlockEntity(pos, TallyHopperBlockEntity.class);
+        TallyHopperBlockEntity hopper = helper.getBlockEntity(pos, TallyHopperBlockEntity.class);
+        // A hopper only watches its farm once a sapling has paid for the run, as a player's would.
+        hopper.saplings().setItem(0, new ItemStack(Items.OAK_SAPLING, 16));
+        return hopper;
     }
 
     private static void setRate(TallyHopperBlockEntity hopper, Item item, long perHour) {

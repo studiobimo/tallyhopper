@@ -4,6 +4,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.bimo.tallyhopper.block.TallyHopperBlock;
 import dev.bimo.tallyhopper.block.TallyHopperBlockEntity;
 import dev.bimo.tallyhopper.command.TallyHopperCommand;
+import dev.bimo.tallyhopper.gui.TallyHopperMenu;
 import dev.bimo.tallyhopper.measure.Measurement;
 import dev.bimo.tallyhopper.offline.Rate;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
@@ -54,7 +55,10 @@ public final class MeasurementTests {
 
     private static TallyHopperBlockEntity placeTallyHopper(GameTestHelper helper, Direction facing) {
         helper.setBlock(HOPPER, TallyHopperContent.block().defaultBlockState().setValue(HopperBlock.FACING, facing));
-        return helper.getBlockEntity(HOPPER, TallyHopperBlockEntity.class);
+        TallyHopperBlockEntity hopper = helper.getBlockEntity(HOPPER, TallyHopperBlockEntity.class);
+        // A hopper only watches its farm once a sapling has paid for the run, as a player's would.
+        hopper.saplings().setItem(0, new ItemStack(Items.OAK_SAPLING, 16));
+        return hopper;
     }
 
     private static void dropStack(GameTestHelper helper, BlockPos pos, ItemStack stack) {
@@ -127,6 +131,73 @@ public final class MeasurementTests {
             helper.assertItemEntityNotPresent(Items.STONE);
             helper.assertValueEqual(hopper.measurement().counted(Items.STONE), 1L, "dropped stone counted");
         });
+    }
+
+    /** A hopper watches nothing until a sapling pays for the run, and then spends exactly one. */
+    public static void calibrationNeedsSapling(GameTestHelper helper) {
+        helper.setBlock(
+                HOPPER, TallyHopperContent.block().defaultBlockState().setValue(HopperBlock.FACING, Direction.DOWN));
+        TallyHopperBlockEntity hopper = helper.getBlockEntity(HOPPER, TallyHopperBlockEntity.class);
+        helper.startSequence()
+                .thenExecute(() -> helper.spawnItem(Items.STONE, HOPPER.above()))
+                .thenIdle(20)
+                .thenExecute(() -> {
+                    helper.assertFalse(hopper.isCalibrationPaid(), "paid for calibration without a sapling");
+                    helper.assertTrue(hopper.measurement().observed().isZero(), "watched without a sapling");
+                    helper.assertValueEqual(
+                            hopper.measurement().counted(Items.STONE), 0L, "stone counted without a sapling");
+                    hopper.saplings().setItem(0, new ItemStack(Items.OAK_SAPLING, 2));
+                })
+                .thenIdle(5)
+                .thenExecute(() -> {
+                    helper.assertTrue(hopper.isCalibrationPaid(), "no sapling was spent");
+                    helper.assertValueEqual(hopper.saplings().getItem(0).getCount(), 1, "saplings left");
+                    helper.spawnItem(Items.STONE, HOPPER.above());
+                })
+                .thenWaitUntil(() -> helper.assertValueEqual(
+                        hopper.measurement().counted(Items.STONE), 1L, "stone counted once paid for"))
+                .thenSucceed();
+    }
+
+    /** The padlock on the screen spends a sapling and measures again, and does nothing without one. */
+    public static void recalibrateSpendsASapling(GameTestHelper helper) {
+        TallyHopperBlockEntity hopper = placeTallyHopper(helper, Direction.DOWN);
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        TallyHopperMenu menu =
+                new TallyHopperMenu(1, player.getInventory(), hopper, hopper.saplings(), helper.absolutePos(HOPPER));
+        helper.startSequence()
+                .thenIdle(20)
+                .thenExecute(() -> {
+                    helper.assertValueEqual(
+                            hopper.saplings().getItem(0).getCount(), 15, "saplings after the first run");
+                    helper.assertFalse(hopper.measurement().observed().isZero(), "nothing was watched");
+                    helper.assertTrue(
+                            menu.clickMenuButton(player, TallyHopperMenu.RECALIBRATE_BUTTON),
+                            "the padlock did nothing");
+                    helper.assertTrue(hopper.measurement().observed().isZero(), "the measurement was kept");
+                    helper.assertValueEqual(
+                            hopper.saplings().getItem(0).getCount(), 14, "saplings after recalibrating");
+                    hopper.saplings().setItem(0, ItemStack.EMPTY);
+                })
+                .thenIdle(5)
+                .thenExecute(() -> helper.assertFalse(
+                        menu.clickMenuButton(player, TallyHopperMenu.RECALIBRATE_BUTTON),
+                        "recalibrated with an empty sapling slot"))
+                .thenSucceed();
+    }
+
+    /** Breaking the hopper spills the saplings, because nothing a player put in may be lost. */
+    public static void saplingsDropWhenBroken(GameTestHelper helper) {
+        TallyHopperBlockEntity hopper = placeTallyHopper(helper, Direction.DOWN);
+        helper.startSequence()
+                .thenIdle(5)
+                .thenExecute(() -> {
+                    helper.assertValueEqual(hopper.saplings().getItem(0).getCount(), 15, "saplings before breaking");
+                    helper.destroyBlock(HOPPER);
+                })
+                .thenIdle(5)
+                .thenExecute(() -> helper.assertItemEntityCountIs(Items.OAK_SAPLING, HOPPER, 2.0, 15))
+                .thenSucceed();
     }
 
     /** A named item is unique, so only its plain copies are counted. */

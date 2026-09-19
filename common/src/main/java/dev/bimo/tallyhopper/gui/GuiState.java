@@ -23,6 +23,8 @@ import net.minecraft.world.item.Item;
  * @param backlog items waiting to be handed out
  * @param lastCredit items credited the last time the world reopened
  * @param terminal whether it fills storage directly, rather than feeding a line of hoppers
+ * @param saplings how many saplings are in the calibration slot
+ * @param paid whether a sapling has been spent on the measurement being built
  */
 public record GuiState(
         Map<Item, Long> ratesPerHour,
@@ -32,9 +34,11 @@ public record GuiState(
         boolean ready,
         long backlog,
         long lastCredit,
-        boolean terminal) {
+        boolean terminal,
+        int saplings,
+        boolean paid) {
 
-    public static final GuiState EMPTY = new GuiState(Map.of(), List.of(), 0, 300, false, 0, 0, false);
+    public static final GuiState EMPTY = new GuiState(Map.of(), List.of(), 0, 300, false, 0, 0, false, 0, false);
 
     public static final Codec<GuiState> CODEC = RecordCodecBuilder.create(i -> i.group(
                     Ledger.COUNTS_CODEC.fieldOf("rates").forGetter(GuiState::ratesPerHour),
@@ -48,7 +52,9 @@ public record GuiState(
                     Codec.BOOL.fieldOf("ready").forGetter(GuiState::ready),
                     ExtraCodecs.NON_NEGATIVE_LONG.fieldOf("backlog").forGetter(GuiState::backlog),
                     ExtraCodecs.NON_NEGATIVE_LONG.fieldOf("last_credit").forGetter(GuiState::lastCredit),
-                    Codec.BOOL.fieldOf("terminal").forGetter(GuiState::terminal))
+                    Codec.BOOL.fieldOf("terminal").forGetter(GuiState::terminal),
+                    ExtraCodecs.NON_NEGATIVE_INT.fieldOf("saplings").forGetter(GuiState::saplings),
+                    Codec.BOOL.fieldOf("paid").forGetter(GuiState::paid))
             .apply(i, GuiState::new));
 
     public GuiState {
@@ -56,8 +62,21 @@ public record GuiState(
         overridden = List.copyOf(overridden);
     }
 
-    /** Whether the hopper is still calibrating, which the screen shows as a countdown. */
+    /** Whether the hopper is watching its farm, which the screen shows as a filling bar. */
     public boolean isCalibrating() {
-        return !ready && observedSeconds < warmUpSeconds;
+        return paid && !ready && observedSeconds < warmUpSeconds;
+    }
+
+    /** Whether the hopper is waiting for the sapling a calibration run costs. */
+    public boolean needsSapling() {
+        return !paid && !ready;
+    }
+
+    /** How far calibration has come, from 0 to 1. */
+    public float progress() {
+        if (ready) {
+            return 1.0F;
+        }
+        return warmUpSeconds <= 0 ? 0.0F : Math.clamp((float) observedSeconds / warmUpSeconds, 0.0F, 1.0F);
     }
 }

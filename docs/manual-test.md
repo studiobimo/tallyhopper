@@ -39,17 +39,23 @@ Record the loader, the mod version and the world name in your notes.
 
 ## 2. Calibration and the screen
 
-1. Feed the Tally Hopper from a working farm, or drop stacks into it by hand at a steady pace.
-2. Open the screen.
-3. **Expect:** the title, the five slots, a "Calibrating: _n_ of 1 min" line, the delivery mode line,
-   and the override box above the inventory label with nothing overlapping it.
-4. Wait out the minute and reopen it.
-5. **Expect:** "Ready", one line per item with a plausible per-hour rate, and — for a hopper that
-   feeds a line — where that line ends.
-6. Type `cobblestone 600` into the box and press Enter.
-7. **Expect:** a chat answer, and the rate line reading "600/h (by hand)" on the next open.
-8. Type `clear` and press Enter.
-9. **Expect:** the override is gone and the measured rate is back.
+1. Open the screen of a freshly placed Tally Hopper.
+2. **Expect:** "Needs a sapling", an empty bar, an empty sapling slot on the left and an open padlock.
+   Hovering the empty meter says what goes there.
+3. Put a stack of saplings in the slot.
+4. **Expect:** one sapling is taken straight away, the meter fills to match what is left, and the
+   status becomes "Calibrating".
+5. Feed the hopper from a working farm, or drop stacks in by hand at a steady pace, and watch the bar.
+6. **Expect:** the bar fills yellow as the minute passes, then turns green and the padlock closes.
+7. Hover the bar.
+8. **Expect:** a tooltip with the status, one line per item with a plausible per-hour rate, the
+   delivery mode and — for a hopper feeding a line — where that line ends.
+9. Run `/tallyhopper rate set ~ ~ ~ minecraft:cobblestone 600` at the hopper and hover the bar again.
+10. **Expect:** the rate line reads "600/h (by hand)". `/tallyhopper rate clear` puts the measured one
+    back.
+11. Press the padlock.
+12. **Expect:** another sapling is spent, the bar empties and calibration starts over. With an empty
+    sapling slot the padlock is greyed out and pressing it does nothing.
 
 ## 3. Offline credit
 
@@ -78,8 +84,8 @@ Record the loader, the mod version and the world name in your notes.
 
 ## 5. Breaking and placing
 
-1. Break a Tally Hopper that is holding a backlog.
-2. **Expect:** the dropped item's tooltip lists the carried backlog.
+1. Break a Tally Hopper that is holding a backlog and some saplings.
+2. **Expect:** the dropped item's tooltip lists the carried backlog, and the saplings drop as items.
 3. Place it somewhere else.
 4. **Expect:** the backlog is still there and drains into the new target.
 5. Break one in creative with an empty hand.

@@ -21,8 +21,8 @@ public final class NeoForgeMenuTypes implements MenuTypes {
     public void open(ServerPlayer player, TallyHopperBlockEntity hopper) {
         player.openMenu(
                 new SimpleMenuProvider(
-                        (containerId, inventory, opening) ->
-                                new TallyHopperMenu(containerId, inventory, hopper, hopper.getBlockPos()),
+                        (containerId, inventory, opening) -> new TallyHopperMenu(
+                                containerId, inventory, hopper, hopper.saplings(), hopper.getBlockPos()),
                         hopper.getDisplayName()),
                 buffer -> buffer.writeBlockPos(hopper.getBlockPos()));
     }

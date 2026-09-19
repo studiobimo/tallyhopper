@@ -37,7 +37,7 @@ public final class FabricMenuTypes implements MenuTypes {
 
             @Override
             public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player opening) {
-                return new TallyHopperMenu(containerId, inventory, hopper, hopper.getBlockPos());
+                return new TallyHopperMenu(containerId, inventory, hopper, hopper.saplings(), hopper.getBlockPos());
             }
         });
     }

@@ -12,3 +12,4 @@ merge once the repository is public (studiobimo/.github#8).
   - [ADR-0003: Measured-rate credit model](adr/0003-measured-rate-model.md)
   - [ADR-0004: Terminal vs line delivery modes](adr/0004-delivery-modes.md)
   - [ADR-0005: Energy-saved estimate methodology](adr/0005-energy-estimate.md)
+  - [ADR-0006: A screen built from vanilla parts](adr/0006-screen-from-vanilla-parts.md)

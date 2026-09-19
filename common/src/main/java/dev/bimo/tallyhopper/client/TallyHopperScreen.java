@@ -1,6 +1,5 @@
 package dev.bimo.tallyhopper.client;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import dev.bimo.tallyhopper.block.TallyHopperBlockEntity;
 import dev.bimo.tallyhopper.conversion.HopperChain;
 import dev.bimo.tallyhopper.gui.GuiState;
@@ -11,9 +10,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.LockIconButton;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -28,85 +26,80 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The Tally Hopper's screen: the five slots, what it measured, and what it is holding.
+ * The Tally Hopper's screen, built from the parts vanilla already uses: the villager screen's bar for
+ * calibration, the brewing stand's fuel meter for the saplings it costs, and the padlock button.
  *
- * <p>Rates are set through the {@code /tallyhopper rate} command the box below sends, so the server
- * decides in one place who may change what.
+ * <p>The panel says only what a glance needs; the numbers behind it are a tooltip on the bar. Rates
+ * are still set through the {@code /tallyhopper rate} command, so the server decides in one place who
+ * may change what.
  */
 public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopperMenu> {
 
     private static final Identifier BACKGROUND =
             Identifier.fromNamespaceAndPath("tallyhopper", "textures/gui/container/tally_hopper.png");
 
+    private static final Identifier BAR_BACKGROUND =
+            Identifier.withDefaultNamespace("container/villager/experience_bar_background");
+
+    /** The plain white bar, tinted while calibrating, and the green one vanilla fills a trade with. */
+    private static final Identifier BAR_CALIBRATING =
+            Identifier.withDefaultNamespace("container/villager/experience_bar_result");
+
+    private static final Identifier BAR_READY =
+            Identifier.withDefaultNamespace("container/villager/experience_bar_current");
+
+    private static final Identifier FUEL = Identifier.withDefaultNamespace("container/brewing_stand/fuel_length");
+
+    private static final int BAR_X = 34;
+    private static final int BAR_Y = 32;
+    private static final int BAR_WIDTH = 102;
+    private static final int BAR_HEIGHT = 5;
+
+    private static final int FUEL_X = 7;
+    private static final int FUEL_Y = 46;
+    private static final int FUEL_WIDTH = 18;
+    private static final int FUEL_HEIGHT = 4;
+
+    /** How many saplings fill the meter, as twenty blaze powder fill a brewing stand's. */
+    private static final int FUEL_FULL = 16;
+
+    private static final int LOCK_X = 140;
+    private static final int LOCK_Y = 40;
+
+    private static final int STATUS_X = 34;
+    private static final int STATUS_Y = 20;
+
     private static final int TEXT_COLOR = 0xFF404040;
-    private static final int FADED_COLOR = 0xFF707070;
-    private static final int LINE_HEIGHT = 10;
+    private static final int CALIBRATING_TINT = 0xFFFFD83D;
 
-    /** The first line of text, just below the five slots. */
-    private static final int FIRST_LINE_Y = 42;
-
-    /** How many lines of text the panel has room for between the slots and the box. */
-    private static final int MAX_LINES = 6;
-
-    /** The top of the override box, below the text and above the inventory label. */
-    private static final int OVERRIDE_Y = FIRST_LINE_Y + MAX_LINES * LINE_HEIGHT + 2;
-
-    /** How wide a line of text may be, the same as the box below it. */
-    private static final int TEXT_WIDTH = 160;
+    /** How many item rates the tooltip lists before the rest are counted. */
+    private static final int LISTED_RATES = 4;
 
     /** A vanilla hopper moves one item every eight ticks, which is 2.5 a second. */
     private static final double ITEMS_PER_SECOND = 2.5;
 
-    private @Nullable EditBox override;
+    private @Nullable LockIconButton lock;
 
     public TallyHopperScreen(TallyHopperMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, 176, 216);
+        super(menu, inventory, title, 176, 166);
         inventoryLabelY = imageHeight - 94;
     }
 
     @Override
     protected void init() {
         super.init();
-        EditBox box = new EditBox(
-                font,
-                leftPos + 8,
-                topPos + OVERRIDE_Y,
-                160,
-                14,
-                Component.translatable("gui.tallyhopper.override.hint"));
-        box.setHint(Component.translatable("gui.tallyhopper.override.hint"));
-        box.setMaxLength(64);
-        box.setResponder(text -> {});
-        override = box;
-        addRenderableWidget(box);
-    }
-
-    @Override
-    public boolean keyPressed(KeyEvent event) {
-        EditBox box = override;
-        if (box != null
-                && box.isFocused()
-                && (event.key() == InputConstants.KEY_RETURN || event.key() == InputConstants.KEY_NUMPADENTER)) {
-            submitOverride(box);
-            return true;
-        }
-        return super.keyPressed(event);
+        LockIconButton button = new LockIconButton(leftPos + LOCK_X, topPos + LOCK_Y, press -> recalibrate());
+        lock = button;
+        addRenderableWidget(button);
     }
 
     /**
-     * Sends what was typed as a {@code /tallyhopper rate} command: {@code <item> <rate>} sets one,
-     * {@code clear} removes them all. The server checks the player may do it and answers in chat.
+     * Presses the menu's button, the way the lectern and the stonecutter do. The server spends the
+     * sapling and starts the measurement again, so nothing here decides whether it may happen.
      */
-    private void submitOverride(EditBox box) {
-        String typed = box.getValue().trim();
-        BlockPos pos = menu.pos();
-        String at = pos.getX() + " " + pos.getY() + " " + pos.getZ();
-        String command = typed.equalsIgnoreCase("clear")
-                ? "tallyhopper rate clear " + at
-                : "tallyhopper rate set " + at + " " + typed;
-        if (!typed.isEmpty() && minecraft != null && minecraft.getConnection() != null) {
-            minecraft.getConnection().sendCommand(command);
-            box.setValue("");
+    private void recalibrate() {
+        if (minecraft != null && minecraft.gameMode != null) {
+            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, TallyHopperMenu.RECALIBRATE_BUTTON);
         }
     }
 
@@ -115,30 +108,84 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
         super.extractBackground(graphics, mouseX, mouseY, partialTick);
         graphics.blit(
                 RenderPipelines.GUI_TEXTURED, BACKGROUND, leftPos, topPos, 0, 0, imageWidth, imageHeight, 256, 256);
+        GuiState state = state();
+        extractBar(graphics, state);
+        extractFuel(graphics, state);
+        LockIconButton button = lock;
+        if (button != null) {
+            button.setLocked(state.ready());
+            button.active = menu.hasSapling();
+        }
+    }
+
+    /** The villager screen's bar: white while it fills, green once the rate can be trusted. */
+    private void extractBar(GuiGraphicsExtractor graphics, GuiState state) {
+        int x = leftPos + BAR_X;
+        int y = topPos + BAR_Y;
+        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BAR_BACKGROUND, x, y, BAR_WIDTH, BAR_HEIGHT);
+        int filled = Math.round(BAR_WIDTH * state.progress());
+        if (filled <= 0) {
+            return;
+        }
+        if (state.ready()) {
+            graphics.blitSprite(
+                    RenderPipelines.GUI_TEXTURED, BAR_READY, BAR_WIDTH, BAR_HEIGHT, 0, 0, x, y, filled, BAR_HEIGHT);
+        } else {
+            graphics.blitSprite(
+                    RenderPipelines.GUI_TEXTURED,
+                    BAR_CALIBRATING,
+                    BAR_WIDTH,
+                    BAR_HEIGHT,
+                    0,
+                    0,
+                    x,
+                    y,
+                    filled,
+                    BAR_HEIGHT,
+                    CALIBRATING_TINT);
+        }
+    }
+
+    /** The brewing stand's fuel meter, counting saplings instead of blaze powder. */
+    private void extractFuel(GuiGraphicsExtractor graphics, GuiState state) {
+        int width = Math.round(FUEL_WIDTH * Math.min(1.0F, (float) state.saplings() / FUEL_FULL));
+        if (width > 0) {
+            graphics.blitSprite(
+                    RenderPipelines.GUI_TEXTURED,
+                    FUEL,
+                    FUEL_WIDTH,
+                    FUEL_HEIGHT,
+                    0,
+                    0,
+                    leftPos + FUEL_X,
+                    topPos + FUEL_Y,
+                    width,
+                    FUEL_HEIGHT);
+        }
     }
 
     @Override
     protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         super.extractLabels(graphics, mouseX, mouseY);
-        GuiState state = state();
-        int y = FIRST_LINE_Y;
-        for (Component line : lines(state)) {
-            graphics.text(font, fit(line), 8, y, TEXT_COLOR, false);
-            y += LINE_HEIGHT;
+        graphics.text(font, status(state()), STATUS_X, STATUS_Y, TEXT_COLOR, false);
+    }
+
+    @Override
+    protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        super.extractTooltip(graphics, mouseX, mouseY);
+        if (isOver(mouseX, mouseY, BAR_X, BAR_Y, BAR_WIDTH, BAR_HEIGHT)) {
+            graphics.setComponentTooltipForNextFrame(font, details(state()), mouseX, mouseY);
+        } else if (isOver(mouseX, mouseY, FUEL_X, FUEL_Y, FUEL_WIDTH, FUEL_HEIGHT)) {
+            graphics.setComponentTooltipForNextFrame(font, List.of(fuelLine(state())), mouseX, mouseY);
+        } else if (lock != null && lock.isHovered()) {
+            graphics.setComponentTooltipForNextFrame(font, lockLines(), mouseX, mouseY);
         }
     }
 
-    /**
-     * Cuts a line down to the panel's width. Item names and translations are any length, so a line that
-     * doesn't fit ends in an ellipsis rather than running off the edge.
-     */
-    private Component fit(Component line) {
-        String text = line.getString();
-        if (font.width(text) <= TEXT_WIDTH) {
-            return line;
-        }
-        String cut = font.plainSubstrByWidth(text, TEXT_WIDTH - font.width("…"));
-        return Component.literal(cut + "…").withStyle(line.getStyle());
+    private boolean isOver(int mouseX, int mouseY, int x, int y, int width, int height) {
+        int left = leftPos + x;
+        int top = topPos + y;
+        return mouseX >= left && mouseX < left + width && mouseY >= top && mouseY < top + height;
     }
 
     private GuiState state() {
@@ -148,13 +195,29 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
                 : GuiState.EMPTY;
     }
 
-    /**
-     * What the panel says, at most {@link #MAX_LINES} lines: what the hopper is doing, then as many
-     * item rates as the rest of the room allows, with the ones left over counted on the last line.
-     */
-    private List<Component> lines(GuiState state) {
+    private static Component status(GuiState state) {
+        if (state.needsSapling()) {
+            return Component.translatable("gui.tallyhopper.status.needs_sapling");
+        }
+        if (state.isCalibrating()) {
+            return Component.translatable("gui.tallyhopper.status.calibrating");
+        }
+        return state.ready()
+                ? Component.translatable("gui.tallyhopper.status.ready")
+                : Component.translatable("gui.tallyhopper.status.idle");
+    }
+
+    /** What the bar's tooltip says: the numbers that used to sit on the panel itself. */
+    private List<Component> details(GuiState state) {
         List<Component> lines = new ArrayList<>();
         lines.add(status(state));
+        if (state.isCalibrating()) {
+            lines.add(Component.translatable(
+                    "gui.tallyhopper.calibrating_minutes",
+                    number(state.observedSeconds() / 60),
+                    number(state.warmUpSeconds() / 60)));
+        }
+        addRates(lines, state);
         lines.add(
                 state.terminal()
                         ? Component.translatable("gui.tallyhopper.mode.terminal")
@@ -165,23 +228,20 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
         } else if (state.lastCredit() > 0) {
             lines.add(Component.translatable("gui.tallyhopper.last_credit", number(state.lastCredit())));
         }
-        Optional<Component> hint = state.terminal() ? Optional.empty() : chainHint();
-        addRates(lines, state, MAX_LINES - lines.size() - (hint.isPresent() ? 1 : 0));
-        hint.ifPresent(lines::add);
+        if (!state.terminal()) {
+            chainHint().ifPresent(lines::add);
+        }
         return lines;
     }
 
-    /** Adds up to {@code budget} lines of item rates, spending the last one on what didn't fit. */
-    private void addRates(List<Component> lines, GuiState state, int budget) {
-        int total = state.ratesPerHour().size();
-        if (total == 0 || budget <= 0) {
-            return;
-        }
-        int listed = total <= budget ? total : budget - 1;
-        int shown = 0;
+    private void addRates(List<Component> lines, GuiState state) {
+        int listed = 0;
         for (Map.Entry<Item, Long> rate : state.ratesPerHour().entrySet()) {
-            if (shown++ == listed) {
-                break;
+            if (listed++ == LISTED_RATES) {
+                lines.add(Component.translatable(
+                        "gui.tallyhopper.more_items",
+                        number(state.ratesPerHour().size() - (long) LISTED_RATES)));
+                return;
             }
             lines.add(Component.translatable(
                     state.overridden().contains(rate.getKey())
@@ -190,22 +250,18 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
                     rate.getKey().getDefaultInstance().getHoverName(),
                     number(rate.getValue())));
         }
-        if (total > listed) {
-            lines.add(Component.translatable("gui.tallyhopper.more_items", number(total - (long) listed))
-                    .withColor(FADED_COLOR));
-        }
     }
 
-    private Component status(GuiState state) {
-        if (state.isCalibrating()) {
-            return Component.translatable(
-                    "gui.tallyhopper.status.calibrating",
-                    number(state.observedSeconds() / 60),
-                    number(state.warmUpSeconds() / 60));
-        }
-        return state.ready() && !state.ratesPerHour().isEmpty()
-                ? Component.translatable("gui.tallyhopper.status.ready")
-                : Component.translatable("gui.tallyhopper.status.idle");
+    private Component fuelLine(GuiState state) {
+        return state.saplings() > 0
+                ? Component.translatable("gui.tallyhopper.saplings", number(state.saplings()))
+                : Component.translatable("gui.tallyhopper.saplings.empty");
+    }
+
+    private List<Component> lockLines() {
+        return menu.hasSapling()
+                ? List.of(Component.translatable("gui.tallyhopper.recalibrate"))
+                : List.of(Component.translatable("gui.tallyhopper.recalibrate.needs_sapling"));
     }
 
     /** Roughly how long the backlog takes to leave through the hopper, at vanilla speed. */
@@ -227,13 +283,11 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
             case HopperChain.Result.End<BlockPos> end
             when !end.pos().equals(start) ->
                 Optional.of(Component.translatable(
-                                "gui.tallyhopper.chain_end",
-                                number(start.distManhattan(end.pos())),
-                                direction(start, end.pos()))
-                        .withColor(FADED_COLOR));
+                        "gui.tallyhopper.chain_end",
+                        number(start.distManhattan(end.pos())),
+                        direction(start, end.pos())));
             case HopperChain.Result.Loop<BlockPos> loop ->
-                Optional.of(
-                        Component.translatable("gui.tallyhopper.chain_loops").withColor(FADED_COLOR));
+                Optional.of(Component.translatable("gui.tallyhopper.chain_loops"));
             default -> Optional.empty();
         };
     }
