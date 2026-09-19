@@ -22,16 +22,41 @@ import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
-/** Using a clock on a hopper converts it in place; sneak-using converts the end of its chain. */
+/**
+ * Using a clock on a hopper converts it in place for one sapling; sneak-using converts the end of
+ * its chain. The clock is always kept.
+ */
 public final class ConversionTests {
 
     private ConversionTests() {}
 
-    private static Player playerWithClocks(GameTestHelper helper, boolean sneaking) {
+    private static final int SAPLINGS = 3;
+
+    /** A survival player holding two clocks, with {@code saplings} oak saplings in the inventory. */
+    private static Player player(GameTestHelper helper, boolean sneaking, int saplings) {
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.CLOCK, 2));
+        if (saplings > 0) {
+            player.getInventory().add(new ItemStack(Items.OAK_SAPLING, saplings));
+        }
         player.setShiftKeyDown(sneaking);
         return player;
+    }
+
+    private static int saplings(Player player) {
+        int total = 0;
+        for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
+            ItemStack stack = player.getInventory().getItem(slot);
+            if (stack.is(Items.OAK_SAPLING)) {
+                total += stack.getCount();
+            }
+        }
+        return total;
+    }
+
+    private static void assertPaid(GameTestHelper helper, Player player, int saplingsUsed) {
+        helper.assertValueEqual(player.getMainHandItem().getCount(), 2, "clocks kept");
+        helper.assertValueEqual(saplings(player), SAPLINGS - saplingsUsed, "saplings left");
     }
 
     private static InteractionResult useClock(GameTestHelper helper, Player player, BlockPos pos) {
@@ -44,7 +69,7 @@ public final class ConversionTests {
         helper.setBlock(pos, Blocks.HOPPER.defaultBlockState().setValue(HopperBlock.FACING, facing));
     }
 
-    /** Contents, custom name and facing survive; the clock is used up; nothing spills. */
+    /** Contents, custom name and facing survive; one sapling is used; nothing spills. */
     public static void keepsContentsAndFacing(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 1, 2);
         placeHopper(helper, pos, Direction.EAST);
@@ -55,7 +80,7 @@ public final class ConversionTests {
         // Applying components also resets the contents, so name the hopper before filling it.
         hopper.setItem(0, new ItemStack(Items.IRON_INGOT, 17));
         hopper.setItem(3, new ItemStack(Items.POPPY, 5));
-        Player player = playerWithClocks(helper, false);
+        Player player = player(helper, false, SAPLINGS);
 
         InteractionResult result = useClock(helper, player, pos);
 
@@ -69,7 +94,7 @@ public final class ConversionTests {
                 ItemStack.matches(tally.getItem(3), new ItemStack(Items.POPPY, 5)), "slot 3 kept its poppies");
         helper.assertTrue(
                 name.equals(tally.getCustomName()), "custom name should be kept, got " + tally.getCustomName());
-        helper.assertValueEqual(player.getMainHandItem().getCount(), 1, "clocks left");
+        assertPaid(helper, player, 1);
         helper.assertItemEntityNotPresent(Items.IRON_INGOT);
         helper.assertItemEntityNotPresent(Items.POPPY);
         helper.succeed();
@@ -80,7 +105,7 @@ public final class ConversionTests {
         for (int x = 0; x < 10; x++) {
             placeHopper(helper, new BlockPos(1 + x, 1, 2), x < 9 ? Direction.EAST : Direction.DOWN);
         }
-        Player player = playerWithClocks(helper, true);
+        Player player = player(helper, true, SAPLINGS);
 
         InteractionResult result = useClock(helper, player, new BlockPos(1, 1, 2));
 
@@ -89,17 +114,17 @@ public final class ConversionTests {
             helper.assertBlockPresent(Blocks.HOPPER, new BlockPos(1 + x, 1, 2));
         }
         helper.assertBlockPresent(TallyHopperContent.block(), new BlockPos(10, 1, 2));
-        helper.assertValueEqual(player.getMainHandItem().getCount(), 1, "clocks left");
+        assertPaid(helper, player, 1);
         helper.succeed();
     }
 
-    /** A chain that loops has no end: nothing converts and the clock is kept. */
+    /** A chain that loops has no end: nothing converts and nothing is used. */
     public static void sneakStopsOnLoop(GameTestHelper helper) {
         placeHopper(helper, new BlockPos(2, 1, 2), Direction.EAST);
         placeHopper(helper, new BlockPos(3, 1, 2), Direction.SOUTH);
         placeHopper(helper, new BlockPos(3, 1, 3), Direction.WEST);
         placeHopper(helper, new BlockPos(2, 1, 3), Direction.NORTH);
-        Player player = playerWithClocks(helper, true);
+        Player player = player(helper, true, SAPLINGS);
 
         InteractionResult result = useClock(helper, player, new BlockPos(2, 1, 2));
 
@@ -108,7 +133,21 @@ public final class ConversionTests {
         helper.assertBlockNotPresent(TallyHopperContent.block(), new BlockPos(3, 1, 2));
         helper.assertBlockNotPresent(TallyHopperContent.block(), new BlockPos(3, 1, 3));
         helper.assertBlockNotPresent(TallyHopperContent.block(), new BlockPos(2, 1, 3));
-        helper.assertValueEqual(player.getMainHandItem().getCount(), 2, "clocks left");
+        assertPaid(helper, player, 0);
+        helper.succeed();
+    }
+
+    /** Without a sapling nothing converts. */
+    public static void needsSapling(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 1, 2);
+        placeHopper(helper, pos, Direction.DOWN);
+        Player player = player(helper, false, 0);
+
+        InteractionResult result = useClock(helper, player, pos);
+
+        helper.assertTrue(result instanceof InteractionResult.Fail, "conversion should be refused, got " + result);
+        helper.assertBlockPresent(Blocks.HOPPER, pos);
+        helper.assertValueEqual(player.getMainHandItem().getCount(), 2, "clocks kept");
         helper.succeed();
     }
 }

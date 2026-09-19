@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:recipe_has_no_uncraft",
+  "max_ticks": 20,
+  "structure": "tallyhopper:platform"
+}
