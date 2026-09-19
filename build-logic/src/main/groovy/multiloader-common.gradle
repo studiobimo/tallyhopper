@@ -8,12 +8,15 @@ plugins {
 // Precompiled script plugins cannot use the type-safe accessor, so look the catalog up by name.
 def libs = versionCatalogs.named('libs')
 
+// .java-version is read by Gradle, actions/setup-java (java-version-file), jenv, mise and asdf.
+def javaVersion = rootProject.layout.projectDirectory.file('.java-version').asFile.text.trim() as int
+
 base {
     archivesName = "${mod_id}-${project.name}"
 }
 
 java {
-    toolchain.languageVersion = JavaLanguageVersion.of(java_version as int)
+    toolchain.languageVersion = JavaLanguageVersion.of(javaVersion)
     withSourcesJar()
 }
 
@@ -31,7 +34,7 @@ dependencyLocking {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-    options.release = java_version as int
+    options.release = javaVersion
     options.compilerArgs.addAll(['-Xlint:all,-processing,-serial', '-Werror'])
     options.errorprone {
         disableWarningsInGeneratedCode = true
@@ -102,7 +105,7 @@ processResources {
             'neoforge_version'             : neoforge_version,
             'neoforge_loader_version_range': neoforge_loader_version_range,
             'credits'                      : credits,
-            'java_version'                 : java_version
+            'java_version'                 : javaVersion
     ]
 
     var jsonExpandProps = expandProps.collectEntries { key, value ->
