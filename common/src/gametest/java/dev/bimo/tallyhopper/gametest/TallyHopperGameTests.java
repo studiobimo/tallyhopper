@@ -27,7 +27,11 @@ public final class TallyHopperGameTests {
             Map.entry(id("sneak_stops_on_loop"), ConversionTests::sneakStopsOnLoop),
             Map.entry(id("convert_needs_sapling"), ConversionTests::needsSapling),
             Map.entry(id("recipe_keeps_clock"), CraftingTests::keepsTheClock),
-            Map.entry(id("recipe_has_no_uncraft"), CraftingTests::noOtherRecipes));
+            Map.entry(id("recipe_has_no_uncraft"), CraftingTests::noOtherRecipes),
+            Map.entry(id("dispenser_farm_measured"), MeasurementTests::dispenserFarm),
+            Map.entry(id("gui_inserts_not_counted"), MeasurementTests::guiInsertsNotCounted),
+            Map.entry(id("only_default_components_counted"), MeasurementTests::onlyDefaultComponentsCounted),
+            Map.entry(id("rate_override_command"), MeasurementTests::rateOverrideCommand));
 
     private TallyHopperGameTests() {}
 

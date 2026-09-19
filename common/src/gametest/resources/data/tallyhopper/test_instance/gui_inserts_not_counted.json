@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:gui_inserts_not_counted",
+  "max_ticks": 40,
+  "structure": "tallyhopper:platform"
+}

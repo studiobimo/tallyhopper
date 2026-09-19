@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:rate_override_command",
+  "max_ticks": 20,
+  "structure": "tallyhopper:platform"
+}

@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:only_default_components_counted",
+  "max_ticks": 40,
+  "structure": "tallyhopper:platform"
+}
