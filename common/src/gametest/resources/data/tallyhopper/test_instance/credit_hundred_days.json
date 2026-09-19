@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:credit_hundred_days",
+  "max_ticks": 20,
+  "structure": "tallyhopper:platform"
+}

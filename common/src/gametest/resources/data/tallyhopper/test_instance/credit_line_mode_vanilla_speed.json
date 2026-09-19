@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:credit_line_mode_vanilla_speed",
+  "max_ticks": 900,
+  "structure": "tallyhopper:platform"
+}
