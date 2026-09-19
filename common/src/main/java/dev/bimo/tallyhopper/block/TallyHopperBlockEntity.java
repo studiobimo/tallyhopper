@@ -36,6 +36,8 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Containers;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -67,12 +69,29 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
     private static final int READY_CHECK_TICKS = 20;
 
     private static final String GUI_STATE_KEY = "tallyhopper_gui";
+    private static final String SAPLING_KEY = TallyHopper.MOD_ID + "_sapling";
+    private static final String PAID_KEY = TallyHopper.MOD_ID + "_calibration_paid";
 
     /** How often an open screen is brought up to date. */
     private static final int SYNC_TICKS = 20;
 
     private final Measurement measurement = new Measurement();
     private final Ledger ledger = new Ledger();
+
+    /**
+     * What a calibration run costs, one sapling at a time. It is a container of its own rather than a
+     * sixth hopper slot, so every piece of vanilla hopper logic still sees exactly five slots and can
+     * never push a sapling out or pull one in.
+     */
+    private final SimpleContainer saplings = new SimpleContainer(1) {
+        @Override
+        public void setChanged() {
+            super.setChanged();
+            TallyHopperBlockEntity.this.setChanged();
+        }
+    };
+
+    private boolean calibrationPaid;
     private GuiState clientState = GuiState.EMPTY;
     private int viewers;
 
@@ -94,10 +113,14 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
             hopper.credit(session);
         }
         hopper.refillFromBacklog();
+        // Paid for before the vanilla tick, so items taken in on this very tick are already counted.
+        if (!hopper.calibrationPaid) {
+            hopper.payForCalibration();
+        }
         HopperBlockEntity.pushItemsTick(level, pos, state, hopper);
 
         Instant now = MeasurementClock.now(level);
-        if (hopper.isMeasuring()) {
+        if (hopper.isWatching()) {
             hopper.measurement.tick(now);
         }
         // Before a session starts there is no window to be eligible for, so the last tick waits too.
@@ -115,7 +138,7 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
     /** Called for every automated insert; see {@code HopperBlockEntityMixin}. */
     public void recordIntake(ItemStack stack, int count) {
         Level level = getLevel();
-        if (level != null && !level.isClientSide() && isMeasuring() && Measurement.isCountable(stack)) {
+        if (level != null && !level.isClientSide() && isWatching() && Measurement.isCountable(stack)) {
             measurement.recordIntake(stack.getItem(), count, MeasurementClock.now(level));
         }
     }
@@ -127,6 +150,63 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
      */
     public boolean isMeasuring() {
         return ledger.backlog().isEmpty();
+    }
+
+    /**
+     * Whether the hopper is watching its farm right now: it has been paid for and nothing is draining
+     * through it. A hopper keeps watching after it is ready, so its rate follows the farm instead of
+     * staying at whatever the first few minutes happened to look like.
+     */
+    public boolean isWatching() {
+        return calibrationPaid && isMeasuring();
+    }
+
+    /** Whether a sapling has been spent on the measurement this hopper is building. */
+    public boolean isCalibrationPaid() {
+        return calibrationPaid;
+    }
+
+    /** The sapling slot, shown on the screen. It is never part of the hopper's five slots. */
+    public SimpleContainer saplings() {
+        return saplings;
+    }
+
+    /**
+     * Measures again from nothing, for a player whose farm changed. Spends one sapling, and does
+     * nothing without one.
+     *
+     * @return whether a sapling was spent and the measurement restarted
+     */
+    public boolean recalibrate() {
+        if (saplings.getItem(0).isEmpty()) {
+            return false;
+        }
+        // The hopper has already paid for the measurement it is about to throw away, so it pays again.
+        calibrationPaid = false;
+        payForCalibration();
+        measurement.restart();
+        Level level = getLevel();
+        if (level != null) {
+            updateClockFace(level, getBlockPos());
+            syncToClients(level, getBlockPos());
+        }
+        return true;
+    }
+
+    /** Takes one sapling for the current measurement, if one is there and none has been taken yet. */
+    private boolean payForCalibration() {
+        if (calibrationPaid) {
+            return false;
+        }
+        ItemStack stack = saplings.getItem(0);
+        if (stack.isEmpty()) {
+            return false;
+        }
+        stack.shrink(1);
+        saplings.setItem(0, stack.isEmpty() ? ItemStack.EMPTY : stack);
+        calibrationPaid = true;
+        setChanged();
+        return true;
     }
 
     /**
@@ -208,7 +288,9 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
                 measurement.isReady(),
                 ledger.backlog().total(),
                 ledger.lastCredit(),
-                level instanceof ServerLevel server && terminalSink(server) != null);
+                level instanceof ServerLevel server && terminalSink(server) != null,
+                saplings.getItem(0).getCount(),
+                calibrationPaid);
     }
 
     @Override
@@ -329,11 +411,26 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         Ledger.discardBacklog(output);
     }
 
+    /**
+     * Vanilla spills the five slots for us. The sapling slot is not one of them, so it spills here:
+     * nothing a player put into this block may be lost when it breaks.
+     */
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        Level level = getLevel();
+        if (level != null) {
+            Containers.dropContents(level, pos, saplings);
+        }
+    }
+
     @Override
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
         measurement.load(input);
         ledger.load(input);
+        saplings.setItem(0, input.read(SAPLING_KEY, ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY));
+        calibrationPaid = input.getBooleanOr(PAID_KEY, false);
         input.read(GUI_STATE_KEY, GuiState.CODEC).ifPresent(state -> clientState = state);
     }
 
@@ -342,6 +439,10 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         super.saveAdditional(output);
         measurement.save(output);
         ledger.save(output);
+        if (!saplings.getItem(0).isEmpty()) {
+            output.store(SAPLING_KEY, ItemStack.OPTIONAL_CODEC, saplings.getItem(0));
+        }
+        output.putBoolean(PAID_KEY, calibrationPaid);
     }
 
     @Override

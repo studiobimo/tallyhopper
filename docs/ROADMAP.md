@@ -79,7 +79,8 @@ A milestone is done only when all of its **exit criteria** are met.
 
 ## M5: UX
 
-- [x] GUI with network sync: rates, status, mode, drain estimate, chain analysis, override field
+- [x] GUI with network sync, built from vanilla widgets: calibration bar, sapling slot and meter,
+  padlock to measure again; rates, mode, drain estimate and chain analysis on hover ([ADR-0006](adr/0006-screen-from-vanilla-parts.md))
 - [x] Rejoin chat summary with energy/CO₂/water/tree-day estimate; custom statistics
 - [x] `config/tallyhopper.json`, gamerules, tooltip, block-state visuals, advancement
 - [x] Methodology page for the environmental estimate

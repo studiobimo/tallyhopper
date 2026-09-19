@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:saplings_drop_when_broken",
+  "max_ticks": 40,
+  "structure": "tallyhopper:platform"
+}

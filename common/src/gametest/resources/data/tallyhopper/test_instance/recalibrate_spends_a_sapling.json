@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:recalibrate_spends_a_sapling",
+  "max_ticks": 80,
+  "structure": "tallyhopper:platform"
+}

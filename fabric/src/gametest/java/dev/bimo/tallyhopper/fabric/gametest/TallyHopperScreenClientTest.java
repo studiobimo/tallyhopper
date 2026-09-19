@@ -10,10 +10,12 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 /**
- * Opens the Tally Hopper's screen in a real client and photographs it while calibrating and once
- * ready, which is the only way to see that it renders at all.
+ * Opens the Tally Hopper's screen in a real client and photographs it in each state it has: waiting
+ * for a sapling, calibrating, and ready. Rendering is the one thing only a real client can show.
  */
 public final class TallyHopperScreenClientTest implements FabricClientGameTest {
 
@@ -35,9 +37,21 @@ public final class TallyHopperScreenClientTest implements FabricClientGameTest {
 
             context.waitForScreen(TallyHopperScreen.class);
             context.waitTicks(5);
-            context.takeScreenshot("tally_hopper_calibrating");
+            context.takeScreenshot("tally_hopper_needs_sapling");
 
             BlockPos pos = placed.get();
+            // A sapling buys one calibration run; the hopper spends it on its next tick.
+            singleplayer.getServer().runOnServer(server -> {
+                if (server.overworld().getBlockEntity(pos) instanceof TallyHopperBlockEntity hopper) {
+                    hopper.saplings().setItem(0, new ItemStack(Items.OAK_SAPLING, 8));
+                }
+            });
+            context.waitFor(client -> client.level != null
+                    && client.level.getBlockEntity(pos) instanceof TallyHopperBlockEntity hopper
+                    && hopper.guiState().isCalibrating());
+            context.waitTicks(5);
+            context.takeScreenshot("tally_hopper_calibrating");
+
             singleplayer
                     .getServer()
                     .runCommand("tallyhopper rate set %d %d %d minecraft:cobblestone 600"

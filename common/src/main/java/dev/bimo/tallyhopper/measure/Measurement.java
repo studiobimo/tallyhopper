@@ -65,6 +65,14 @@ public final class Measurement {
         return tracker.rates();
     }
 
+    /**
+     * Forgets what was measured and watches the farm again from nothing, for a player who changed
+     * their farm and doesn't want to wait for the window to roll over. Overrides are left alone.
+     */
+    public void restart() {
+        tracker = new RateTracker<>();
+    }
+
     public Duration observed() {
         return tracker.observed();
     }
