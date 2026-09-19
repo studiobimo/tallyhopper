@@ -1,0 +1,26 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = 'Fabric'
+                    url = uri('https://maven.fabricmc.net')
+                }
+            }
+            filter {
+                includeGroupAndSubgroups('net.fabricmc')
+            }
+        }
+    }
+}
+
+plugins {
+    // Auto-provisions the JDK declared by java_version when it is not installed locally.
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+rootProject.name = 'tallyhopper'
+includeBuild('build-logic')
+include('common')
