@@ -1,7 +1,12 @@
 // Conventions shared by every subproject (common, fabric, neoforge).
 plugins {
     id 'java-library'
+    id 'com.diffplug.spotless'
+    id 'net.ltgt.errorprone'
 }
+
+// Precompiled script plugins cannot use the type-safe accessor, so look the catalog up by name.
+def libs = versionCatalogs.named('libs')
 
 base {
     archivesName = "${mod_id}-${project.name}"
@@ -12,9 +17,45 @@ java {
     withSourcesJar()
 }
 
+dependencies {
+    compileOnly(libs.findLibrary('jspecify').get())
+    errorprone(libs.findLibrary('errorprone-core').get())
+    errorprone(libs.findLibrary('nullaway').get())
+}
+
+// Pin every resolved dependency (gradle.lockfile per project). Regenerate with
+// `make -C .devtools lock` after changing versions.
+dependencyLocking {
+    lockAllConfigurations()
+}
+
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.release = java_version as int
+    options.compilerArgs.addAll(['-Xlint:all,-processing,-serial', '-Werror'])
+    options.errorprone {
+        disableWarningsInGeneratedCode = true
+        excludedPaths = '.*/build/generated/.*'
+        // Minecraft is not null-annotated; enforce nullness only in our packages.
+        option('NullAway:AnnotatedPackages', 'dev.bimo.tallyhopper')
+        option('NullAway:JSpecifyMode', 'true')
+        error('NullAway')
+    }
+}
+
+// Error Prone only on production code; tests favor readability over lint strictness.
+tasks.named('compileTestJava', JavaCompile) {
+    options.errorprone.enabled = false
+    options.compilerArgs.remove('-Werror')
+}
+
+spotless {
+    java {
+        target 'src/*/java/**/*.java'
+        palantirJavaFormat(libs.findVersion('palantir-java-format').get().requiredVersion)
+        removeUnusedImports()
+        formatAnnotations()
+    }
 }
 
 // Reproducible archives: identical inputs produce byte-identical jars, which
@@ -76,4 +117,17 @@ processResources {
     }
 
     inputs.properties(expandProps)
+}
+
+// Resolves every resolvable configuration so `--write-locks` captures all of them.
+tasks.register('resolveAndLockAll') {
+    group = 'dependency locking'
+    description = 'Resolves all configurations; run with --write-locks to refresh gradle.lockfile.'
+    notCompatibleWithConfigurationCache('Resolves configurations at execution time')
+    doFirst {
+        assert gradle.startParameter.writeDependencyLocks: 'Run with --write-locks'
+    }
+    doLast {
+        configurations.findAll { it.canBeResolved }.each { it.resolve() }
+    }
 }
