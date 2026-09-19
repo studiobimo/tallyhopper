@@ -19,6 +19,9 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -44,6 +47,8 @@ import net.minecraft.world.entity.vehicle.minecart.MinecartHopper;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ChestBlock;
@@ -351,6 +356,28 @@ public final class CreditTests {
             helper.assertValueEqual(carried, 500L, "backlog carried by the dropped item");
             helper.succeed();
         });
+    }
+
+    /** A Tally Hopper item carrying a backlog says so in its tooltip. */
+    // The tooltip hook is deprecated in 26.3; see TallyHopperItem for why it is still the one to use.
+    @SuppressWarnings("deprecation")
+    public static void backlogShowsInTheTooltip(GameTestHelper helper) {
+        ItemStack stack = new ItemStack(TallyHopperContent.item());
+        List<Component> lines = new ArrayList<>();
+        stack.getItem()
+                .appendHoverText(
+                        stack, Item.TooltipContext.EMPTY, TooltipDisplay.DEFAULT, lines::add, TooltipFlag.NORMAL);
+        helper.assertTrue(lines.isEmpty(), "a plain Tally Hopper says nothing extra, got " + lines);
+
+        stack.set(TallyHopperContent.backlogComponent(), new StoredBacklog(Map.of(Items.COBBLESTONE, 500L)));
+        stack.getItem()
+                .appendHoverText(
+                        stack, Item.TooltipContext.EMPTY, TooltipDisplay.DEFAULT, lines::add, TooltipFlag.NORMAL);
+
+        helper.assertValueEqual(lines.size(), 2, "tooltip lines");
+        String tooltip = lines.stream().map(Component::getString).toList().toString();
+        helper.assertTrue(tooltip.contains("500"), "the tooltip mentions the 500 items, got " + tooltip);
+        helper.succeed();
     }
 
     /** After crediting, the player is told, and their statistics and the Sleep Mode advancement follow. */
