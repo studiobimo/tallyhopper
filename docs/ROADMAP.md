@@ -28,16 +28,16 @@ A milestone is done only when all of its **exit criteria** are met.
 
 ## M1: Core logic (pure Java)
 
-- [ ] `SessionClock` math: heartbeat, offline window, clamping
-- [ ] `RateTracker`: rolling buckets, pause detection, warm-up gate
-- [ ] `OfflineCredit`: carry, caps, saturating arithmetic
-- [ ] `Backlog`: `item → long count` with a cap
+- [x] `SessionClock` math: heartbeat, offline window, clamping
+- [x] `RateTracker`: rolling buckets, pause detection, warm-up gate
+- [x] `OfflineCredit`: carry, caps, saturating arithmetic
+- [x] `Backlog`: `item → long count` with a cap
 
 ### Exit criteria
 
-- [ ] JUnit covers: 1000/h × 8 h = 8000, fractional carry, negative clock jumps, 100-day gaps,
+- [x] JUnit covers: 1000/h × 8 h = 8000, fractional carry, negative clock jumps, 100-day gaps,
       cap hits, override precedence, and the warm-up gate
-- [ ] ≥90% line coverage on `dev.bimo.tallyhopper.offline`
+- [x] ≥90% line coverage on `dev.bimo.tallyhopper.offline`
 
 ## M2: Block parity
 
