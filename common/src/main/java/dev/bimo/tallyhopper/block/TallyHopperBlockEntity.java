@@ -3,6 +3,7 @@ package dev.bimo.tallyhopper.block;
 import dev.bimo.tallyhopper.measure.Measurement;
 import dev.bimo.tallyhopper.measure.MeasurementClock;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
+import java.util.function.Function;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -59,9 +60,20 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         return measurement;
     }
 
+    /** Changes the overrides, then saves and updates the clock face straight away. */
+    public <T> T changeOverrides(Function<Measurement, T> change) {
+        T result = change.apply(measurement);
+        setChanged();
+        Level level = getLevel();
+        if (level != null) {
+            updateClockFace(level, getBlockPos());
+        }
+        return result;
+    }
+
     private void updateClockFace(Level level, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
-        boolean ready = measurement.isWarmedUp();
+        boolean ready = measurement.isReady();
         if (state.hasProperty(TallyHopperBlock.READY) && state.getValue(TallyHopperBlock.READY) != ready) {
             level.setBlock(pos, state.setValue(TallyHopperBlock.READY, ready), Block.UPDATE_CLIENTS);
         }
