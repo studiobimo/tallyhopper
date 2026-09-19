@@ -1,0 +1,69 @@
+# Dependency updates. Commit messages follow Conventional Commits (chore(deps): ...).
+# Minecraft, Fabric and NeoForge versions are ported deliberately, so Dependabot ignores them.
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      gradle-minor-patch:
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: com.mojang:minecraft
+      - dependency-name: net.fabricmc:fabric-loader
+      - dependency-name: net.fabricmc.fabric-api:*
+      - dependency-name: net.neoforged:*
+      # Must match what Minecraft and the loaders bundle:
+      - dependency-name: org.jspecify:jspecify
+      - dependency-name: net.fabricmc:sponge-mixin
+      - dependency-name: io.github.llamalad7:*
+      # Loader plugins track Minecraft versions; bump majors deliberately.
+      - dependency-name: net.fabricmc.fabric-loom
+        update-types: [version-update:semver-major]
+      - dependency-name: net.neoforged.moddev
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: pre-commit
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      pre-commit-hooks:
+        patterns: ["*"]
+
+  - package-ecosystem: uv
+    directory: /.devtools
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      devtools:
+        patterns: ["*"]

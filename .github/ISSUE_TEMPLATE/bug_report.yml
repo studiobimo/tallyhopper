@@ -1,0 +1,58 @@
+name: Bug report
+description: Something isn't working as expected in game.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for the report! Please include enough detail to reproduce it.
+  - type: input
+    id: mod-version
+    attributes:
+      label: Tally Hopper version
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: input
+    id: mc-version
+    attributes:
+      label: Minecraft version
+      placeholder: "26.3"
+    validations:
+      required: true
+  - type: dropdown
+    id: loader
+    attributes:
+      label: Mod loader
+      options: [Fabric, NeoForge]
+    validations:
+      required: true
+  - type: input
+    id: loader-version
+    attributes:
+      label: Loader version (and Fabric API version, if Fabric)
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened, and what did you expect?
+      description: Include the farm design and how long you were away, if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Place a Tally Hopper facing a chest
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: latest.log / crash report
+      description: Paste `logs/latest.log`, or link a gist or mclo.gs upload.
+      render: text
+  - type: textarea
+    id: mods
+    attributes:
+      label: Other mods installed

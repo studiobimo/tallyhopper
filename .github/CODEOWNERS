@@ -1,0 +1,8 @@
+# Default owners for everything in the repo.
+* @davidmoralesz
+
+# Build, release and supply-chain configuration: extra care required.
+/build-logic/                    @davidmoralesz
+/gradle/                         @davidmoralesz
+/.github/                        @davidmoralesz
+/.devtools/                      @davidmoralesz
