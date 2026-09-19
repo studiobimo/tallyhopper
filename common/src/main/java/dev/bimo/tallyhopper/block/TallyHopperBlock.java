@@ -1,7 +1,12 @@
 package dev.bimo.tallyhopper.block;
 
+import dev.bimo.tallyhopper.credit.StoredBacklog;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HopperBlock;
@@ -31,6 +36,28 @@ public final class TallyHopperBlock extends HopperBlock {
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
         builder.add(READY);
+    }
+
+    /**
+     * In creative, breaking drops nothing, so a hopper with a backlog drops itself carrying it, the way
+     * a shulker box with contents does. Its five slots spill as usual.
+     */
+    @Override
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide()
+                && player.preventsBlockDrops()
+                && level.getBlockEntity(pos) instanceof TallyHopperBlockEntity hopper) {
+            StoredBacklog backlog = hopper.storedBacklog();
+            if (backlog != null) {
+                ItemStack stack = new ItemStack(this);
+                stack.set(TallyHopperContent.backlogComponent(), backlog);
+                stack.set(DataComponents.CUSTOM_NAME, hopper.getCustomName());
+                ItemEntity entity = new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, stack);
+                entity.setDefaultPickUpDelay();
+                level.addFreshEntity(entity);
+            }
+        }
+        return super.playerWillDestroy(level, pos, state, player);
     }
 
     @Override

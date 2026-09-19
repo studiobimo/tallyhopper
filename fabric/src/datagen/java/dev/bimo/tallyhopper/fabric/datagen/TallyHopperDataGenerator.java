@@ -13,6 +13,7 @@ import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagsProvider;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeProvider;
@@ -28,6 +29,13 @@ import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.storage.loot.LootPool;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.functions.CopyComponentsFunction;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.level.storage.loot.providers.number.ints.ContextIntProviders;
 
 /** Generates the mod's recipes, loot table and tags into {@code common/src/generated}. */
 public final class TallyHopperDataGenerator implements DataGeneratorEntrypoint {
@@ -89,10 +97,21 @@ public final class TallyHopperDataGenerator implements DataGeneratorEntrypoint {
             super(output, registries);
         }
 
-        // Same as the vanilla hopper: drops itself and keeps a custom name. Contents spill on break.
+        // Drops itself with its custom name and backlog; its five slots spill on break like a hopper's.
+        // Unlike a hopper it always survives explosions, since the backlog would go with it.
         @Override
         public void generate() {
-            add(TallyHopperContent.block(), createNameableBlockEntityTable(TallyHopperContent.block()));
+            Block block = TallyHopperContent.block();
+            add(
+                    block,
+                    LootTable.lootTable()
+                            .withPool(LootPool.lootPool()
+                                    .setRolls(ContextIntProviders.exactly(1))
+                                    .add(LootItem.lootTableItem(block)
+                                            .apply(CopyComponentsFunction.copyComponentsFromBlockEntity(
+                                                            LootContextParams.BLOCK_ENTITY)
+                                                    .include(DataComponents.CUSTOM_NAME)
+                                                    .include(TallyHopperContent.backlogComponent())))));
         }
     }
 

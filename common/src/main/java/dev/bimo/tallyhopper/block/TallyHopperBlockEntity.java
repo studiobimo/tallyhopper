@@ -3,6 +3,7 @@ package dev.bimo.tallyhopper.block;
 import dev.bimo.tallyhopper.TallyHopper;
 import dev.bimo.tallyhopper.credit.CreditReport;
 import dev.bimo.tallyhopper.credit.Ledger;
+import dev.bimo.tallyhopper.credit.StoredBacklog;
 import dev.bimo.tallyhopper.measure.Measurement;
 import dev.bimo.tallyhopper.measure.MeasurementClock;
 import dev.bimo.tallyhopper.offline.Backlog;
@@ -20,6 +21,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.component.DataComponentGetter;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -209,6 +212,33 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         if (state.hasProperty(TallyHopperBlock.READY) && state.getValue(TallyHopperBlock.READY) != ready) {
             level.setBlock(pos, state.setValue(TallyHopperBlock.READY, ready), Block.UPDATE_CLIENTS);
         }
+    }
+
+    /** The backlog as an item component, or {@code null} when there is none to carry. */
+    public @Nullable StoredBacklog storedBacklog() {
+        Backlog<Item> backlog = ledger.backlog();
+        return backlog.isEmpty() ? null : new StoredBacklog(backlog.contents());
+    }
+
+    @Override
+    protected void applyImplicitComponents(DataComponentGetter components) {
+        super.applyImplicitComponents(components);
+        StoredBacklog stored = components.get(TallyHopperContent.backlogComponent());
+        if (stored != null) {
+            ledger.restoreBacklog(stored);
+        }
+    }
+
+    @Override
+    protected void collectImplicitComponents(DataComponentMap.Builder components) {
+        super.collectImplicitComponents(components);
+        components.set(TallyHopperContent.backlogComponent(), storedBacklog());
+    }
+
+    @Override
+    public void removeComponentsFromTag(ValueOutput output) {
+        super.removeComponentsFromTag(output);
+        Ledger.discardBacklog(output);
     }
 
     @Override
