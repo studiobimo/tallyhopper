@@ -36,7 +36,7 @@ public final class TallyHopperMenu extends AbstractContainerMenu {
         for (int slot = 0; slot < SLOTS; slot++) {
             addSlot(new Slot(hopper, slot, 44 + slot * 18, 20));
         }
-        addStandardInventorySlots(inventory, 8, 98);
+        addStandardInventorySlots(inventory, 8, 134);
     }
 
     public BlockPos pos() {
