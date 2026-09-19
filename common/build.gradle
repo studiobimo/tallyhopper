@@ -1,6 +1,7 @@
 plugins {
     id 'multiloader-common'
     id 'net.neoforged.moddev'
+    id 'jacoco'
 }
 
 // Common compiles against vanilla Minecraft only (via NeoForm), so nothing
@@ -18,6 +19,46 @@ dependencies {
     compileOnly(libs.mixin)
     compileOnly(libs.mixinextras.common)
     annotationProcessor(libs.mixinextras.common)
+
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.assertj.core)
+    testRuntimeOnly(libs.junit.platform.launcher)
+}
+
+// Unit tests cover pure, Minecraft-free logic. In-game behavior is covered by GameTests.
+tasks.named('test', Test) {
+    useJUnitPlatform()
+    finalizedBy('jacocoTestReport')
+}
+
+jacoco {
+    toolVersion = libs.versions.jacoco.get()
+}
+
+tasks.named('jacocoTestReport', JacocoReport) {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+// Coverage gate for the offline-credit math, where bugs would silently mint or lose items.
+tasks.named('jacocoTestCoverageVerification', JacocoCoverageVerification) {
+    violationRules {
+        rule {
+            element = 'PACKAGE'
+            includes = ['dev.bimo.tallyhopper.offline']
+            limit {
+                counter = 'LINE'
+                minimum = 0.90
+            }
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn('jacocoTestCoverageVerification')
 }
 
 configurations {

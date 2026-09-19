@@ -1,3 +1,10 @@
+// Lock the plugin classpath resolved for this build script (buildscript-gradle.lockfile).
+buildscript {
+    configurations.classpath {
+        resolutionStrategy.activateDependencyLocking()
+    }
+}
+
 plugins {
     alias(libs.plugins.fabric.loom) apply false
     alias(libs.plugins.neoforged.moddev) apply false
