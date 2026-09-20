@@ -34,6 +34,7 @@ public final class TallyHopperGameTests {
             Map.entry(id("rate_override_command"), MeasurementTests::rateOverrideCommand),
             Map.entry(id("calibration_needs_sapling"), MeasurementTests::calibrationNeedsSapling),
             Map.entry(id("recalibrate_spends_a_sapling"), MeasurementTests::recalibrateSpendsASapling),
+            Map.entry(id("recalibrate_refuses_while_draining"), MeasurementTests::recalibrateRefusesWhileDraining),
             Map.entry(id("saplings_drop_when_broken"), MeasurementTests::saplingsDropWhenBroken),
             Map.entry(id("credit_fills_double_chest"), CreditTests::fillsDoubleChest),
             Map.entry(id("credit_backlog_drains_to_minecart"), CreditTests::fullTargetBacklogsAndMinecartDrains),
