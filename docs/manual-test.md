@@ -120,6 +120,21 @@ Record the loader, the mod version and the world name in your notes.
    **Expect:** no raw keys such as `gui.tallyhopper.status.ready` anywhere on screen — everything
    falls back to English text.
 
+## 8. Modded storage and chunk loading
+
+Storage Drawers is already in the dev runtime on both loaders (see [compatibility](compatibility.md)).
+
+1. Point a calibrated Tally Hopper at a drawer and rejoin after an absence.
+   **Expect:** the credit lands in the drawer, which a vanilla hopper could not fill at all.
+2. Put something else in the drawer first, then rejoin.
+   **Expect:** the drawer keeps what it held, nothing is replaced, and the credit waits in the
+   backlog instead.
+3. `/forceload add ~ ~` on a hopper's chunk, travel far away, then quit and rejoin.
+   **Expect:** that hopper credits normally.
+4. Leave another hopper in a chunk nobody loads, quit for a while, rejoin, and then walk to it.
+   **Expect:** nothing is credited for the time it was asleep, and its own summary line appears only
+   if it had been running when the world closed.
+
 ## Reporting
 
 Note the loader, the version, and any step whose **Expect** did not happen, with the log lines around

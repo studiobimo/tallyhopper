@@ -93,11 +93,13 @@ A milestone is done only when all of its **exit criteria** are met.
 
 ## M6: Compatibility
 
-- [ ] Modded storage through the transfer APIs; chunk-loader scenarios
+- [x] Modded storage through the transfer APIs; chunk-loader scenarios
+      ([compatibility](compatibility.md))
 
 ### Exit criteria
 
-- [ ] Credit lands in at least one popular modded storage block on each loader (documented)
+- [x] Credit lands in at least one popular modded storage block on each loader (documented):
+      Storage Drawers 26.3.0.0 on Fabric and NeoForge, under GameTest
 
 ## M7: Release 0.1.0 (beta)
 

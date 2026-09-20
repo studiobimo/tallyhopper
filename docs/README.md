@@ -5,6 +5,7 @@ merge once the repository is public (studiobimo/.github#8).
 
 - [Roadmap](ROADMAP.md): milestones, checklists and exit criteria
 - [Manual test script](manual-test.md): what to check by hand on both loaders before a release
+- [Compatibility](compatibility.md): modded storage, chunk loading, and what is verified
 - [Energy estimate methodology](methodology.md): where the kWh, CO₂, water and tree-day numbers come from
 - Architecture decision records:
   - [ADR-0001: A mod, not a datapack](adr/0001-mod-not-datapack.md)
