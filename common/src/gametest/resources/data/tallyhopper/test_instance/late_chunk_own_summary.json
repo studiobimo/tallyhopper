@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:late_chunk_own_summary",
+  "max_ticks": 400,
+  "structure": "tallyhopper:platform"
+}
