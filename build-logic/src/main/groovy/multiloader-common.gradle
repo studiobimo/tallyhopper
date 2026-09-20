@@ -30,6 +30,24 @@ dependencies {
 // `make -C .devtools lock` after changing versions.
 dependencyLocking {
     lockAllConfigurations()
+
+    // Minecraft's library manifest gates a few modules on the host OS, so the set of
+    // resolved modules differs between a developer's machine and a CI runner. Dependency
+    // locking is strict in both directions -- it fails on a locked module that did not
+    // resolve *and* on a resolved module that is not locked -- so a lockfile written on
+    // one OS can never validate on another, and a union of both would fail everywhere.
+    // Ignoring them keeps one lockfile valid on every platform.
+    //
+    // These stay pinned: gradle/verification-metadata.xml carries the sha256 of every
+    // platform's artifact, so an unexpected version has no trusted checksum and fails.
+    //
+    // Only modules that are wholly OS-gated need this. LWJGL and jtracy ship their natives
+    // as classifiers of a module that resolves everywhere, and locking ignores classifiers.
+    ignoredDependencies.addAll(
+            'ca.weblite:java-objc-bridge',          // macOS only
+            'io.netty:netty-transport-native-epoll', // Linux only
+            'io.netty:netty-transport-native-kqueue' // macOS and BSD only
+    )
 }
 
 tasks.withType(JavaCompile).configureEach {
