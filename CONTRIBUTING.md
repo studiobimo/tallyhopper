@@ -70,7 +70,12 @@ in CI, and for AI agents through a PreToolUse hook (`.devtools/scripts/agent-gua
   versions live in `gradle.properties` and are bumped deliberately, one Minecraft version at a time.
 - Every configuration is locked (`gradle.lockfile`) and checksum-verified
   (`gradle/verification-metadata.xml`). **After changing any version, run `make -C .devtools lock`**
-  and commit the results.
+  and commit the results. Lockfiles are platform-neutral, so it does not matter which OS you
+  run `lock` on.
+- The few Minecraft libraries that exist only on one OS (the netty native transports and
+  `java-objc-bridge`) are listed in `ignoredDependencies` in `build-logic/.../multiloader-common.gradle`.
+  They are left out of the lock state on purpose -- see the comment there -- and stay
+  checksum-pinned by `verification-metadata.xml`.
 - Dependabot opens `chore(deps)` PRs. Gradle bumps also need `make -C .devtools lock` on the PR branch,
   until CI automates it.
 

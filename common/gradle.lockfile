@@ -3,7 +3,6 @@
 # This file is expected to be part of source control.
 # To regenerate this file, run: ./gradlew :common:dependencies --write-locks
 at.yawk.lz4:lz4-java:1.10.1=compileClasspath,gametestCompileClasspath,gametestRuntimeClasspath,neoFormRuntimeDependenciesCompileClasspath,neoFormRuntimeDependenciesRuntimeClasspath,runtimeClasspath
-ca.weblite:java-objc-bridge:1.1=compileClasspath,gametestCompileClasspath,gametestRuntimeClasspath,neoFormRuntimeDependenciesCompileClasspath,neoFormRuntimeDependenciesRuntimeClasspath,runtimeClasspath
 com.azure:azure-json:1.4.0=compileClasspath,gametestCompileClasspath,gametestRuntimeClasspath,neoFormRuntimeDependenciesCompileClasspath,neoFormRuntimeDependenciesRuntimeClasspath,runtimeClasspath
 com.github.ben-manes.caffeine:caffeine:3.0.5=annotationProcessor,gametestAnnotationProcessor,testAnnotationProcessor
 com.github.kevinstern:software-and-algorithms:1.0=annotationProcessor,gametestAnnotationProcessor,testAnnotationProcessor
@@ -53,7 +52,6 @@ io.netty:netty-handler:4.2.16.Final=compileClasspath,gametestCompileClasspath,ga
 io.netty:netty-resolver:4.2.16.Final=compileClasspath,gametestCompileClasspath,gametestRuntimeClasspath,neoFormRuntimeDependenciesCompileClasspath,neoFormRuntimeDependenciesRuntimeClasspath,runtimeClasspath
 io.netty:netty-transport-classes-epoll:4.2.16.Final=compileClasspath,gametestCompileClasspath,gametestRuntimeClasspath,neoFormRuntimeDependenciesCompileClasspath,neoFormRuntimeDependenciesRuntimeClasspath,runtimeClasspath
 io.netty:netty-transport-classes-kqueue:4.2.16.Final=compileClasspath,gametestCompileClasspath,gametestRuntimeClasspath,neoFormRuntimeDependenciesCompileClasspath,neoFormRuntimeDependenciesRuntimeClasspath,runtimeClasspath
-io.netty:netty-transport-native-kqueue:4.2.16.Final=gametestRuntimeClasspath,neoFormRuntimeDependenciesRuntimeClasspath,runtimeClasspath
 io.netty:netty-transport-native-unix-common:4.2.16.Final=compileClasspath,gametestCompileClasspath,gametestRuntimeClasspath,neoFormRuntimeDependenciesCompileClasspath,neoFormRuntimeDependenciesRuntimeClasspath,runtimeClasspath
 io.netty:netty-transport:4.2.16.Final=compileClasspath,gametestCompileClasspath,gametestRuntimeClasspath,neoFormRuntimeDependenciesCompileClasspath,neoFormRuntimeDependenciesRuntimeClasspath,runtimeClasspath
 it.unimi.dsi:fastutil:8.3.1=neoFormRuntimeExternalTools
