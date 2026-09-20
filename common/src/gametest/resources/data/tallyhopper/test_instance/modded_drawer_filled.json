@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:modded_drawer_filled",
+  "max_ticks": 20,
+  "structure": "tallyhopper:platform"
+}

@@ -46,7 +46,10 @@ public final class TallyHopperGameTests {
             Map.entry(id("gamerules_have_defaults"), CreditTests::gameRulesHaveDefaults),
             Map.entry(id("credit_stops_at_the_ceiling"), CreditTests::creditStopsAtTheCeiling),
             Map.entry(id("rejoin_summary_awards"), CreditTests::rejoinSummaryAwardsStatsAndAdvancement),
-            Map.entry(id("backlog_tooltip"), CreditTests::backlogShowsInTheTooltip));
+            Map.entry(id("backlog_tooltip"), CreditTests::backlogShowsInTheTooltip),
+            Map.entry(id("modded_drawer_filled"), CompatibilityTests::fillsAModdedDrawer),
+            Map.entry(id("modded_drawer_full_backlogs"), CompatibilityTests::aFullDrawerBacklogsTheRest),
+            Map.entry(id("modded_drawer_keeps_contents"), CompatibilityTests::aDrawerKeepsWhatItHolds));
 
     private TallyHopperGameTests() {}
 

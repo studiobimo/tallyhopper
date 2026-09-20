@@ -72,14 +72,14 @@ public final class CreditTests {
 
     private CreditTests() {}
 
-    private static final BlockPos HOPPER = new BlockPos(2, 2, 2);
+    static final BlockPos HOPPER = new BlockPos(2, 2, 2);
 
     private static final int LINE_FLOW_TICKS = 800;
 
     /** Real sessions count up from 1, so made-up ones count down from the top to never collide. */
     private static final AtomicLong SESSION_IDS = new AtomicLong(Long.MAX_VALUE);
 
-    private static TallyHopperBlockEntity placeTallyHopper(GameTestHelper helper, BlockPos pos, Direction facing) {
+    static TallyHopperBlockEntity placeTallyHopper(GameTestHelper helper, BlockPos pos, Direction facing) {
         helper.setBlock(pos, TallyHopperContent.block().defaultBlockState().setValue(HopperBlock.FACING, facing));
         TallyHopperBlockEntity hopper = helper.getBlockEntity(pos, TallyHopperBlockEntity.class);
         // A hopper only watches its farm once a sapling has paid for the run, as a player's would.
@@ -87,7 +87,7 @@ public final class CreditTests {
         return hopper;
     }
 
-    private static void setRate(TallyHopperBlockEntity hopper, Item item, long perHour) {
+    static void setRate(TallyHopperBlockEntity hopper, Item item, long perHour) {
         hopper.changeOverrides(measurement -> {
             measurement.setOverride(item, perHour);
             return true;
@@ -95,14 +95,14 @@ public final class CreditTests {
     }
 
     /** A session in which the world was closed for {@code away}, starting {@code sinceLastTick} after the hopper's last tick. */
-    private static OfflineSession.Current session(GameTestHelper helper, Duration sinceLastTick, Duration away) {
+    static OfflineSession.Current session(GameTestHelper helper, Duration sinceLastTick, Duration away) {
         Instant closed = MeasurementClock.now(helper.getLevel()).plus(sinceLastTick);
         Duration cap = away.compareTo(SessionClock.DEFAULT_MAX_OFFLINE) > 0 ? away : SessionClock.DEFAULT_MAX_OFFLINE;
         return new OfflineSession.Current(
                 SESSION_IDS.getAndDecrement(), OfflineWindow.between(closed, closed.plus(away), cap));
     }
 
-    private static OfflineSession.Current session(GameTestHelper helper, Duration away) {
+    static OfflineSession.Current session(GameTestHelper helper, Duration away) {
         return session(helper, Duration.ZERO, away);
     }
 
