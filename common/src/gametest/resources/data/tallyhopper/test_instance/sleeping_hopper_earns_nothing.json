@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:sleeping_hopper_earns_nothing",
+  "max_ticks": 60,
+  "structure": "tallyhopper:platform"
+}
