@@ -13,7 +13,8 @@ A milestone is done only when all of its **exit criteria** are met.
 - [x] `.devtools/` (Makefile, uv, pre-commit), agent guards for Claude Code and Codex
 - [x] `.java-version` as the single Java version source
 - [x] Governance: README, CONTRIBUTING, CODEOWNERS, templates, Dependabot, release-please config, ADRs
-- [ ] CI wrappers calling the org reusable workflows (`pr-checks`, `ci`, `lint`, `security`, `release-please`)
+- [ ] CI wrappers calling the org reusable workflows: `pr-checks` and `ci` done; `lint`, `security`
+      and `release-please` still to come (studiobimo/.github#4, #5, #7)
 - [ ] Dependabot Gradle PRs refresh the lockfiles and verification metadata automatically
 - [ ] Wiki sync (once the repository is public)
 
