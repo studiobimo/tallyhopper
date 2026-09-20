@@ -17,7 +17,7 @@ jobs:
     # grant what it needs. `permissions: {}` above keeps every other job at nothing.
     permissions:
       contents: read
-    uses: studiobimo/.github/.github/workflows/ci-java-gradle.yml@2ee5455c17b24739dc85b2c1d8f3e803b3c2b114 # feat/release-workflows
+    uses: studiobimo/.github/.github/workflows/ci-java-gradle.yml@v1
     with:
       gradle-tasks: check
       artifact-paths: |
