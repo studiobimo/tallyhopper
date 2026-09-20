@@ -104,7 +104,7 @@ A milestone is done only when all of its **exit criteria** are met.
 
 ## M7: Release 0.1.0 (beta)
 
-- [ ] README with a how-it-works diagram, placement guidance and limits
+- [x] README with a how-it-works diagram, placement guidance and limits
 - [ ] Modrinth and CurseForge pages, screenshots
 
 ### Exit criteria
