@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:credit_stops_at_the_ceiling",
+  "max_ticks": 40,
+  "structure": "tallyhopper:platform"
+}

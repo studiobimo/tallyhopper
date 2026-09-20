@@ -100,9 +100,15 @@ Record the loader, the mod version and the world name in your notes.
    **Expect:** the summary says it was capped.
 3. `/gamerule tallyhopper:backlog_cap 10` on a busy hopper.
    **Expect:** the summary reports items not created once the cap is hit.
-4. Open Statistics.
+4. Hover the bar on a hopper that became ready only a few minutes ago.
+   **Expect:** a line saying it credits at a percentage until an hour is watched, and rates that match
+   that percentage. After an hour of running, the line is gone and the rates are the measured ones.
+5. `/gamerule tallyhopper:max_items_per_hour 100`, then rejoin after an absence.
+   **Expect:** no hopper credits more than 100 items an hour, whatever it measured or was overridden
+   to. Put it back to 9000 afterwards.
+6. Open Statistics.
    **Expect:** "Items credited while away" and "Energy not used (Wh)" have grown.
-5. Open Advancements.
+7. Open Advancements.
    **Expect:** "Sleep Mode" was granted the first time credit was applied.
 
 ## 7. Presentation

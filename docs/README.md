@@ -13,3 +13,4 @@ merge once the repository is public (studiobimo/.github#8).
   - [ADR-0004: Terminal vs line delivery modes](adr/0004-delivery-modes.md)
   - [ADR-0005: Energy-saved estimate methodology](adr/0005-energy-estimate.md)
   - [ADR-0006: A screen built from vanilla parts](adr/0006-screen-from-vanilla-parts.md)
+  - [ADR-0007: Bounding what a hopper may credit](adr/0007-bounding-credited-rates.md)

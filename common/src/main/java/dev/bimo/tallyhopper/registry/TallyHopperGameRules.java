@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.serialization.Codec;
 import dev.bimo.tallyhopper.TallyHopper;
 import dev.bimo.tallyhopper.offline.Backlog;
+import dev.bimo.tallyhopper.offline.RateBounds;
 import dev.bimo.tallyhopper.offline.RateTracker;
 import dev.bimo.tallyhopper.offline.SessionClock;
 import java.util.LinkedHashMap;
@@ -39,6 +40,13 @@ public final class TallyHopperGameRules {
     public static final GameRule<Integer> MIN_OBSERVATION_MINUTES =
             integer("min_observation_minutes", (int) RateTracker.DEFAULT_WARM_UP.toMinutes(), 1, (int)
                     RateTracker.WINDOW.toMinutes());
+
+    /**
+     * The most one hopper may credit per hour, across every item. The default is what a hopper can
+     * physically move, so no honest farm is touched by it; see {@link RateBounds}.
+     */
+    public static final GameRule<Integer> MAX_ITEMS_PER_HOUR =
+            integer("max_items_per_hour", (int) RateBounds.HOPPER_ITEMS_PER_HOUR, 0, Integer.MAX_VALUE);
 
     /** Whether players are told in chat what their hoppers earned while the world was closed. */
     public static final GameRule<Boolean> REJOIN_SUMMARY = bool("rejoin_summary", true);
