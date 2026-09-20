@@ -13,7 +13,7 @@ export SSL_CERT_FILE ?= $(shell $(UV) run --frozen python -c 'import certifi; pr
 GRADLE := cd $(ROOT) && JAVA_HOME="$$(/usr/libexec/java_home -v $$(cat .java-version) 2>/dev/null || echo $$JAVA_HOME)" ./gradlew
 
 .DEFAULT_GOAL := help
-.PHONY: help setup fmt lint test build check client-test scan lock run-fabric run-neoforge run-fabric-server run-neoforge-server clean
+.PHONY: help setup fmt lint test build check client-test scan lock stray kill-stray run-fabric run-neoforge run-fabric-server run-neoforge-server clean
 
 help: ## List targets
 	@grep -hE '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -46,6 +46,12 @@ scan: ## Secret and workflow security scans
 
 lock: ## Refresh gradle.lockfile(s) and sha256 dependency verification after version changes
 	$(GRADLE) --write-verification-metadata sha256 --refresh-dependencies resolveAndLockAll buildEnvironment build --write-locks
+
+stray: ## List JVMs a dev run or GameTest left behind
+	@$(CURDIR)/scripts/stray-java.sh || true
+
+kill-stray: ## Stop JVMs a dev run or GameTest left behind
+	@$(CURDIR)/scripts/stray-java.sh --kill
 
 run-fabric: ## Launch the Fabric dev client
 	$(GRADLE) :fabric:runClient
