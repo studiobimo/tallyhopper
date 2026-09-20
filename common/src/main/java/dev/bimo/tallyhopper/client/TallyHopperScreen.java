@@ -136,7 +136,8 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
 
     /**
      * Presses the menu's button, the way the lectern and the stonecutter do. The server spends the
-     * sapling and starts the measurement again, so nothing here decides whether it may happen.
+     * sapling and starts the measurement again; greying the padlock out here only spares the player a
+     * press the server would refuse anyway.
      */
     private void recalibrate() {
         if (minecraft != null && minecraft.gameMode != null) {
@@ -155,7 +156,7 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
         LockIconButton button = lock;
         if (button != null) {
             button.setLocked(state.ready());
-            button.active = menu.hasSapling();
+            button.active = menu.hasSapling() && !state.isDraining();
         }
     }
 
@@ -273,7 +274,7 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
         } else if (isOver(mouseX, mouseY, STAND_X, STAND_Y, STAND_WIDTH, STAND_HEIGHT)) {
             graphics.setComponentTooltipForNextFrame(font, List.of(fuelLine(state())), mouseX, mouseY);
         } else if (lock != null && lock.isHovered()) {
-            graphics.setComponentTooltipForNextFrame(font, lockLines(), mouseX, mouseY);
+            graphics.setComponentTooltipForNextFrame(font, lockLines(state()), mouseX, mouseY);
         }
     }
 
@@ -293,6 +294,9 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
     private static Component status(GuiState state) {
         if (state.needsSapling()) {
             return Component.translatable("gui.tallyhopper.status.needs_sapling");
+        }
+        if (state.isWaitingForBacklog()) {
+            return Component.translatable("gui.tallyhopper.status.draining");
         }
         if (state.isCalibrating()) {
             return Component.translatable("gui.tallyhopper.status.calibrating");
@@ -357,7 +361,11 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
                 : Component.translatable("gui.tallyhopper.saplings.empty");
     }
 
-    private List<Component> lockLines() {
+    private List<Component> lockLines(GuiState state) {
+        // A draining backlog is named first: unlike a missing sapling, it is not the player's to fix.
+        if (state.isDraining()) {
+            return List.of(Component.translatable("gui.tallyhopper.recalibrate.draining"));
+        }
         return menu.hasSapling()
                 ? List.of(Component.translatable("gui.tallyhopper.recalibrate"))
                 : List.of(Component.translatable("gui.tallyhopper.recalibrate.needs_sapling"));

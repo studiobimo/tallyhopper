@@ -64,7 +64,24 @@ public record GuiState(
 
     /** Whether the hopper is watching its farm, which the screen shows as a filling bar. */
     public boolean isCalibrating() {
-        return paid && !ready && observedSeconds < warmUpSeconds;
+        return paid && !ready && observedSeconds < warmUpSeconds && !isDraining();
+    }
+
+    /**
+     * Whether a backlog is flowing through the hopper. It shares the slots with farm output while it
+     * does, so the hopper stops watching, and the padlock is refused until it is empty.
+     */
+    public boolean isDraining() {
+        return backlog > 0;
+    }
+
+    /**
+     * Whether the hopper has been paid for but cannot watch yet, because a backlog is draining. The
+     * bar would sit at zero for as long as that takes, so the screen says what it is waiting for
+     * instead of claiming to be calibrating.
+     */
+    public boolean isWaitingForBacklog() {
+        return paid && !ready && isDraining();
     }
 
     /** Whether the hopper is waiting for the sapling a calibration run costs. */

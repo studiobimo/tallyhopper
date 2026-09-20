@@ -69,8 +69,14 @@ Record the loader, the mod version and the world name in your notes.
    nothing that was already there was moved, replaced or removed.
 6. Reopen the screen.
 7. **Expect:** either a "Last credit" line, or a backlog line with a drain estimate.
-8. Rejoin a second time without waiting.
-9. **Expect:** no summary and no second credit for the same absence.
+8. With a backlog still draining, look at the status line and the padlock.
+9. **Expect:** the status reads "Paused: backlog draining" with no rising bubbles, and the padlock is
+   greyed out; hovering it says the backlog has to drain first. The bar holds the progress it had
+   rather than restarting at zero.
+10. Wait for the backlog to reach zero.
+11. **Expect:** the padlock is pressable again, and pressing it spends a sapling and starts a new run.
+12. Rejoin a second time without waiting.
+13. **Expect:** no summary and no second credit for the same absence.
 
 ## 4. Delivery modes
 

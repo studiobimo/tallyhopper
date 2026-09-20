@@ -4,6 +4,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.bimo.tallyhopper.block.TallyHopperBlock;
 import dev.bimo.tallyhopper.block.TallyHopperBlockEntity;
 import dev.bimo.tallyhopper.command.TallyHopperCommand;
+import dev.bimo.tallyhopper.gui.GuiState;
 import dev.bimo.tallyhopper.gui.TallyHopperMenu;
 import dev.bimo.tallyhopper.measure.Measurement;
 import dev.bimo.tallyhopper.offline.Rate;
@@ -52,6 +53,9 @@ public final class MeasurementTests {
 
     /** Where a hopper's first hotbar slot sits in a {@link HopperMenu}: 5 hopper slots, 27 inventory. */
     private static final int MENU_HOTBAR_START = 5 + 27;
+
+    /** More than the five slots hold, so some is still waiting after the hopper refills from it. */
+    private static final long DRAINING_BACKLOG = 500;
 
     private static TallyHopperBlockEntity placeTallyHopper(GameTestHelper helper, Direction facing) {
         helper.setBlock(HOPPER, TallyHopperContent.block().defaultBlockState().setValue(HopperBlock.FACING, facing));
@@ -183,6 +187,51 @@ public final class MeasurementTests {
                 .thenExecute(() -> helper.assertFalse(
                         menu.clickMenuButton(player, TallyHopperMenu.RECALIBRATE_BUTTON),
                         "recalibrated with an empty sapling slot"))
+                .thenSucceed();
+    }
+
+    /**
+     * A hopper with a backlog is not watching its farm, so the padlock is refused and no sapling is
+     * spent: pressing it would otherwise buy a run that cannot start, behind a bar stuck at zero.
+     */
+    public static void recalibrateRefusesWhileDraining(GameTestHelper helper) {
+        TallyHopperBlockEntity hopper = placeTallyHopper(helper, Direction.DOWN);
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        TallyHopperMenu menu =
+                new TallyHopperMenu(1, player.getInventory(), hopper, hopper.saplings(), helper.absolutePos(HOPPER));
+        helper.startSequence()
+                .thenIdle(20)
+                .thenExecute(() -> {
+                    helper.assertTrue(hopper.isWatching(), "not watching before any backlog arrives");
+                    helper.assertValueEqual(
+                            hopper.saplings().getItem(0).getCount(), 15, "saplings after the first run");
+                    hopper.ledger().backlog().addAll(Map.of(Items.COBBLESTONE, DRAINING_BACKLOG));
+                })
+                .thenIdle(5)
+                .thenExecute(() -> {
+                    helper.assertFalse(hopper.isWatching(), "watching while the backlog drains");
+                    GuiState state = hopper.guiState();
+                    helper.assertTrue(state.backlog() > 0, "backlog left to drain");
+                    helper.assertFalse(state.isCalibrating(), "the screen claims to be calibrating");
+                    helper.assertTrue(state.isWaitingForBacklog(), "the screen doesn't say what it waits for");
+                    helper.assertFalse(
+                            menu.clickMenuButton(player, TallyHopperMenu.RECALIBRATE_BUTTON),
+                            "the padlock recalibrated while the backlog drains");
+                    helper.assertValueEqual(
+                            hopper.saplings().getItem(0).getCount(), 15, "saplings after the refused press");
+                    helper.assertFalse(hopper.measurement().observed().isZero(), "the measurement was thrown away");
+                    hopper.ledger().backlog().take(Items.COBBLESTONE, Long.MAX_VALUE);
+                })
+                .thenIdle(5)
+                .thenExecute(() -> {
+                    helper.assertTrue(hopper.isWatching(), "not watching once the backlog has drained");
+                    helper.assertTrue(
+                            menu.clickMenuButton(player, TallyHopperMenu.RECALIBRATE_BUTTON),
+                            "the padlock did nothing once the backlog had drained");
+                    helper.assertValueEqual(
+                            hopper.saplings().getItem(0).getCount(), 14, "saplings after recalibrating");
+                    helper.assertTrue(hopper.measurement().observed().isZero(), "the measurement was kept");
+                })
                 .thenSucceed();
     }
 
