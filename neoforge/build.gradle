@@ -3,6 +3,44 @@ plugins {
     id 'net.neoforged.moddev'
 }
 
+// Modrinth's maven, for third-party mods loaded only by the dev and GameTest runtimes. Scoped to its
+// own group so nothing else can be resolved from it.
+repositories {
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Modrinth'
+                url = uri('https://api.modrinth.com/maven')
+            }
+        }
+        filter {
+            includeGroup('maven.modrinth')
+        }
+    }
+}
+
+configurations {
+    // Mod jars handed to the run configurations only; never compiled against, never published.
+    testMods
+}
+
+// FML finds third-party mods in a run directory's `mods` folder, not on the classpath, so each run
+// gets the test mods copied in before it starts. The GameTest run owns its directory and is synced
+// clean; the dev client and server directories are the developer's, so those are only added to.
+def installTestMods(run) {
+    def install = tasks.register("install${run.name.capitalize()}TestMods", run.name == 'gameTestServer' ? Sync : Copy) {
+        from(configurations.testMods)
+        into(run.gameDirectory.dir('mods'))
+    }
+    run.taskBefore(install)
+}
+
+dependencies {
+    // Storage Drawers proves credit reaches storage the mod knows nothing about: it is never on the
+    // compile classpath, and the tests find its blocks by id. See docs/compatibility.md.
+    testMods("maven.modrinth:storagedrawers:${storage_drawers_version}+neoforge")
+}
+
 // GameTests run as a separate mod from the gametest source set, which adds the shared tests from
 // common. `./gradlew :neoforge:runGameTestServer` runs them headless; `check` runs them too.
 sourceSets {
@@ -33,6 +71,7 @@ neoForge {
         configureEach {
             systemProperty('neoforge.enabledGameTestNamespaces', mod_id)
             ideName = "NeoForge ${it.name.capitalize()} (${project.path})"
+            installTestMods(it)
         }
         client {
             client()

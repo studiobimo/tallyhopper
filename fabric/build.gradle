@@ -3,10 +3,32 @@ plugins {
     id 'net.fabricmc.fabric-loom'
 }
 
+// Modrinth's maven, for third-party mods loaded only by the dev and GameTest runtimes. Scoped to its
+// own group so nothing else can be resolved from it.
+repositories {
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Modrinth'
+                url = uri('https://api.modrinth.com/maven')
+            }
+        }
+        filter {
+            includeGroup('maven.modrinth')
+        }
+    }
+}
+
 dependencies {
     minecraft("com.mojang:minecraft:${minecraft_version}")
     implementation("net.fabricmc:fabric-loader:${fabric_loader_version}")
     implementation("net.fabricmc.fabric-api:fabric-api:${fabric_version}")
+
+    // Storage Drawers proves credit reaches storage the mod knows nothing about: it is never on the
+    // compile classpath, and the tests find its blocks by id. See docs/compatibility.md. Minecraft
+    // 26.x is unobfuscated, so a mod jar needs no remapping and `localRuntime` is enough; every run
+    // configuration, GameTests included, extends the main runtime classpath.
+    localRuntime("maven.modrinth:storagedrawers:${storage_drawers_version}+fabric")
 }
 
 // Datagen lives in its own source set (kept out of the release jar) and writes into common, so both
