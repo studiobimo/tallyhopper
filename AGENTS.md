@@ -36,6 +36,7 @@ make -C .devtools setup   # once: pinned tools + git hooks
 make -C .devtools check   # everything CI runs (lint + build + tests)
 make -C .devtools fmt     # format Java
 make -C .devtools run-fabric-server
+make -C .devtools stray   # JVMs a dev run or GameTest left behind (kill-stray stops them)
 ```
 
 ## Code conventions
