@@ -84,7 +84,11 @@ repos:
     rev: 2bba271688c1abb1503097a064e6c3bc1d1b6a9b  # frozen: lychee-v0.24.2
     hooks:
       - id: lychee
-        args: [--no-progress, --config, lychee.toml]
+        # The wrapper resolves its version with `git describe` but does not clear
+        # GIT_DIR, which git exports to hooks, so on push it inspects this repo
+        # instead of its own checkout and finds no lychee tag. Pinning the version
+        # takes the wrapper's documented fast path and skips that lookup.
+        args: [LYCHEE_VERSION=0.24.2, --no-progress, --config, lychee.toml]
         types: [markdown]
         stages: [pre-push, manual]
 
