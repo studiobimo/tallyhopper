@@ -1,0 +1,68 @@
+name: Release
+
+# The whole release path, in one run.
+#
+#   push to main            -> release-please grooms a release pull request
+#   merge that pull request -> release-please tags it and cuts the GitHub Release
+#                           -> publish-mod builds, attests and ships the jars
+#
+# Both jobs are thin wrappers around studiobimo/.github, so a fix there lands in
+# every repo at once; see that repo's README for the inputs.
+#
+# They have to share one run. A tag created with GITHUB_TOKEN does not trigger
+# another workflow -- GitHub suppresses that to stop runaway loops -- so a separate
+# `on: push: tags` publisher would silently never fire. Gating publish on the
+# release job's `release-created` output is what makes the handoff reliable. Do not
+# split these into two workflows.
+#
+# The publish job holds the Modrinth and CurseForge tokens and runs this repo's own
+# Gradle build. That is safe here and only here: this workflow triggers on a push to
+# main, which is code that already went through review. Never move it to a
+# `pull_request` trigger, where a fork could rewrite the build and read the tokens.
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+# Never cancel a release in flight; a half-finished one is worse than a slow one.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    # A called workflow can never hold more than its caller, so the caller has to
+    # grant what it needs. `permissions: {}` above keeps every other job at nothing.
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: studiobimo/.github/.github/workflows/release-please.yml@v1
+
+  publish:
+    needs: release
+    # Every push to main runs the job above, but only the one that merged the
+    # release pull request actually tagged anything.
+    if: ${{ needs.release.outputs.release-created == 'true' }}
+    permissions:
+      # Uploading the jars onto the GitHub Release.
+      contents: write
+      # Signing the provenance attestation with a short-lived OIDC identity.
+      id-token: write
+      # Recording the attestation against the repository.
+      attestations: write
+    uses: studiobimo/.github/.github/workflows/publish-mod.yml@v1
+    with:
+      # Checked out by the publish job, so the jars are built from exactly what was tagged.
+      tag-name: ${{ needs.release.outputs.tag-name }}
+      # Stays true until this repo actually has a publish task. The build still runs,
+      # the jars are still attested and kept with the run, but nothing is pushed to a
+      # download page. Flip it once mod-publish-plugin provides `publishMods` and the
+      # MODRINTH_TOKEN / CURSEFORGE_TOKEN secrets exist.
+      dry-run: true
+    # Explicit, never `secrets: inherit`. Both are optional: leave one out and that
+    # platform is simply not published to.
+    secrets:
+      modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+      curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
