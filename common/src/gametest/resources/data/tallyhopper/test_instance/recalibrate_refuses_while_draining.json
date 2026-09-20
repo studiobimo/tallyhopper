@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:recalibrate_refuses_while_draining",
+  "max_ticks": 80,
+  "structure": "tallyhopper:platform"
+}

@@ -177,10 +177,14 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
      * Measures again from nothing, for a player whose farm changed. Spends one sapling, and does
      * nothing without one.
      *
+     * <p>It also does nothing while a backlog is draining. The hopper is not watching its farm then, so
+     * the sapling would buy a run that cannot begin until the backlog is empty, and the screen would
+     * show a bar that sits at zero for as long as that takes.
+     *
      * @return whether a sapling was spent and the measurement restarted
      */
     public boolean recalibrate() {
-        if (saplings.getItem(0).isEmpty()) {
+        if (!isMeasuring() || saplings.getItem(0).isEmpty()) {
             return false;
         }
         // The hopper has already paid for the measurement it is about to throw away, so it pays again.
