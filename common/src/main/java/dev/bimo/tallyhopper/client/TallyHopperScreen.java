@@ -4,6 +4,7 @@ import dev.bimo.tallyhopper.block.TallyHopperBlockEntity;
 import dev.bimo.tallyhopper.conversion.HopperChain;
 import dev.bimo.tallyhopper.gui.GuiState;
 import dev.bimo.tallyhopper.gui.TallyHopperMenu;
+import dev.bimo.tallyhopper.offline.RateTracker;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -111,6 +112,9 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
 
     /** How many item rates the tooltip lists before the rest are counted. */
     private static final int LISTED_RATES = 4;
+
+    /** A rate measured over less of this earns its share of it, so a burst is worth a burst. */
+    private static final long WINDOW_SECONDS = RateTracker.WINDOW.toSeconds();
 
     /** A vanilla hopper moves one item every eight ticks, which is 2.5 a second. */
     private static final double ITEMS_PER_SECOND = 2.5;
@@ -309,6 +313,10 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
                     number(state.warmUpSeconds() / 60)));
         }
         addRates(lines, state);
+        if (state.ready() && state.observedSeconds() < WINDOW_SECONDS) {
+            long percent = Math.max(1, state.observedSeconds() * 100L / WINDOW_SECONDS);
+            lines.add(Component.translatable("gui.tallyhopper.weighed", number(percent)));
+        }
         lines.add(
                 state.terminal()
                         ? Component.translatable("gui.tallyhopper.mode.terminal")

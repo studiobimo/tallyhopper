@@ -7,6 +7,7 @@ import dev.bimo.tallyhopper.credit.StoredBacklog;
 import dev.bimo.tallyhopper.measure.MeasurementClock;
 import dev.bimo.tallyhopper.offline.Backlog;
 import dev.bimo.tallyhopper.offline.OfflineWindow;
+import dev.bimo.tallyhopper.offline.RateBounds;
 import dev.bimo.tallyhopper.offline.SessionClock;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
 import dev.bimo.tallyhopper.registry.TallyHopperGameRules;
@@ -291,12 +292,13 @@ public final class CreditTests {
             CreditReport report = hopper.credit(session(helper, Duration.ofDays(100)));
             Duration took = Duration.ofNanos(System.nanoTime() - started);
 
-            helper.assertValueEqual(
-                    report.earned().getOrDefault(Items.COBBLESTONE, 0L), 2_400_000_000L, "cobblestone earned");
+            // Both overrides are far over the hopper's ceiling, so the two items share it evenly.
+            long perItem = RateBounds.HOPPER_ITEMS_PER_HOUR / 2 * 24 * 100;
+            helper.assertValueEqual(report.earned().getOrDefault(Items.COBBLESTONE, 0L), perItem, "cobblestone earned");
             helper.assertValueEqual(report.delivered(), 27L * 64, "delivered into the chest");
             helper.assertValueEqual(hopper.ledger().backlog().total(), Backlog.DEFAULT_CAP, "backlog");
             helper.assertValueEqual(
-                    report.refused(), 2 * 2_400_000_000L - 27L * 64 - Backlog.DEFAULT_CAP, "refused over the cap");
+                    report.refused(), 2 * perItem - 27L * 64 - Backlog.DEFAULT_CAP, "refused over the cap");
             int bytes =
                     serializedSize(hopper.saveWithoutMetadata(helper.getLevel().registryAccess()));
             helper.assertTrue(bytes < 4096, "the hopper saves in " + bytes + " bytes");
@@ -421,6 +423,26 @@ public final class CreditTests {
     }
 
     /**
+     * A rate far above what a hopper can move earns only the ceiling, however it was arrived at. This
+     * is what stops a hand-fed burst during calibration from paying out forever.
+     */
+    public static void creditStopsAtTheCeiling(GameTestHelper helper) {
+        helper.setBlock(new BlockPos(3, 2, 2), Blocks.CHEST);
+        TallyHopperBlockEntity hopper = placeTallyHopper(helper, HOPPER, Direction.EAST);
+        setRate(hopper, Items.COBBLESTONE, 1_000_000);
+
+        helper.runAfterDelay(1, () -> {
+            CreditReport report = hopper.credit(session(helper, Duration.ofHours(1)));
+
+            helper.assertValueEqual(
+                    report.earned().getOrDefault(Items.COBBLESTONE, 0L),
+                    RateBounds.HOPPER_ITEMS_PER_HOUR,
+                    "an hour of credit at the ceiling");
+            helper.succeed();
+        });
+    }
+
+    /**
      * The gamerules are registered and start at their defaults. Changing them would affect the other
      * tests, which share one world, so only the defaults are checked here.
      */
@@ -430,6 +452,10 @@ public final class CreditTests {
         helper.assertValueEqual(rules.get(TallyHopperGameRules.BACKLOG_CAP), 1_000_000, "backlog cap");
         helper.assertValueEqual(rules.get(TallyHopperGameRules.MIN_OBSERVATION_MINUTES), 5, "minutes to calibrate");
         helper.assertValueEqual(rules.get(TallyHopperGameRules.REJOIN_SUMMARY), true, "rejoin summary");
+        helper.assertValueEqual(
+                (long) rules.get(TallyHopperGameRules.MAX_ITEMS_PER_HOUR),
+                RateBounds.HOPPER_ITEMS_PER_HOUR,
+                "max items per hour");
         for (Identifier id : TallyHopperGameRules.ALL.keySet()) {
             helper.assertTrue(BuiltInRegistries.GAME_RULE.containsKey(id), id + " is registered");
         }

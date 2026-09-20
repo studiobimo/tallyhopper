@@ -8,6 +8,8 @@ import dev.bimo.tallyhopper.gui.GuiState;
 import dev.bimo.tallyhopper.measure.Measurement;
 import dev.bimo.tallyhopper.measure.MeasurementClock;
 import dev.bimo.tallyhopper.offline.Backlog;
+import dev.bimo.tallyhopper.offline.Rate;
+import dev.bimo.tallyhopper.offline.RateBounds;
 import dev.bimo.tallyhopper.offline.SaturatingMath;
 import dev.bimo.tallyhopper.platform.Services;
 import dev.bimo.tallyhopper.platform.services.ItemSinks;
@@ -217,7 +219,7 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
      * the hopper faces; the rest goes to the backlog.
      */
     public CreditReport credit(OfflineSession.Current session) {
-        Map<Item, Long> earned = ledger.earn(session, measurement.effectiveRates());
+        Map<Item, Long> earned = ledger.earn(session, creditedRates());
         setChanged();
         if (earned.isEmpty()) {
             return CreditReport.NONE;
@@ -272,6 +274,27 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         return Services.ITEM_SINKS.find(level, target, facing.getOpposite());
     }
 
+    /**
+     * The rates this hopper would actually credit: what it measured, weighed by how much of the window
+     * it has watched, with the player's overrides in place, and the total held to what a hopper can
+     * physically move. Everything that shows a rate goes through here, so the screen, the command and
+     * the credit itself can never disagree.
+     */
+    public Map<Item, Rate> creditedRates() {
+        return RateBounds.capTotal(measurement.effectiveRates(), ceiling());
+    }
+
+    /** The same bound applied to what the hopper measured alone, without any override. */
+    public Map<Item, Rate> provenRates() {
+        return RateBounds.capTotal(measurement.provenRates(), ceiling());
+    }
+
+    private long ceiling() {
+        return getLevel() instanceof ServerLevel level
+                ? level.getGameRules().get(TallyHopperGameRules.MAX_ITEMS_PER_HOUR)
+                : RateBounds.HOPPER_ITEMS_PER_HOUR;
+    }
+
     /** What an open screen shows. Built on the server, read on the client. */
     public GuiState guiState() {
         Level level = getLevel();
@@ -279,7 +302,7 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
             return clientState;
         }
         Map<Item, Long> rates = new LinkedHashMap<>();
-        measurement.effectiveRates().forEach((item, rate) -> rates.put(item, Math.round(rate.itemsPerHour())));
+        creditedRates().forEach((item, rate) -> rates.put(item, Math.round(rate.itemsPerHour())));
         return new GuiState(
                 rates,
                 List.copyOf(measurement.overrides().keySet()),

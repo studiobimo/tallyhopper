@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.bimo.tallyhopper.TallyHopper;
 import dev.bimo.tallyhopper.offline.OfflineCredit;
 import dev.bimo.tallyhopper.offline.Rate;
+import dev.bimo.tallyhopper.offline.RateBounds;
 import dev.bimo.tallyhopper.offline.RateTracker;
 import java.time.Duration;
 import java.time.Instant;
@@ -98,11 +99,25 @@ public final class Measurement {
         return isWarmedUp() || overridesPerHour.values().stream().anyMatch(perHour -> perHour > 0);
     }
 
-    /** The rates that earn credit; see {@link OfflineCredit#effectiveRates}. */
+    /**
+     * The rates that earn credit, before the per-hopper ceiling: what was measured, weighed by how much
+     * of the window this hopper has actually watched, with each override in place of its item's rate.
+     *
+     * @see OfflineCredit#effectiveRates
+     * @see RateBounds#weigh
+     */
     public Map<Item, Rate> effectiveRates() {
         Map<Item, Rate> overrides = new LinkedHashMap<>();
         overridesPerHour.forEach((item, perHour) -> overrides.put(item, Rate.perHour(perHour)));
-        return OfflineCredit.effectiveRates(measuredRates(), isWarmedUp(), overrides);
+        return OfflineCredit.effectiveRates(provenRates(), isWarmedUp(), overrides);
+    }
+
+    /**
+     * What this hopper can prove on its own: its measured rates, weighed down while it has watched for
+     * less than the window. This is the ceiling a player who is not an operator may override up to.
+     */
+    public Map<Item, Rate> provenRates() {
+        return RateBounds.weigh(measuredRates(), observed(), RateTracker.WINDOW);
     }
 
     /** The overrides in items per hour. */
