@@ -28,9 +28,7 @@ jobs:
     # grant what it needs. `permissions: {}` above keeps every other job at nothing.
     permissions:
       contents: read
-    # TEMPORARY: studiobimo/.github#33 branch SHA, for the cross-repo proof that
-    # repo's AGENTS.md requires. Flip to @v1 once #33 is merged and released.
-    uses: studiobimo/.github/.github/workflows/ci-pre-commit.yml@b68d93973833a6c382d45f8f48b98a43a82e4b3f
+    uses: studiobimo/.github/.github/workflows/ci-pre-commit.yml@v1
     with:
       # Where pre-commit itself is pinned, the same project `make -C .devtools lint` uses.
       uv-project: .devtools
