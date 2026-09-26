@@ -68,8 +68,10 @@ Record the loader, the mod version and the world name in your notes.
 1. Note what the hopper's target container holds.
 2. Quit to the title screen, close the game, and wait a few real minutes.
 3. Start the game and rejoin the world.
-4. **Expect:** one chat line summarising what was earned, with the details on hover for several
-   hoppers, and the energy line if `show_energy_estimate` is on.
+4. **Expect:** two chat lines: a gold `[Tally Hopper]` tag, then what was earned in grey with the
+   item count in green, and underneath it in dark grey how it landed — delivered, backlogged, and the
+   energy line if `show_energy_estimate` is on. With several hoppers, hovering the first line lists
+   them.
 5. **Expect:** the target container gained items at roughly the measured rate for the time away, and
    nothing that was already there was moved, replaced or removed.
 6. Reopen the screen.

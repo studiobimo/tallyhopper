@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -108,22 +109,20 @@ public final class RejoinSummary {
         waited = 0;
     }
 
+    /**
+     * Two lines: what was earned, then how it landed. The headline is the only thing a player has to
+     * read, so it carries the colour; everything that only matters when something went wrong sits
+     * under it in dark grey.
+     */
     private Component message(OfflineWindow window, EnergyEstimate energy) {
-        MutableComponent message = hoppers == 1
+        Component headline = Component.translatable("message.tallyhopper.summary.items", number(items))
+                .withStyle(ChatFormatting.GREEN);
+        MutableComponent earned = hoppers == 1
                 ? Component.translatable(
-                        "message.tallyhopper.summary.one",
-                        firstPos,
-                        duration(window.credited()),
-                        number(items),
-                        number(delivered),
-                        number(backlogged))
+                        "message.tallyhopper.summary.one", firstPos, duration(window.credited()), headline)
                 : Component.translatable(
-                        "message.tallyhopper.summary.many",
-                        number(hoppers),
-                        duration(window.credited()),
-                        number(items),
-                        number(delivered),
-                        number(backlogged));
+                        "message.tallyhopper.summary.many", number(hoppers), duration(window.credited()), headline);
+        earned.withStyle(ChatFormatting.GRAY);
         if (hoppers > 1) {
             MutableComponent hover = Component.empty();
             lines.forEach(line -> hover.append(line).append(Component.literal("\n")));
@@ -131,20 +130,38 @@ public final class RejoinSummary {
                 hover.append(Component.translatable(
                         "message.tallyhopper.summary.and_more", number(hoppers - (long) lines.size())));
             }
-            message.withStyle(Style.EMPTY.withHoverEvent(new HoverEvent.ShowText(hover)));
+            earned.withStyle(Style.EMPTY.withHoverEvent(new HoverEvent.ShowText(hover)));
         }
+
+        MutableComponent landed =
+                Component.translatable("message.tallyhopper.summary.detail", number(delivered), number(backlogged));
         if (window.capped()) {
-            message.append(Component.translatable(
+            landed.append(Component.translatable(
                     "message.tallyhopper.summary.capped",
                     number(window.credited().toHours())));
         }
         if (refused > 0) {
-            message.append(Component.translatable("message.tallyhopper.summary.refused", number(refused)));
+            landed.append(Component.translatable("message.tallyhopper.summary.refused", number(refused)));
         }
         if (TallyHopperConfig.showEnergyEstimate() && energy.kilowattHours() > 0) {
-            message.append(energy(energy));
+            landed.append(energy(energy));
         }
-        return message;
+        landed.withStyle(ChatFormatting.DARK_GRAY);
+
+        // An empty root, so the prefix's colours stay on the prefix instead of bleeding into the rest.
+        return Component.empty()
+                .append(prefix())
+                .append(earned)
+                .append(Component.literal("\n"))
+                .append(landed);
+    }
+
+    /** The mod's one piece of chat branding, reusing the block's own translated name. */
+    private static Component prefix() {
+        return Component.literal("[")
+                .withStyle(ChatFormatting.DARK_GRAY)
+                .append(Component.translatable("block.tallyhopper.tally_hopper").withStyle(ChatFormatting.GOLD))
+                .append(Component.literal("] ").withStyle(ChatFormatting.DARK_GRAY));
     }
 
     private static Component energy(EnergyEstimate energy) {
