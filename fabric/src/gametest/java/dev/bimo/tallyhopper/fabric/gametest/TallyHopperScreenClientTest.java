@@ -1,5 +1,6 @@
 package dev.bimo.tallyhopper.fabric.gametest;
 
+import dev.bimo.tallyhopper.block.TallyHopperBlock;
 import dev.bimo.tallyhopper.block.TallyHopperBlockEntity;
 import dev.bimo.tallyhopper.client.TallyHopperScreen;
 import dev.bimo.tallyhopper.platform.Services;
@@ -15,8 +16,9 @@ import net.minecraft.world.item.Items;
 
 /**
  * Opens the Tally Hopper's screen in a real client and photographs it in each state it has: waiting
- * for a sapling, calibrating, ready, and passthrough. Rendering is the one thing only a real client can
- * show.
+ * for a sapling, calibrating, ready, and passthrough. Then photographs the block itself by day and by
+ * night, one hopper calibrating and one ready, so the clock face can be checked by eye. Rendering is
+ * the one thing only a real client can show.
  */
 public final class TallyHopperScreenClientTest implements FabricClientGameTest {
 
@@ -76,6 +78,35 @@ public final class TallyHopperScreenClientTest implements FabricClientGameTest {
                     && hopper.guiState().isPassthrough());
             context.waitTicks(5);
             context.takeScreenshot("tally_hopper_passthrough");
+
+            context.setScreen(() -> null);
+            singleplayer.getServer().runOnServer(server -> {
+                ServerPlayer player = server.getPlayerList().getPlayers().getFirst();
+                BlockPos base = player.blockPosition();
+                BlockPos calibrating = base.offset(-1, 1, -3);
+                BlockPos ready = base.offset(1, 1, -3);
+                server.overworld()
+                        .setBlockAndUpdate(
+                                calibrating, TallyHopperContent.block().defaultBlockState());
+                server.overworld()
+                        .setBlockAndUpdate(
+                                ready,
+                                TallyHopperContent.block().defaultBlockState().setValue(TallyHopperBlock.READY, true));
+                // An override keeps it ready, or its next clock-face check would set it back.
+                if (server.overworld().getBlockEntity(ready) instanceof TallyHopperBlockEntity hopper) {
+                    hopper.changeOverrides(measurement -> {
+                        measurement.setOverride(Items.COBBLESTONE, 600);
+                        return true;
+                    });
+                }
+                player.connection.teleport(base.getX() + 0.5, base.getY(), base.getZ() + 0.5, 180, 12);
+            });
+            singleplayer.getServer().runCommand("time set noon");
+            context.waitTicks(40);
+            context.takeScreenshot("tally_hopper_block_day");
+            singleplayer.getServer().runCommand("time set midnight");
+            context.waitTicks(40);
+            context.takeScreenshot("tally_hopper_block_night");
         }
     }
 }

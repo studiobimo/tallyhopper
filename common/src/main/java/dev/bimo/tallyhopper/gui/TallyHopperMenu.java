@@ -1,8 +1,10 @@
 package dev.bimo.tallyhopper.gui;
 
+import dev.bimo.tallyhopper.TallyHopper;
 import dev.bimo.tallyhopper.block.TallyHopperBlockEntity;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -22,6 +24,10 @@ public final class TallyHopperMenu extends AbstractContainerMenu {
 
     /** The button the padlock on the screen presses; see {@link #clickMenuButton}. */
     public static final int RECALIBRATE_BUTTON = 0;
+
+    /** The ghost sapling an empty calibration slot shows, the way an empty armour slot shows its piece. */
+    private static final Identifier EMPTY_SLOT_SAPLING =
+            Identifier.fromNamespaceAndPath(TallyHopper.MOD_ID, "container/slot/sapling");
 
     /** Where the five hopper slots start, and where the sapling slot sits. */
     private static final int SLOTS_X = 80;
@@ -55,6 +61,11 @@ public final class TallyHopperMenu extends AbstractContainerMenu {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return stack.is(ItemTags.SAPLINGS);
+            }
+
+            @Override
+            public Identifier getNoItemIcon() {
+                return EMPTY_SLOT_SAPLING;
             }
         });
         addStandardInventorySlots(inventory, 8, 84);

@@ -40,8 +40,8 @@ Record the loader, the mod version and the world name in your notes.
 ## 2. Calibration and the screen
 
 1. Open the screen of a freshly placed Tally Hopper.
-2. **Expect:** "Needs a sapling", an empty bar, an empty sapling slot on the left and an open padlock.
-   Hovering the empty meter says what goes there.
+2. **Expect:** "Needs a sapling", an empty bar, a ghost sapling in the empty slot on the left and an
+   open padlock. Hovering the empty meter says what goes there.
 3. Put a stack of saplings in the slot.
 4. **Expect:** one sapling is taken straight away, the meter under the stand fills to match what is
    left, the bubbles start rising, and the status becomes "Calibrating".
@@ -137,9 +137,13 @@ Record the loader, the mod version and the world name in your notes.
 ## 7. Presentation
 
 1. Check the block from a distance.
-   **Expect:** its clock face reads orange while calibrating and green once ready.
-2. Hover the item in the creative inventory and in a chest.
-3. Switch the language to something other than English.
+   **Expect:** its brass clock face reads cream while calibrating and green once ready, on all four
+   sides, with the hand the same way up on each.
+2. Open the screen.
+   **Expect:** the panel has the black rounded outline of every vanilla container.
+3. Hover the item in the creative inventory and in a chest.
+   **Expect:** the icon is a hopper with a small pocket-watch badge.
+4. Switch the language to something other than English.
    **Expect:** no raw keys such as `gui.tallyhopper.status.ready` anywhere on screen — everything
    falls back to English text.
 
