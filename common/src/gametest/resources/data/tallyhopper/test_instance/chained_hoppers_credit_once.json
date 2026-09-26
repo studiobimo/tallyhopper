@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:chained_hoppers_credit_once",
+  "max_ticks": 40,
+  "structure": "tallyhopper:platform"
+}

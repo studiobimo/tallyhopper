@@ -74,6 +74,22 @@ public final class ClockConversion {
         };
     }
 
+    /**
+     * Whether the hopper at {@code pos} feeds a Tally Hopper, directly or down a line of hoppers.
+     *
+     * <p>Two Tally Hoppers on one line both measure the same items, so both would extrapolate them:
+     * the line would hand back one farm's output once per Tally Hopper in it. Only the one nearest
+     * the storage earns, because it is the one that sees everything the line actually delivers.
+     */
+    public static boolean feedsATallyHopper(Level level, BlockPos pos) {
+        BlockPos downstream = nextHopper(level, pos);
+        return downstream != null
+                && HopperChain.anyInChain(
+                        downstream,
+                        next -> nextHopper(level, next),
+                        next -> level.getBlockState(next).getBlock() instanceof TallyHopperBlock);
+    }
+
     /** The hopper that the hopper at {@code pos} pushes into, or {@code null}. Never loads chunks. */
     static @Nullable BlockPos nextHopper(Level level, BlockPos pos) {
         BlockPos target = pos.relative(level.getBlockState(pos).getValue(HopperBlock.FACING));
@@ -96,6 +112,10 @@ public final class ClockConversion {
 
     /** Converts the hopper if the player can pay a sapling, and takes the sapling. */
     private static InteractionResult convertPaying(ServerLevel level, BlockPos pos, Player player) {
+        // Checked before the sapling, so a refused conversion never costs anything.
+        if (feedsATallyHopper(level, pos)) {
+            return refuse(player, "message.tallyhopper.feeds_tally_hopper");
+        }
         int saplingSlot = findSapling(player);
         if (!player.hasInfiniteMaterials() && saplingSlot < 0) {
             return refuse(player, "message.tallyhopper.needs_sapling");

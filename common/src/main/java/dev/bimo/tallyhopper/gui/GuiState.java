@@ -25,6 +25,7 @@ import net.minecraft.world.item.Item;
  * @param terminal whether it fills storage directly, rather than feeding a line of hoppers
  * @param saplings how many saplings are in the calibration slot
  * @param paid whether a sapling has been spent on the measurement being built
+ * @param feedsTallyHopper whether another Tally Hopper down the line already earns for this farm
  */
 public record GuiState(
         Map<Item, Long> ratesPerHour,
@@ -36,9 +37,10 @@ public record GuiState(
         long lastCredit,
         boolean terminal,
         int saplings,
-        boolean paid) {
+        boolean paid,
+        boolean feedsTallyHopper) {
 
-    public static final GuiState EMPTY = new GuiState(Map.of(), List.of(), 0, 300, false, 0, 0, false, 0, false);
+    public static final GuiState EMPTY = new GuiState(Map.of(), List.of(), 0, 300, false, 0, 0, false, 0, false, false);
 
     public static final Codec<GuiState> CODEC = RecordCodecBuilder.create(i -> i.group(
                     Ledger.COUNTS_CODEC.fieldOf("rates").forGetter(GuiState::ratesPerHour),
@@ -54,7 +56,8 @@ public record GuiState(
                     ExtraCodecs.NON_NEGATIVE_LONG.fieldOf("last_credit").forGetter(GuiState::lastCredit),
                     Codec.BOOL.fieldOf("terminal").forGetter(GuiState::terminal),
                     ExtraCodecs.NON_NEGATIVE_INT.fieldOf("saplings").forGetter(GuiState::saplings),
-                    Codec.BOOL.fieldOf("paid").forGetter(GuiState::paid))
+                    Codec.BOOL.fieldOf("paid").forGetter(GuiState::paid),
+                    Codec.BOOL.fieldOf("feeds_tally_hopper").forGetter(GuiState::feedsTallyHopper))
             .apply(i, GuiState::new));
 
     public GuiState {
@@ -84,9 +87,22 @@ public record GuiState(
         return paid && !ready && isDraining();
     }
 
-    /** Whether the hopper is waiting for the sapling a calibration run costs. */
+    /**
+     * Whether the hopper is waiting for the sapling a calibration run costs. A passthrough hopper is
+     * not: nothing it measures would ever be credited, so it is not asking for one.
+     */
     public boolean needsSapling() {
-        return !paid && !ready;
+        return !paid && !ready && !feedsTallyHopper;
+    }
+
+    /**
+     * Whether this hopper only passes items along. Another Tally Hopper further down the line measures
+     * the same items and is the one that earns, so this one's own rate is never paid out. Items still
+     * flow through exactly as before, which is why the screen says "passthrough" rather than showing
+     * an error.
+     */
+    public boolean isPassthrough() {
+        return feedsTallyHopper;
     }
 
     /** How far calibration has come, from 0 to 1. */

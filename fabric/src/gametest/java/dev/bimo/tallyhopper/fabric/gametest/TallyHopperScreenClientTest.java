@@ -15,7 +15,8 @@ import net.minecraft.world.item.Items;
 
 /**
  * Opens the Tally Hopper's screen in a real client and photographs it in each state it has: waiting
- * for a sapling, calibrating, and ready. Rendering is the one thing only a real client can show.
+ * for a sapling, calibrating, ready, and passthrough. Rendering is the one thing only a real client can
+ * show.
  */
 public final class TallyHopperScreenClientTest implements FabricClientGameTest {
 
@@ -27,7 +28,7 @@ public final class TallyHopperScreenClientTest implements FabricClientGameTest {
             AtomicReference<BlockPos> placed = new AtomicReference<>();
             singleplayer.getServer().runOnServer(server -> {
                 ServerPlayer player = server.getPlayerList().getPlayers().getFirst();
-                BlockPos pos = player.blockPosition().above(2);
+                BlockPos pos = player.blockPosition().above(3);
                 player.level().setBlockAndUpdate(pos, TallyHopperContent.block().defaultBlockState());
                 placed.set(pos);
                 if (player.level().getBlockEntity(pos) instanceof TallyHopperBlockEntity hopper) {
@@ -62,6 +63,19 @@ public final class TallyHopperScreenClientTest implements FabricClientGameTest {
                     && hopper.guiState().ready());
             context.waitTicks(5);
             context.takeScreenshot("tally_hopper_ready");
+
+            // A second Tally Hopper under this one takes over earning, so this one becomes a
+            // passthrough: the status word changes and the padlock is hidden.
+            singleplayer
+                    .getServer()
+                    .runOnServer(server -> server.overworld()
+                            .setBlockAndUpdate(
+                                    pos.below(), TallyHopperContent.block().defaultBlockState()));
+            context.waitFor(client -> client.level != null
+                    && client.level.getBlockEntity(pos) instanceof TallyHopperBlockEntity hopper
+                    && hopper.guiState().isPassthrough());
+            context.waitTicks(5);
+            context.takeScreenshot("tally_hopper_passthrough");
         }
     }
 }

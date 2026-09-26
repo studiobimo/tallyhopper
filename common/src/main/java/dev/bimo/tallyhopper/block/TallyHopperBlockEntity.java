@@ -1,6 +1,7 @@
 package dev.bimo.tallyhopper.block;
 
 import dev.bimo.tallyhopper.TallyHopper;
+import dev.bimo.tallyhopper.conversion.ClockConversion;
 import dev.bimo.tallyhopper.credit.CreditReport;
 import dev.bimo.tallyhopper.credit.Ledger;
 import dev.bimo.tallyhopper.credit.StoredBacklog;
@@ -249,7 +250,8 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
      * the hopper faces; the rest goes to the backlog.
      */
     public CreditReport credit(OfflineSession.Current session) {
-        Map<Item, Long> earned = ledger.earn(session, creditedRates());
+        // The session is still marked credited, so the chain isn't walked again on every tick.
+        Map<Item, Long> earned = ledger.earn(session, feedsATallyHopper() ? Map.of() : creditedRates());
         setChanged();
         if (earned.isEmpty()) {
             return CreditReport.NONE;
@@ -305,6 +307,20 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
     }
 
     /**
+     * Whether another Tally Hopper further down this line already measures the same items.
+     *
+     * <p>Both would extrapolate them, so a line of two would hand back one farm's output twice. The
+     * hopper nearest the storage is the one that earns: it sees everything the line delivers, while
+     * an upstream one only sees what it passes on. This one keeps measuring and keeps its screen, it
+     * just earns nothing while the line is built this way.
+     *
+     * @see ClockConversion#feedsATallyHopper
+     */
+    public boolean feedsATallyHopper() {
+        return getLevel() instanceof ServerLevel level && ClockConversion.feedsATallyHopper(level, getBlockPos());
+    }
+
+    /**
      * The rates this hopper would actually credit: what it measured, weighed by how much of the window
      * it has watched, with the player's overrides in place, and the total held to what a hopper can
      * physically move. Everything that shows a rate goes through here, so the screen, the command and
@@ -343,7 +359,8 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
                 ledger.lastCredit(),
                 level instanceof ServerLevel server && terminalSink(server) != null,
                 saplings.getItem(0).getCount(),
-                calibrationPaid);
+                calibrationPaid,
+                feedsATallyHopper());
     }
 
     @Override

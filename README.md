@@ -40,7 +40,7 @@ It is **strictly additive**. It never removes, replaces or rearranges items you 
 | Facing a chest, barrel or modded drawer | Credit is delivered in one go when you return. This is what you want.                                                                 |
 | Facing another hopper                   | Line mode: credit drains one item at a time at vanilla speed, so item sorters and filter hoppers are never jammed by a bulk delivery. |
 | Facing nothing                          | Credit waits in the backlog until there is somewhere to put it.                                                                       |
-| Mid-chain, several in one line          | Each one measures the same items and each one credits. Use one per farm.                                                              |
+| Mid-chain, several in one line          | Only the last one credits. The ones above it read *Passthrough*: they still measure, but never pay for items the last one pays for.   |
 
 A few rules of thumb:
 

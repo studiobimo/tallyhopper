@@ -3,6 +3,7 @@ package dev.bimo.tallyhopper.conversion;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -38,6 +39,33 @@ public final class HopperChain {
 
     public static <P> Result<P> findEnd(P start, Function<P, @Nullable P> next) {
         return findEnd(start, next, MAX_LENGTH);
+    }
+
+    /**
+     * Whether any hopper from {@code start} onwards, {@code start} included, matches {@code test}.
+     *
+     * <p>A chain that loops or runs past {@link #MAX_LENGTH} is answered from what was walked before
+     * it stopped, which is every hopper of a loop and the first {@link #MAX_LENGTH} of a chain too
+     * long to follow.
+     */
+    public static <P> boolean anyInChain(P start, Function<P, @Nullable P> next, Predicate<P> test) {
+        return anyInChain(start, next, test, MAX_LENGTH);
+    }
+
+    static <P> boolean anyInChain(P start, Function<P, @Nullable P> next, Predicate<P> test, int maxLength) {
+        Set<P> visited = new HashSet<>();
+        P current = start;
+        while (visited.add(current) && visited.size() <= maxLength) {
+            if (test.test(current)) {
+                return true;
+            }
+            P following = next.apply(current);
+            if (following == null) {
+                return false;
+            }
+            current = following;
+        }
+        return false;
     }
 
     static <P> Result<P> findEnd(P start, Function<P, @Nullable P> next, int maxLength) {

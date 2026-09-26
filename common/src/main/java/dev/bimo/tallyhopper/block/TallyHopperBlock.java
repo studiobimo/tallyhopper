@@ -1,13 +1,17 @@
 package dev.bimo.tallyhopper.block;
 
+import dev.bimo.tallyhopper.conversion.ClockConversion;
 import dev.bimo.tallyhopper.credit.StoredBacklog;
 import dev.bimo.tallyhopper.platform.Services;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -41,6 +45,23 @@ public final class TallyHopperBlock extends HopperBlock {
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
         builder.add(READY);
+    }
+
+    /**
+     * Tells a player who has just placed a hopper that feeds another Tally Hopper that it will not earn.
+     *
+     * <p>Placement is allowed rather than refused. The same arrangement is reachable by placing the two
+     * in the other order, or by re-aiming a hopper afterwards, so refusing here would only make the
+     * state harder to reach, not impossible — and a mod that quietly refuses to place a block a player
+     * is holding is worse than one that explains itself. The chain is walked once, on this placement.
+     */
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity by, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, by, stack);
+        if (!level.isClientSide() && by instanceof Player player && ClockConversion.feedsATallyHopper(level, pos)) {
+            player.sendSystemMessage(Component.translatable("message.tallyhopper.placed_passthrough")
+                    .withStyle(ChatFormatting.GOLD));
+        }
     }
 
     /**
