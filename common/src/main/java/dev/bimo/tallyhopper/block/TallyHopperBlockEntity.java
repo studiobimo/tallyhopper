@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -94,6 +95,10 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
     };
 
     private boolean calibrationPaid;
+
+    /** Whether the intake being handled right now is farm output worth measuring. */
+    private boolean countingIntake = true;
+
     private GuiState clientState = GuiState.EMPTY;
     private int viewers;
 
@@ -140,8 +145,29 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
     /** Called for every automated insert; see {@code HopperBlockEntityMixin}. */
     public void recordIntake(ItemStack stack, int count) {
         Level level = getLevel();
-        if (level != null && !level.isClientSide() && isWatching() && Measurement.isCountable(stack)) {
+        if (level != null
+                && !level.isClientSide()
+                && countingIntake
+                && isWatching()
+                && Measurement.isCountable(stack)) {
             measurement.recordIntake(stack.getItem(), count, MeasurementClock.now(level));
+        }
+    }
+
+    /**
+     * Runs {@code intake} without measuring what it brings in, for a stack a player threw by hand.
+     * Such a stack is still taken in, so the hopper behaves exactly as a vanilla one would; it just
+     * isn't farm output, and crediting it offline would hand back items nothing ever made.
+     *
+     * @see dev.bimo.tallyhopper.mixin.HopperBlockEntityMixin
+     */
+    public boolean intakeWithoutCounting(BooleanSupplier intake) {
+        boolean wasCounting = countingIntake;
+        countingIntake = false;
+        try {
+            return intake.getAsBoolean();
+        } finally {
+            countingIntake = wasCounting;
         }
     }
 

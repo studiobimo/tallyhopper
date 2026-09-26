@@ -9,6 +9,7 @@ import dev.bimo.tallyhopper.gui.TallyHopperMenu;
 import dev.bimo.tallyhopper.measure.Measurement;
 import dev.bimo.tallyhopper.offline.Rate;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
+import java.util.List;
 import java.util.Map;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
@@ -18,6 +19,8 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.PermissionSet;
+import net.minecraft.util.Prediction;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerInput;
@@ -31,6 +34,7 @@ import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.level.block.HopperBlock;
 import net.minecraft.world.level.block.entity.DispenserBlockEntity;
 import net.minecraft.world.phys.Vec3;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A Tally Hopper measures what its farm makes, and only that.
@@ -135,6 +139,57 @@ public final class MeasurementTests {
             helper.assertItemEntityNotPresent(Items.STONE);
             helper.assertValueEqual(hopper.measurement().counted(Items.STONE), 1L, "dropped stone counted");
         });
+    }
+
+    /**
+     * A stack a player throws in by hand earns nothing. The drop key and throwing a stack out of a
+     * screen both reach {@code Player.drop} with {@code thrownFromHand}, which marks the item entity
+     * with its thrower; the hopper still picks it up, but the measurement ignores it.
+     */
+    public static void thrownItemsNotCounted(GameTestHelper helper) {
+        TallyHopperBlockEntity hopper = placeTallyHopper(helper, Direction.DOWN);
+        ServerPlayer player = (ServerPlayer) helper.makeMockServerPlayer(GameType.SURVIVAL);
+        Vec3 standing = helper.absoluteVec(Vec3.atBottomCenterOf(HOPPER.above(3)));
+        player.snapTo(standing.x, standing.y, standing.z, 0, 90);
+
+        helper.startSequence()
+                .thenExecute(() -> {
+                    // The drop key hands the stack to exactly this call.
+                    onHopper(helper, player.drop(new ItemStack(Items.DIAMOND, 3), true, Prediction.PREDICTED));
+
+                    // Throwing a stack out of the hopper's own screen goes down the same path.
+                    HopperMenu menu = new HopperMenu(1, player.getInventory(), hopper);
+                    player.getInventory().setItem(0, new ItemStack(Items.DIAMOND, 4));
+                    menu.clicked(MENU_HOTBAR_START, 1, ContainerInput.THROW, player);
+                    thrownNear(helper, player).forEach(item -> onHopper(helper, item));
+                })
+                .thenWaitUntil(() -> {
+                    helper.assertItemEntityNotPresent(Items.DIAMOND);
+                    helper.assertValueEqual(hopper.countItem(Items.DIAMOND), 7, "thrown diamonds picked up");
+                })
+                .thenExecute(() -> {
+                    helper.assertValueEqual(hopper.measurement().counted(Items.DIAMOND), 0L, "thrown diamonds counted");
+                    // The same hopper still counts what a farm drops into it.
+                    helper.spawnItem(Items.EMERALD, HOPPER.above());
+                })
+                .thenWaitUntil(() -> helper.assertValueEqual(
+                        hopper.measurement().counted(Items.EMERALD), 1L, "a farm's drop counted"))
+                .thenSucceed();
+    }
+
+    /** Puts a thrown item on the hopper, so the test doesn't depend on where a throw happens to land. */
+    private static void onHopper(GameTestHelper helper, @Nullable ItemEntity thrown) {
+        if (thrown == null) {
+            throw helper.assertionException(Component.literal("nothing was thrown"));
+        }
+        thrown.snapTo(helper.absoluteVec(Vec3.atCenterOf(HOPPER.above())));
+        thrown.setDeltaMovement(Vec3.ZERO);
+    }
+
+    /** The items a player has just thrown, which spawn at their eye height. */
+    private static List<ItemEntity> thrownNear(GameTestHelper helper, Entity thrower) {
+        return helper.getLevel()
+                .getEntitiesOfClass(ItemEntity.class, thrower.getBoundingBox().inflate(4));
     }
 
     /** A hopper watches nothing until a sapling pays for the run, and then spends exactly one. */

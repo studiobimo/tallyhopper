@@ -66,7 +66,8 @@ These are deliberate, not missing features.
   you already have is ever touched to make room.
 - **Plain items only.** Anything with enchantments, a custom name or other data is not counted and
   not credited.
-- **Items you put in by hand are not counted.** Only what flows through the hopper on its own.
+- **Items you put in by hand are not counted**, whether through the screen or thrown in. Only what
+  flows through the hopper on its own counts; blocks you mine or chop above it still do.
 - **Time counts only while the world is closed.** On a server that stays up you were never away, so
   nothing is credited; a mode for time a chunk spends unloaded is on the v2 list.
 
