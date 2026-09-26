@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:convert_refuses_upstream",
+  "max_ticks": 40,
+  "structure": "tallyhopper:platform"
+}

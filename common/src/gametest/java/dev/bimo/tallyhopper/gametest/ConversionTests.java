@@ -137,6 +137,38 @@ public final class ConversionTests {
         helper.succeed();
     }
 
+    /**
+     * A hopper that feeds an existing Tally Hopper is refused, and costs nothing. Both would measure
+     * the same items, so converting it would buy a hopper that can never earn.
+     */
+    public static void refusesUpstreamOfATallyHopper(GameTestHelper helper) {
+        BlockPos upstream = new BlockPos(2, 1, 2);
+        BlockPos middle = new BlockPos(3, 1, 2);
+        BlockPos downstream = new BlockPos(4, 1, 2);
+        placeHopper(helper, upstream, Direction.EAST);
+        // A vanilla hopper in between, so the whole line is walked and not just the next block.
+        placeHopper(helper, middle, Direction.EAST);
+        helper.setBlock(
+                downstream,
+                TallyHopperContent.block().defaultBlockState().setValue(HopperBlock.FACING, Direction.EAST));
+        Player player = player(helper, false, SAPLINGS);
+
+        InteractionResult result = useClock(helper, player, upstream);
+
+        helper.assertTrue(result instanceof InteractionResult.Fail, "conversion should be refused, got " + result);
+        helper.assertBlockPresent(Blocks.HOPPER, upstream);
+        assertPaid(helper, player, 0);
+
+        // With the Tally Hopper gone, the same click converts as usual.
+        helper.setBlock(downstream, Blocks.AIR);
+        helper.assertTrue(
+                useClock(helper, player, upstream) instanceof InteractionResult.Success,
+                "conversion should be allowed once the line has no Tally Hopper");
+        helper.assertBlockPresent(TallyHopperContent.block(), upstream);
+        assertPaid(helper, player, 1);
+        helper.succeed();
+    }
+
     /** Without a sapling nothing converts. */
     public static void needsSapling(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 1, 2);

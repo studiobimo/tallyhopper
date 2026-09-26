@@ -4,6 +4,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.bimo.tallyhopper.block.TallyHopperBlockEntity;
 import dev.bimo.tallyhopper.credit.CreditReport;
 import dev.bimo.tallyhopper.credit.StoredBacklog;
+import dev.bimo.tallyhopper.gui.GuiState;
 import dev.bimo.tallyhopper.measure.MeasurementClock;
 import dev.bimo.tallyhopper.offline.Backlog;
 import dev.bimo.tallyhopper.offline.OfflineWindow;
@@ -234,6 +235,52 @@ public final class CreditTests {
                             arrived + " items arrived in " + LINE_FLOW_TICKS + " ticks; vanilla speed is " + vanilla);
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * Two Tally Hoppers on one line credit one farm's output once, not twice. Only the hopper nearest
+     * the storage earns; the one upstream keeps measuring but is paid nothing, because both watched
+     * the same items go past.
+     */
+    public static void chainedHoppersCreditOnce(GameTestHelper helper) {
+        BlockPos upstreamPos = new BlockPos(2, 2, 2);
+        BlockPos middle = new BlockPos(3, 2, 2);
+        BlockPos downstreamPos = new BlockPos(4, 2, 2);
+        BlockPos chest = new BlockPos(5, 2, 2);
+        TallyHopperBlockEntity upstream = placeTallyHopper(helper, upstreamPos, Direction.EAST);
+        // A vanilla hopper in between, so the whole line is walked and not just the next block.
+        helper.setBlock(middle, Blocks.HOPPER.defaultBlockState().setValue(HopperBlock.FACING, Direction.EAST));
+        TallyHopperBlockEntity downstream = placeTallyHopper(helper, downstreamPos, Direction.EAST);
+        helper.setBlock(chest, Blocks.CHEST);
+        setRate(upstream, Items.COBBLESTONE, 100);
+        setRate(downstream, Items.COBBLESTONE, 100);
+
+        helper.runAfterDelay(1, () -> {
+            helper.assertTrue(upstream.feedsATallyHopper(), "the upstream hopper should see the one downstream");
+            helper.assertFalse(downstream.feedsATallyHopper(), "the downstream hopper feeds a chest");
+            // The screen says so too, so a player is never shown a rate they will not be paid.
+            GuiState upstreamScreen = upstream.guiState();
+            helper.assertTrue(upstreamScreen.isPassthrough(), "the upstream screen doesn't say it is a passthrough");
+            // It is not asking for a sapling either: one would buy a run that is never paid out.
+            helper.assertFalse(upstreamScreen.needsSapling(), "the upstream screen still asks for a sapling");
+            helper.assertFalse(downstream.guiState().isPassthrough(), "the downstream screen claims passthrough");
+
+            OfflineSession.Current session = session(helper, Duration.ofHours(1));
+            helper.assertTrue(upstream.credit(session).isEmpty(), "the upstream hopper earned something");
+            helper.assertValueEqual(downstream.credit(session).delivered(), 100L, "the downstream credit");
+            helper.assertValueEqual(
+                    count(helper.getBlockEntity(chest, ChestBlockEntity.class), Items.COBBLESTONE),
+                    100,
+                    "cobblestone in the chest");
+
+            // Take the downstream hopper away and the upstream one earns for the line again.
+            helper.setBlock(downstreamPos, Blocks.AIR);
+            helper.assertValueEqual(
+                    upstream.credit(session(helper, Duration.ofHours(1))).backlogged(),
+                    100L,
+                    "credit once the line has one Tally Hopper");
+            helper.succeed();
+        });
     }
 
     /** A session credits once, even across a save and reload of the block entity. */

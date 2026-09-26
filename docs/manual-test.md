@@ -54,8 +54,9 @@ Record the loader, the mod version and the world name in your notes.
 8. **Expect:** both are picked up as a vanilla hopper would, the hopper's five slots hold them, and
    no rate line appears for them. Mining a block over the hopper still counts.
 9. Hover the bar.
-10. **Expect:** a tooltip with the status, one line per item with a plausible per-hour rate, the
-    delivery mode and — for a hopper feeding a line — where that line ends.
+10. **Expect:** a tooltip with a coloured status heading (green ready, yellow calibrating, grey
+    passthrough), one white line per item with a plausible per-hour rate, hand-set rates in aqua, and
+    the delivery mode and chain end in dark grey italics under them.
 11. Run `/tallyhopper rate set ~ ~ ~ minecraft:cobblestone 600` at the hopper and hover the bar again.
 12. **Expect:** the rate line reads "600/h (by hand)". `/tallyhopper rate clear` puts the measured one
     back.
@@ -95,6 +96,15 @@ Record the loader, the mod version and the world name in your notes.
 3. Fill the destination completely and rejoin again.
    **Expect:** the summary says items were not created because the backlog is full; **nothing is
    voided and nothing already stored is touched**.
+4. **Chained:** place a second Tally Hopper on the same line, upstream of the first.
+   **Expect:** a gold chat line on placement saying it passes items through without earning; the
+   upstream screen's status reads "Passthrough" in a lighter grey, the bar goes flat grey, the padlock
+   is gone entirely, the sapling slot is no longer asked for, and on rejoin the line delivers one
+   farm's output, not two.
+5. Try to convert a third hopper upstream of those two.
+   **Expect:** the conversion is refused and no sapling is spent.
+6. Break the downstream Tally Hopper and reopen the upstream one's screen.
+   **Expect:** it goes back to its normal status and the padlock returns.
 
 ## 5. Breaking and placing
 

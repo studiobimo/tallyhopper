@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class HopperChainTest {
@@ -47,6 +48,42 @@ class HopperChainTest {
         links.put(3, 2);
 
         assertThat(walkFrom(0)).isInstanceOf(HopperChain.Result.Loop.class);
+    }
+
+    @Test
+    void findsAMarkedHopperAnywhereInTheChain() {
+        for (int i = 0; i < 9; i++) {
+            links.put(i, i + 1);
+        }
+        Set<Integer> marked = Set.of(5);
+
+        assertThat(HopperChain.anyInChain(0, links::get, marked::contains)).isTrue();
+        assertThat(HopperChain.anyInChain(5, links::get, marked::contains)).isTrue();
+        assertThat(HopperChain.anyInChain(6, links::get, marked::contains)).isFalse();
+        assertThat(HopperChain.anyInChain(0, links::get, Set.of(99)::contains)).isFalse();
+    }
+
+    @Test
+    void looksAtEveryHopperOfALoop() {
+        links.put(0, 1);
+        links.put(1, 2);
+        links.put(2, 0);
+
+        assertThat(HopperChain.anyInChain(0, links::get, Set.of(2)::contains)).isTrue();
+        assertThat(HopperChain.anyInChain(0, links::get, Set.of(9)::contains)).isFalse();
+    }
+
+    /** A chain too long to follow is answered from the part that was walked, and never hangs. */
+    @Test
+    void answersALongChainFromWhatItWalked() {
+        for (int i = 0; i < 20; i++) {
+            links.put(i, i + 1);
+        }
+
+        assertThat(HopperChain.anyInChain(0, links::get, Set.of(3)::contains, 5))
+                .isTrue();
+        assertThat(HopperChain.anyInChain(0, links::get, Set.of(15)::contains, 5))
+                .isFalse();
     }
 
     @Test
