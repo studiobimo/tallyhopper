@@ -45,17 +45,22 @@ Record the loader, the mod version and the world name in your notes.
 3. Put a stack of saplings in the slot.
 4. **Expect:** one sapling is taken straight away, the meter under the stand fills to match what is
    left, the bubbles start rising, and the status becomes "Calibrating".
-5. Feed the hopper from a working farm, or drop stacks in by hand at a steady pace, and watch the bar.
+5. Feed the hopper from a working farm — a dispenser on a clock does — and watch the bar. Throwing
+   stacks in by hand will not do: that is deliberately not counted.
 6. **Expect:** the bar fills yellow as the minute passes, then turns green, the bubbles stop and the
    padlock closes.
-7. Hover the bar.
-8. **Expect:** a tooltip with the status, one line per item with a plausible per-hour rate, the
-   delivery mode and — for a hopper feeding a line — where that line ends.
-9. Run `/tallyhopper rate set ~ ~ ~ minecraft:cobblestone 600` at the hopper and hover the bar again.
-10. **Expect:** the rate line reads "600/h (by hand)". `/tallyhopper rate clear` puts the measured one
+7. Stand over the hopper and throw a stack in with the drop key, then throw one out of the hopper's
+   own screen.
+8. **Expect:** both are picked up as a vanilla hopper would, the hopper's five slots hold them, and
+   no rate line appears for them. Mining a block over the hopper still counts.
+9. Hover the bar.
+10. **Expect:** a tooltip with the status, one line per item with a plausible per-hour rate, the
+    delivery mode and — for a hopper feeding a line — where that line ends.
+11. Run `/tallyhopper rate set ~ ~ ~ minecraft:cobblestone 600` at the hopper and hover the bar again.
+12. **Expect:** the rate line reads "600/h (by hand)". `/tallyhopper rate clear` puts the measured one
     back.
-11. Press the padlock.
-12. **Expect:** another sapling is spent, the bar empties and calibration starts over. With an empty
+13. Press the padlock.
+14. **Expect:** another sapling is spent, the bar empties and calibration starts over. With an empty
     sapling slot the padlock is greyed out and pressing it does nothing.
 
 ## 3. Offline credit
