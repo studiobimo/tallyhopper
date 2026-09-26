@@ -9,7 +9,8 @@
       "dev.bimo.tallyhopper.fabric.gametest.TallyHopperFabricGameTests"
     ],
     "fabric-client-gametest": [
-      "dev.bimo.tallyhopper.fabric.gametest.TallyHopperScreenClientTest"
+      "dev.bimo.tallyhopper.fabric.gametest.TallyHopperScreenClientTest",
+      "dev.bimo.tallyhopper.fabric.gametest.ReadmeScreenshotsClientTest"
     ]
   },
   "depends": {

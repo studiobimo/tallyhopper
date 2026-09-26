@@ -7,6 +7,11 @@ merge once the repository is public (studiobimo/.github#8).
 - [Manual test script](manual-test.md): what to check by hand on both loaders before a release
 - [Compatibility](compatibility.md): modded storage, chunk loading, and what is verified
 - [Energy estimate methodology](methodology.md): where the kWh, CO₂, water and tree-day numbers come from
+- [Images](images/): the README's screenshots, taken in a real client by
+  `ReadmeScreenshotsClientTest` and `TallyHopperScreenClientTest`. Run
+  `./gradlew :fabric:runClientGameTest`, then copy the `readme_*` shots from
+  `fabric/build/run/clientGameTest/screenshots/`; `hoppers.png` is cropped to the middle
+  960×540, and `screen.png` is the `tally_hopper_ready` shot cropped to the panel and scaled 2×.
 - Architecture decision records:
   - [ADR-0001: A mod, not a datapack](adr/0001-mod-not-datapack.md)
   - [ADR-0002: Multiloader (Fabric + NeoForge)](adr/0002-multiloader.md)

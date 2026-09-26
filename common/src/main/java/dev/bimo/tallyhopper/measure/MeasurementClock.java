@@ -1,6 +1,7 @@
 package dev.bimo.tallyhopper.measure;
 
 import java.time.Instant;
+import java.time.InstantSource;
 import java.util.function.Function;
 import net.minecraft.world.level.Level;
 
@@ -26,5 +27,10 @@ public final class MeasurementClock {
     /** Measures in game time instead of real time. For GameTests only. */
     public static void useGameTime() {
         source = level -> Instant.ofEpochMilli(level.getGameTime() * MILLIS_PER_TICK);
+    }
+
+    /** Measures against {@code clock}, such as a real clock set back to stage a night away. For tests only. */
+    public static void useClock(InstantSource clock) {
+        source = level -> clock.instant();
     }
 }

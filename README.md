@@ -1,8 +1,18 @@
 # Tally Hopper
 
+[![CI](https://github.com/studiobimo/tallyhopper/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/studiobimo/tallyhopper/actions/workflows/ci.yml)
+[![Lint](https://github.com/studiobimo/tallyhopper/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/studiobimo/tallyhopper/actions/workflows/lint.yml)
+[![Release](https://github.com/studiobimo/tallyhopper/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/studiobimo/tallyhopper/actions/workflows/release.yml)
+![Minecraft 26.3](https://img.shields.io/badge/Minecraft-26.3-62B47A)
+![Fabric | NeoForge](https://img.shields.io/badge/loader-Fabric%20%7C%20NeoForge-DBD0B4)
+![Java 25](https://img.shields.io/badge/Java-25-E76F00)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 A Minecraft mod that lets you turn your computer off at night instead of leaving an AFK farm running.
 
 > **Status: pre-alpha.** Under active development. See the [roadmap](docs/ROADMAP.md).
+
+![Two Tally Hoppers on chests: the one on the right is ready, its clock face green and its red lamp lit; the one on the left is still calibrating.](docs/images/hoppers.png)
 
 ## How it works
 
@@ -25,9 +35,15 @@ flowchart LR
    sneak-use finds the end of a hopper chain for you. The clock is not consumed; the sapling is.
 2. **Calibrate.** Put a sapling in the hopper's screen. It spends one and watches for five minutes,
    then the bar turns green and it is ready. It only needs a sapling to calibrate, never to run.
+   The clock face on its side turns green too, and its lamp flashes red, like an observer's, each
+   time it counts an item.
+
+   <img src="docs/images/screen.png" width="354" alt="The Tally Hopper screen: a sapling slot, the status Ready over a full green bar, the hopper's five slots and the player inventory.">
 3. **Leave.** Close your world. The mod records the real-world time at the last heartbeat.
 4. **Return.** Each hopper credits `rate × time away` into the storage it faces. A chat line tells you
    what you earned, and roughly how much electricity you did not spend to earn it.
+
+   ![Chat after eight hours away: "[Tally Hopper] at 0, -59, -3 over 8h 00m: +4,800 items", then "1,728 delivered · 3,072 to backlog · ≈1.2 kWh not used", and the Sleep Mode advancement.](docs/images/rejoin-message.png)
 
 It is **strictly additive**. It never removes, replaces or rearranges items you already have.
 
