@@ -6,6 +6,8 @@
     { "when": { "facing": "south" }, "apply": { "model": "minecraft:block/hopper_side", "y": 180 } },
     { "when": { "facing": "west" }, "apply": { "model": "minecraft:block/hopper_side", "y": 270 } },
     { "when": { "ready": "false" }, "apply": { "model": "tallyhopper:block/clock_face_calibrating" } },
-    { "when": { "ready": "true" }, "apply": { "model": "tallyhopper:block/clock_face_ready" } }
+    { "when": { "ready": "true" }, "apply": { "model": "tallyhopper:block/clock_face_ready" } },
+    { "when": { "lit": "false" }, "apply": { "model": "tallyhopper:block/lamp_off" } },
+    { "when": { "lit": "true" }, "apply": { "model": "tallyhopper:block/lamp_on" } }
   ]
 }

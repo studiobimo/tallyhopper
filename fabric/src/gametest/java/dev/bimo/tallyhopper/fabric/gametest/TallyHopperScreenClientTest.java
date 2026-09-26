@@ -17,8 +17,8 @@ import net.minecraft.world.item.Items;
 /**
  * Opens the Tally Hopper's screen in a real client and photographs it in each state it has: waiting
  * for a sapling, calibrating, ready, and passthrough. Then photographs the block itself by day and by
- * night, one hopper calibrating and one ready, so the clock face can be checked by eye. Rendering is
- * the one thing only a real client can show.
+ * night, one hopper calibrating with its lamp dark and one ready with its lamp lit, so the clock face
+ * and the lamp's glow can be checked by eye. Rendering is the one thing only a real client can show.
  */
 public final class TallyHopperScreenClientTest implements FabricClientGameTest {
 
@@ -88,10 +88,14 @@ public final class TallyHopperScreenClientTest implements FabricClientGameTest {
                 server.overworld()
                         .setBlockAndUpdate(
                                 calibrating, TallyHopperContent.block().defaultBlockState());
+                // Lit without a scheduled tick to end the flash, so it holds for the camera.
                 server.overworld()
                         .setBlockAndUpdate(
                                 ready,
-                                TallyHopperContent.block().defaultBlockState().setValue(TallyHopperBlock.READY, true));
+                                TallyHopperContent.block()
+                                        .defaultBlockState()
+                                        .setValue(TallyHopperBlock.READY, true)
+                                        .setValue(TallyHopperBlock.LIT, true));
                 // An override keeps it ready, or its next clock-face check would set it back.
                 if (server.overworld().getBlockEntity(ready) instanceof TallyHopperBlockEntity hopper) {
                     hopper.changeOverrides(measurement -> {
