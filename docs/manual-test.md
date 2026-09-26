@@ -139,11 +139,15 @@ Record the loader, the mod version and the world name in your notes.
 1. Check the block from a distance.
    **Expect:** its brass clock face reads cream while calibrating and green once ready, on all four
    sides, with the hand the same way up on each.
-2. Open the screen.
+2. Feed it a few items, by day and by night.
+   **Expect:** the red lamp beside the clock face flashes as it counts items, like an observer,
+   with a faint pale-red spill on the rim around it. At night the lamp glows without lighting up
+   the ground. Thrown and hand-fed items don't flash it, and it never stays lit.
+3. Open the screen.
    **Expect:** the panel has the black rounded outline of every vanilla container.
-3. Hover the item in the creative inventory and in a chest.
+4. Hover the item in the creative inventory and in a chest.
    **Expect:** the icon is a hopper with a small pocket-watch badge.
-4. Switch the language to something other than English.
+5. Switch the language to something other than English.
    **Expect:** no raw keys such as `gui.tallyhopper.status.ready` anywhere on screen — everything
    falls back to English text.
 

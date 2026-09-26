@@ -152,6 +152,9 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
                 && isWatching()
                 && Measurement.isCountable(stack)) {
             measurement.recordIntake(stack.getItem(), count, MeasurementClock.now(level));
+            // Only here, after every reason not to count has been ruled out, so the lamp means
+            // exactly "this was tallied": thrown items, hand-fed items and a draining backlog stay dark.
+            TallyHopperBlock.flash(level, getBlockPos());
         }
     }
 

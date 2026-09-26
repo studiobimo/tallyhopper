@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tallyhopper:counted_items_flash_the_lamp",
+  "max_ticks": 40,
+  "structure": "tallyhopper:platform"
+}

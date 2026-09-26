@@ -11,6 +11,7 @@ import dev.bimo.tallyhopper.offline.Rate;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -152,6 +153,15 @@ public final class MeasurementTests {
         Vec3 standing = helper.absoluteVec(Vec3.atBottomCenterOf(HOPPER.above(3)));
         player.snapTo(standing.x, standing.y, standing.z, 0, 90);
 
+        // The lamp means "this was tallied", so nothing thrown may light it.
+        AtomicBoolean throwing = new AtomicBoolean(true);
+        AtomicBoolean litForAThrow = new AtomicBoolean();
+        helper.onEachTick(() -> {
+            if (throwing.get() && helper.getBlockState(HOPPER).getValue(TallyHopperBlock.LIT)) {
+                litForAThrow.set(true);
+            }
+        });
+
         helper.startSequence()
                 .thenExecute(() -> {
                     // The drop key hands the stack to exactly this call.
@@ -169,11 +179,39 @@ public final class MeasurementTests {
                 })
                 .thenExecute(() -> {
                     helper.assertValueEqual(hopper.measurement().counted(Items.DIAMOND), 0L, "thrown diamonds counted");
+                    helper.assertFalse(litForAThrow.get(), "the lamp flashed for a thrown item");
+                    throwing.set(false);
                     // The same hopper still counts what a farm drops into it.
                     helper.spawnItem(Items.EMERALD, HOPPER.above());
                 })
                 .thenWaitUntil(() -> helper.assertValueEqual(
                         hopper.measurement().counted(Items.EMERALD), 1L, "a farm's drop counted"))
+                .thenSucceed();
+    }
+
+    /** A counted item lights the observer's lamp for its two-tick pulse, and then the lamp goes dark. */
+    public static void countedItemsFlashTheLamp(GameTestHelper helper) {
+        TallyHopperBlockEntity hopper = placeTallyHopper(helper, Direction.DOWN);
+        AtomicBoolean seenLit = new AtomicBoolean();
+        helper.onEachTick(() -> {
+            if (helper.getBlockState(HOPPER).getValue(TallyHopperBlock.LIT)) {
+                seenLit.set(true);
+            }
+        });
+        helper.startSequence()
+                .thenIdle(5)
+                .thenExecute(() -> {
+                    helper.assertBlockProperty(HOPPER, TallyHopperBlock.LIT, false);
+                    helper.assertFalse(seenLit.get(), "the lamp lit before anything was counted");
+                    helper.spawnItem(Items.STONE, HOPPER.above());
+                })
+                .thenWaitUntil(
+                        () -> helper.assertValueEqual(hopper.measurement().counted(Items.STONE), 1L, "stone counted"))
+                .thenIdle(TallyHopperBlock.FLASH_TICKS + 1)
+                .thenExecute(() -> {
+                    helper.assertTrue(seenLit.get(), "the lamp never lit for a counted item");
+                    helper.assertBlockProperty(HOPPER, TallyHopperBlock.LIT, false);
+                })
                 .thenSucceed();
     }
 

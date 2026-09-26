@@ -8,8 +8,10 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -23,6 +25,7 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jspecify.annotations.Nullable;
@@ -31,20 +34,51 @@ import org.jspecify.annotations.Nullable;
  * A hopper that measures what passes through it. Everything a hopper does is inherited unchanged.
  *
  * <p>{@link #READY} drives the clock face: calibrating until the rate is measured, then ready.
+ * {@link #LIT} drives the observer's lamp beside it, which flashes for each item the hopper counts.
  */
 public final class TallyHopperBlock extends HopperBlock {
 
     public static final BooleanProperty READY = BooleanProperty.create("ready");
 
+    /** Vanilla's own {@code lit}, as a furnace or redstone lamp uses it. */
+    public static final BooleanProperty LIT = BlockStateProperties.LIT;
+
+    /** How long the lamp stays on: the observer's pulse, two game ticks. */
+    public static final int FLASH_TICKS = 2;
+
     public TallyHopperBlock(Properties properties) {
         super(properties);
-        registerDefaultState(defaultBlockState().setValue(READY, false));
+        registerDefaultState(defaultBlockState().setValue(READY, false).setValue(LIT, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
-        builder.add(READY);
+        builder.add(READY, LIT);
+    }
+
+    /**
+     * Lights the lamp for {@link #FLASH_TICKS}, the way an observer lights when it sees a change.
+     *
+     * <p>Kept as cheap as a lamp can be. The change goes to clients only: no neighbour updates, no
+     * redstone signal and no world light, since the glow is the model's own {@code light_emission}.
+     * A lamp already lit is left alone rather than extended, so a steady stream reads as separate
+     * blinks and no hopper changes state more often than every other tick, whatever feeds it.
+     */
+    public static void flash(Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        if (state.getBlock() instanceof TallyHopperBlock block && !state.getValue(LIT)) {
+            level.setBlock(pos, state.setValue(LIT, true), Block.UPDATE_CLIENTS);
+            level.scheduleTick(pos, block, FLASH_TICKS);
+        }
+    }
+
+    /** The end of a flash. Vanilla hoppers never schedule ticks, so this is the only one there is. */
+    @Override
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (state.getValue(LIT)) {
+            level.setBlock(pos, state.setValue(LIT, false), Block.UPDATE_CLIENTS);
+        }
     }
 
     /**
