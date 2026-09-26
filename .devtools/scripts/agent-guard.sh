@@ -5,7 +5,8 @@
 #
 # Enforces the same rules as the git hooks, before the agent acts:
 #   - gh pr create / gh stack submit / git push  -> PR size limit
-#   - git checkout -b / git switch -c / git branch <name> -> Conventional Branch
+#   - git checkout -b / git switch -c / git branch <name>
+#     / git branch -m|-c [<old>] <new>                   -> Conventional Branch
 #
 # CI (pr-checks) remains the authoritative gate; this is a guardrail.
 set -euo pipefail
@@ -45,8 +46,24 @@ fi
 new_branch=""
 if [[ "${first_line}" =~ git[[:space:]]+(checkout|switch)[[:space:]]+(-b|-B|-c|-C|--create)[[:space:]]+[\"\']?([^[:space:];&|\"\']+) ]]; then
     new_branch="${BASH_REMATCH[3]}"
-elif [[ "${first_line}" =~ git[[:space:]]+branch[[:space:]]+(-m[[:space:]]+)?[\"\']?([^-[:space:];&|\"\'][^[:space:];&|\"\']*)[\"\']?([[:space:]]|$) ]]; then
-    new_branch="${BASH_REMATCH[2]}"
+elif [[ "${first_line}" =~ git[[:space:]]+branch[[:space:]]+(-[mMcC]|--move|--copy)[[:space:]]+(.*)$ ]]; then
+    # Rename/copy: `<new>` alone renames the current branch; with `<old> <new>`
+    # the second name is the one being created.
+    args="${BASH_REMATCH[2]%%[;&|<>]*}"
+    args="${args% [0-9]}"
+    names=()
+    for b in ${args}; do
+        b="${b//[\"\']/}"
+        [[ -z "${b}" || "${b}" == -* ]] && continue
+        names+=("${b}")
+    done
+    if ((${#names[@]} >= 2)); then
+        new_branch="${names[1]}"
+    elif ((${#names[@]} == 1)); then
+        new_branch="${names[0]}"
+    fi
+elif [[ "${first_line}" =~ git[[:space:]]+branch[[:space:]]+[\"\']?([^-[:space:];&|\"\'][^[:space:];&|\"\']*)[\"\']?([[:space:]]|$) ]]; then
+    new_branch="${BASH_REMATCH[1]}"
 elif [[ "${first_line}" =~ gh[[:space:]]+stack[[:space:]]+(init|add)[[:space:]]+(.*)$ ]]; then
     # Stop at the next command separator or redirection.
     args="${BASH_REMATCH[2]%%[;&|<>]*}"
