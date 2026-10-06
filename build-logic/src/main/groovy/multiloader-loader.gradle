@@ -1,5 +1,3 @@
-// Conventions for loader subprojects: compile and package the common sources
-// into each loader's jar.
 plugins {
     id 'multiloader-common'
 }

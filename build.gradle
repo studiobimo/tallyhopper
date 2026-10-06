@@ -1,4 +1,3 @@
-// Lock the plugin classpath resolved for this build script (buildscript-gradle.lockfile).
 buildscript {
     configurations.classpath {
         resolutionStrategy.activateDependencyLocking()

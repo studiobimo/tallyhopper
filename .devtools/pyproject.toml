@@ -1,5 +1,3 @@
-# Python-distributed developer tools, pinned via uv.lock.
-# Install with: make -C .devtools setup
 [project]
 name = "tallyhopper-devtools"
 version = "0"

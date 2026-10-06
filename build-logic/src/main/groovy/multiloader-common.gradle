@@ -1,4 +1,3 @@
-// Conventions shared by every subproject (common, fabric, neoforge).
 plugins {
     id 'java-library'
     id 'com.diffplug.spotless'
