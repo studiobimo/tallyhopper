@@ -10,24 +10,58 @@ Loader-specific code lives in `fabric/` and `neoforge/` behind `Services` interf
 
 - Roadmap and exit criteria: `docs/ROADMAP.md`
 - Design decisions: `docs/adr/`
+- Workflow and conventions in full: `CONTRIBUTING.md`
+- Commit scopes: `common`, `fabric`, `neoforge`, `build`, `ci`, `docs`, `deps`, `devtools`
 
+<!-- >>> template:rules -->
 ## Non-negotiables
 
-- **Commits:** [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/).
-  Scopes: `common`, `fabric`, `neoforge`, `build`, `ci`, `docs`, `deps`, `devtools`.
-- **Branches:** [Conventional Branch](https://conventionalbranch.org/), e.g. `feat/offline-credit`.
-  Agents may use `claude/…` or `codex/…`.
+These hold in every studiobimo repo. Git hooks, CI and an agent hook all enforce them, so a
+violation is caught before it is reviewed.
+
+- **Commits:** [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/),
+  `<type>(<scope>): <summary>`. PRs are squash-merged, so the **PR title** must be one too.
+- **Branches:** [Conventional Branch](https://conventionalbranch.org/), `<type>/<description>`
+  in lowercase with single hyphens, e.g. `feat/short-description`. Agents may use `claude/…` or
+  `codex/…`.
 - **PR size:** at most 20 changed files. Split bigger work with `gh stack`
   (`gh stack init`, `gh stack add`, `gh stack submit`).
-- **Versioning:** SemVer, managed by release-please. Never edit `version` in `gradle.properties` by hand.
-- **Pinning:** GitHub Actions pinned to full SHAs; dependencies locked (`gradle.lockfile`)
-  and checksum-verified (`gradle/verification-metadata.xml`). After changing a version, run
-  `make -C .devtools lock`.
-- **Behavior:** the mod is strictly additive. It must never delete, replace or extract
-  items a player already has.
+- **Versioning:** SemVer, managed by release-please. Never edit a version, a
+  `.release-please-manifest.json` or a `CHANGELOG.md` by hand.
+- **Pinning:** third-party GitHub Actions and pre-commit hooks are pinned to full commit SHAs with
+  the version in a comment; studiobimo's own reusable workflows are called at `@v1`. Python tools
+  are locked in `.devtools/uv.lock`.
+- **Workflows:** `permissions: {}` at the top, the minimum per job, `persist-credentials: false`
+  on every checkout, secrets passed explicitly and never with `secrets: inherit`.
+- **Say what you tested.** State what you ran and what it showed. If something could not be
+  tested, say so plainly rather than implying it was.
 
 A PreToolUse hook (`.devtools/scripts/agent-guard.sh`) blocks `gh pr create`, `gh stack submit`
 and `git push` when the PR-size rule is violated, and blocks non-conventional branch names.
+
+## Where shared things live
+
+Some files here are not this repo's to edit. Changing them locally only creates drift, which a
+weekly workflow reports as an issue.
+
+| To change | Edit it in | It reaches this repo by |
+| --- | --- | --- |
+| CI behaviour (lint, PR checks, release) | `studiobimo/.github`, `.github/workflows/` | the `@v1` tag moving |
+| Commit, branch and PR-size rules | `studiobimo/.github`, `.devtools/` | a `rev:` bump in `.pre-commit-config.yaml` |
+| Files and blocks listed in the template's `.template/manifest` | `studiobimo/project-template` | `make -C .devtools sync` |
+
+A managed block sits between `>>> template:<name>` and `<<< template:<name>` marker lines, like
+this section. Edit outside the markers freely; inside them, change the template instead. If a
+difference is deliberate, list the path in `.template-ignore` with a comment saying why.
+<!-- <<< template:rules -->
+
+## Mod rules
+
+- **Version:** release-please owns `version` in `gradle.properties`. Never edit it by hand.
+- **Dependencies:** locked (`gradle.lockfile`) and checksum-verified
+  (`gradle/verification-metadata.xml`). After changing a version, run `make -C .devtools lock`.
+- **Behavior:** the mod is strictly additive. It must never delete, replace or extract
+  items a player already has.
 
 ## Commands
 
@@ -37,6 +71,8 @@ make -C .devtools check   # everything CI runs (lint + build + tests)
 make -C .devtools fmt     # format Java
 make -C .devtools run-fabric-server
 make -C .devtools stray   # JVMs a dev run or GameTest left behind (kill-stray stops them)
+make -C .devtools drift   # where this repo differs from studiobimo/project-template
+make -C .devtools sync    # pull the template's managed files
 ```
 
 ## Code conventions

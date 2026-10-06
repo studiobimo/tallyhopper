@@ -5,44 +5,51 @@
 #
 # Enforces the same rules as the git hooks, before the agent acts:
 #   - gh pr create / gh stack submit / git push  -> PR size limit
-#   - git checkout -b / git switch -c / git branch <name>
-#     / git branch -m|-c [<old>] <new>                   -> Conventional Branch
+#   - git checkout -b / git switch -c / git branch <name> -> Conventional Branch
 #
-# CI (pr-checks) remains the authoritative gate; this is a guardrail.
+# The rules themselves are the org's pre-commit hooks (studiobimo/.github), run by
+# id, so this file only decides when to ask. CI (pr-checks) remains the
+# authoritative gate; this is a guardrail.
+#
+# Managed by studiobimo/project-template; change it there.
 set -euo pipefail
 
-here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+devtools="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 command -v jq >/dev/null 2>&1 || exit 0
+command -v uv >/dev/null 2>&1 || exit 0
 cmd="$(jq -r '.tool_input.command // empty' 2>/dev/null || true)"
 [[ -n "${cmd}" ]] || exit 0
 
-block() {
-    printf '%s\n' "$1" >&2
-    exit 2
+# run_hook <rule> <hook-id> [VAR=value ...]: blocks the call when the hook fails.
+run_hook() {
+    local rule="$1" id="$2" out status=0
+    shift 2
+    out="$(env "$@" uv --project "${devtools}" run --frozen \
+        pre-commit run "${id}" --hook-stage manual 2>&1)" || status=$?
+    # 1 is the hook saying no. Anything else is pre-commit itself failing (tools not
+    # set up yet, the hook repo unreachable), which is not a reason to stop the agent.
+    if [[ "${status}" -eq 1 ]]; then
+        printf 'Blocked by agent-guard (%s):\n%s\n' "${rule}" "${out}" >&2
+        exit 2
+    fi
 }
 
 # Only the first line matters for matching; heredoc bodies can contain anything.
 first_line="${cmd%%$'\n'*}"
 
-# Help output never changes anything.
 if [[ "${first_line}" =~ [[:space:]](--help|-h)([[:space:]]|$) ]]; then
     exit 0
 fi
 
-# --- PR size -------------------------------------------------------------
 if [[ "${first_line}" =~ (^|[[:space:]\;\&\|])(gh[[:space:]]+pr[[:space:]]+create|gh[[:space:]]+stack[[:space:]]+submit|git[[:space:]]+push)([[:space:]]|$) ]]; then
-    size_args=()
+    size_env=()
     if [[ "${first_line}" =~ gh[[:space:]]+pr[[:space:]]+create.*(--base|-B)[[:space:]=]+[\"\']?([^[:space:]\"\']+) ]]; then
-        size_args=(--base "${BASH_REMATCH[2]}")
+        size_env=("PR_BASE=${BASH_REMATCH[2]}")
     fi
-    if ! out="$("${here}/check-pr-size.sh" ${size_args[@]+"${size_args[@]}"} 2>&1)"; then
-        block "Blocked by agent-guard (PR size rule):
-${out}"
-    fi
+    run_hook "PR size rule" pr-size ${size_env[@]+"${size_env[@]}"}
 fi
 
-# --- Branch names --------------------------------------------------------
 new_branch=""
 if [[ "${first_line}" =~ git[[:space:]]+(checkout|switch)[[:space:]]+(-b|-B|-c|-C|--create)[[:space:]]+[\"\']?([^[:space:];&|\"\']+) ]]; then
     new_branch="${BASH_REMATCH[3]}"
@@ -71,18 +78,12 @@ elif [[ "${first_line}" =~ gh[[:space:]]+stack[[:space:]]+(init|add)[[:space:]]+
     for b in ${args}; do
         b="${b//[\"\']/}"
         [[ -z "${b}" || "${b}" == -* ]] && continue
-        if ! out="$("${here}/check-branch-name.sh" "${b}" 2>&1)"; then
-            block "Blocked by agent-guard (branch naming rule):
-${out}"
-        fi
+        run_hook "branch naming rule" conventional-branch "BRANCH_NAME=${b}"
     done
 fi
 
 if [[ -n "${new_branch}" ]]; then
-    if ! out="$("${here}/check-branch-name.sh" "${new_branch}" 2>&1)"; then
-        block "Blocked by agent-guard (branch naming rule):
-${out}"
-    fi
+    run_hook "branch naming rule" conventional-branch "BRANCH_NAME=${new_branch}"
 fi
 
 exit 0

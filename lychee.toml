@@ -1,8 +1,6 @@
-# Link checking for Markdown (pre-push and CI).
 max_retries = 2
 timeout = 20
 accept = ["200..=299", "429"]
 exclude = [
-  # Private until public launch; re-enable when the repo is public.
   "^https://github\\.com/studiobimo/",
 ]

@@ -1,3 +1,18 @@
+# >>> template:base
+# Python (.devtools)
+.venv/
+__pycache__/
+
+# OS
+.DS_Store
+__MACOSX/
+Thumbs.db
+
+# Local agent state (shared settings are committed)
+.claude/settings.local.json
+.claude/worktrees/
+# <<< template:base
+
 # Gradle
 .gradle/
 build/
@@ -23,17 +38,6 @@ bin/
 .metadata/
 *.launch
 .vscode/
-
-# Python (.devtools)
-.venv/
-__pycache__/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Local agent settings (shared settings are committed)
-.claude/settings.local.json
 
 # Datagen cache
 common/src/generated/resources/.cache/

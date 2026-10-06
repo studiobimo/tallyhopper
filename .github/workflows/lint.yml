@@ -1,15 +1,5 @@
 name: Lint
 
-# The other half of `make -C .devtools check`.
-#
-# `check` is `lint` then `build`. ci.yml runs the build half -- Gradle's own `check`,
-# which covers compilation, Error Prone, the tests, the coverage gate and
-# spotlessCheck. This runs the lint half: every pre-commit hook, over every file.
-#
-# It calls the org workflow rather than listing tools, so .pre-commit-config.yaml
-# stays the only place a linter's version is written down. See that repo's README for
-# why a repo with a pre-commit config calls this instead of ci-workflows + ci-gitleaks.
-
 on:
   push:
     branches: [main]
@@ -24,13 +14,10 @@ concurrency:
 
 jobs:
   lint:
-    # A called workflow can never hold more than its caller, so the caller has to
-    # grant what it needs. `permissions: {}` above keeps every other job at nothing.
     permissions:
       contents: read
     uses: studiobimo/.github/.github/workflows/ci-pre-commit.yml@v1
     with:
-      # Where pre-commit itself is pinned, the same project `make -C .devtools lint` uses.
       uv-project: .devtools
       # spotlessCheck is already part of the Gradle `check` ci.yml runs. Repeating it
       # here would mean a JDK, a Gradle distribution and a warm build cache in the lint
