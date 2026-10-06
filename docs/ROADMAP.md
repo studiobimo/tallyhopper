@@ -13,19 +13,19 @@ A milestone is done only when all of its **exit criteria** are met.
 - [x] `.devtools/` (Makefile, uv, pre-commit), agent guards for Claude Code and Codex
 - [x] `.java-version` as the single Java version source
 - [x] Governance: README, CONTRIBUTING, CODEOWNERS, templates, Dependabot, release-please config, ADRs
-- [ ] CI wrappers calling the org reusable workflows: `pr-checks` and `ci` done; `lint`, `security`
-      and `release-please` still to come (studiobimo/.github#4, #5, #7)
-- [ ] Dependabot Gradle PRs refresh the lockfiles and verification metadata automatically
+- [ ] CI wrappers calling the org reusable workflows: `pr-checks`, `ci`, `lint` and
+      `release-please` done; `security` still to come (studiobimo/.github#5)
+- [x] Dependabot Gradle PRs refresh the lockfiles and verification metadata automatically
 - [ ] Wiki sync (once the repository is public)
 
 ### Exit criteria
 
 - [x] An empty mod loads on Fabric and NeoForge dev servers
-- [ ] `make -C .devtools check` passes locally **and in CI**
+- [x] `make -C .devtools check` passes locally **and in CI**
 - [x] Hooks reject a bad commit message and a bad branch name, locally and from a Claude/Codex tool call
 - [x] Hooks reject a PR over 20 files, locally and from a Claude/Codex tool call
 - [ ] CI rejects all three of the above
-- [ ] release-please opens a release PR
+- [x] release-please opens a release PR
 
 ## M1: Core logic (pure Java)
 

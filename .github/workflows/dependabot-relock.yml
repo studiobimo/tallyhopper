@@ -1,0 +1,134 @@
+name: Dependabot relock
+
+# Gradle dependency verification pins 408 artifacts by sha256, and four
+# gradle.lockfile(s) pin the resolved graph. A Dependabot version bump invalidates
+# both, so every Gradle dependency pull request arrives red and stays red until the
+# metadata is regenerated. This regenerates it and pushes the result onto the branch.
+#
+# ## Why pull_request_target
+#
+# A Dependabot-triggered `pull_request` run gets a read-only GITHUB_TOKEN no matter
+# what the workflow asks for, and this job has to push. `pull_request_target` runs
+# the workflow definition from the default branch -- so what executes is this
+# reviewed file, never a copy from the pull request -- with a token that can write.
+#
+# ## What the gate is load-bearing for
+#
+# `pull_request_target` plus `contents: write` is the combination that leaks
+# repositories when it is left open, so the `if:` below is the security control, not
+# a convenience. It requires both the author to be dependabot[bot] and the head
+# branch to be `dependabot/gradle/*`. Those branches are created by Dependabot inside
+# this repository; a fork cannot produce one, and anyone able to push one already has
+# write access.
+#
+# What the job does still execute is the upstream build. Resolving a bumped
+# dependency configures Gradle plugins, which is code from the new version, running
+# in a job that holds a write token. That is the deliberate tradeoff and the reason
+# the gate is narrow: it is the same code ci.yml already builds, here with a token
+# scoped to this repository and nothing else.
+#
+# Do not widen the trigger, drop either half of the gate, or add a branch pattern a
+# contributor can create.
+#
+# ## Known limitation
+#
+# A push made with GITHUB_TOKEN does not trigger further workflow runs -- GitHub
+# suppresses that to stop loops. That is what keeps this from re-triggering itself,
+# but it also means ci.yml does not re-run on the relock commit, so the pull request
+# keeps showing the check that failed before the fix. Re-run it by hand, or wait for
+# a GitHub App token (studiobimo/.github#30) to replace GITHUB_TOKEN here. The relock
+# step runs the full build itself, so a green job is real evidence the new lockfiles
+# resolve and compile.
+
+# The audit below is right in general, and the reasoning for taking the risk here is
+# in the header: a Dependabot run cannot get a writable token any other way, the
+# workflow body comes from the default branch rather than the pull request, and the
+# job gate admits only dependabot[bot] on a dependabot/gradle/* branch that no outside
+# contributor can create.
+on: # zizmor: ignore[dangerous-triggers]
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    paths:
+      - gradle/libs.versions.toml
+      - gradle/wrapper/gradle-wrapper.properties
+      - gradle.properties
+      - '**/build.gradle'
+
+permissions: {}
+
+concurrency:
+  group: dependabot-relock-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  relock:
+    name: Refresh lockfiles and verification metadata
+    # Both halves are required. See the header before touching this.
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      startsWith(github.event.pull_request.head.ref, 'dependabot/gradle/')
+    runs-on: ubuntu-latest
+    # A cold Gradle cache re-resolving every configuration is slow.
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # pull_request_target defaults to the base branch; the point is the PR's code.
+          ref: ${{ github.event.pull_request.head.ref }}
+          # The final step pushes, so this is the one workflow in this repo that keeps
+          # its credentials. Deliberate, not an oversight.
+          persist-credentials: true
+
+      - name: Resolve the JDK version
+        id: jdk
+        run: echo "version=$(cat .java-version)" >> "${GITHUB_OUTPUT}"
+
+      - uses: studiobimo/.github/.github/actions/setup-java-gradle@2baaeb5ba77d1059b36c42660fed28afefe69c05 # v1.4.0
+        with:
+          java-version: ${{ steps.jdk.outputs.version }}
+          # A pull request must never write the shared Gradle cache, and this one
+          # resolves an unreviewed dependency graph.
+          cache-read-only: 'true'
+
+      # The same target a developer runs, so a bump that needs a human produces the
+      # same result here as it would locally.
+      - name: Regenerate
+        run: make -C .devtools lock
+
+      # `lock` runs a full build, so it touches more than the files we mean to commit.
+      # Anything outside this list is a bug or a compromise; either way, stop.
+      - name: Check what changed
+        id: changed
+        run: |
+          git add --intent-to-add --all
+          unexpected=$(
+            git diff --name-only -- . \
+              ':(exclude)gradle/verification-metadata.xml' \
+              ':(exclude)*gradle.lockfile'
+          )
+          if [ -n "${unexpected}" ]; then
+            echo "::error::Relock changed files it should not have:"
+            echo "${unexpected}"
+            exit 1
+          fi
+
+          if git diff --quiet -- gradle/verification-metadata.xml '*gradle.lockfile'; then
+            echo "needed=false" >> "${GITHUB_OUTPUT}"
+            echo "Lockfiles and verification metadata are already current."
+          else
+            echo "needed=true" >> "${GITHUB_OUTPUT}"
+            git diff --stat -- gradle/verification-metadata.xml '*gradle.lockfile'
+          fi
+
+      - name: Commit and push
+        if: steps.changed.outputs.needed == 'true'
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add gradle/verification-metadata.xml '*gradle.lockfile'
+          git commit -m 'chore(deps): refresh lockfiles and verification metadata'
+          git push origin "HEAD:${HEAD_REF}"
