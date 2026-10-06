@@ -1,5 +1,6 @@
 root = true
 
+# >>> template:base
 [*]
 charset = utf-8
 end_of_line = lf
@@ -8,7 +9,7 @@ indent_size = 4
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.{yml,yaml,json,json5,toml,mcmeta}]
+[*.{yml,yaml,json,json5,toml}]
 indent_size = 2
 
 [*.md]
@@ -16,11 +17,15 @@ trim_trailing_whitespace = false
 # List continuation and nested content follow Markdown, not code, indentation.
 indent_size = unset
 
+[{Makefile,*.mk}]
+indent_style = tab
+# <<< template:base
+
+[*.mcmeta]
+indent_size = 2
+
 [*.bat]
 end_of_line = crlf
-
-[Makefile]
-indent_style = tab
 
 [gradle/wrapper/gradle-wrapper.jar]
 charset = unset

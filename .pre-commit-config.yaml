@@ -1,10 +1,5 @@
-# Hook revs are frozen to commit SHAs (`pre-commit autoupdate --freeze`);
-# Dependabot's pre-commit ecosystem keeps them current.
-# Install: make -C .devtools setup
 default_install_hook_types: [pre-commit, commit-msg, pre-push]
 default_stages: [pre-commit]
-# Toolchains pre-commit provisions for hooks (python: shellcheck/typos/zizmor/…,
-# node: markdownlint-cli2, golang: gitleaks/actionlint). Pinned for reproducibility.
 default_language_version:
   python: python3.14
   node: 24.21.0
@@ -92,12 +87,14 @@ repos:
         types: [markdown]
         stages: [pre-push, manual]
 
-  - repo: https://github.com/compilerla/conventional-pre-commit
-    rev: 91ab4bf57e58b32adf1a122681f6ebe164d081c8  # frozen: v4.4.0
+  # The org's own rules, from the same scripts CI runs on the pull request.
+  # agent-guard.sh runs the last two by id, so keep them even if a stage changes.
+  - repo: https://github.com/studiobimo/.github
+    rev: 0ec35109583b97c453323ae40412505a16398f32  # frozen: v1.5.0
     hooks:
-      - id: conventional-pre-commit
-        stages: [commit-msg]
-        args: [--strict, build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test]
+      - id: conventional-commit
+      - id: conventional-branch
+      - id: pr-size
 
   - repo: local
     hooks:
@@ -107,20 +104,6 @@ repos:
         language: system
         files: \.java$
         pass_filenames: false
-      - id: conventional-branch
-        name: conventional branch name
-        entry: .devtools/scripts/check-branch-name.sh
-        language: script
-        pass_filenames: false
-        always_run: true
-        stages: [pre-push, manual]
-      - id: pr-size
-        name: PR size (max 20 files)
-        entry: .devtools/scripts/check-pr-size.sh
-        language: script
-        pass_filenames: false
-        always_run: true
-        stages: [pre-push, manual]
       - id: gradle-check
         name: gradle build (compile, Error Prone, tests)
         entry: bash -c 'JAVA_HOME="$(/usr/libexec/java_home -v "$(cat .java-version)" 2>/dev/null || echo "$JAVA_HOME")" ./gradlew build -q'

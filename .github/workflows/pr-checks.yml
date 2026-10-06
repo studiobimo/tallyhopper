@@ -1,8 +1,5 @@
 name: PR checks
 
-# Thin wrapper. The checks live in studiobimo/.github so a fix lands in every
-# repo at once; see that repo's README for the inputs.
-
 on:
   pull_request:
     types: [opened, edited, synchronize, reopened]
@@ -11,8 +8,6 @@ permissions: {}
 
 jobs:
   pr-checks:
-    # A called workflow can never hold more than its caller, so the caller has to
-    # grant what it needs. `permissions: {}` above keeps every other job at nothing.
     permissions:
       contents: read
     uses: studiobimo/.github/.github/workflows/ci-pr.yml@v1

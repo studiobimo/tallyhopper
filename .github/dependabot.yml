@@ -1,5 +1,3 @@
-# Dependency updates. Commit messages follow Conventional Commits (chore(deps): ...).
-# Minecraft, Fabric and NeoForge versions are ported deliberately, so Dependabot ignores them.
 version: 2
 updates:
   - package-ecosystem: gradle
@@ -29,6 +27,7 @@ updates:
       - dependency-name: net.neoforged.moddev
         update-types: [version-update:semver-major]
 
+  # >>> template:base
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -67,3 +66,4 @@ updates:
     groups:
       devtools:
         patterns: ["*"]
+  # <<< template:base
