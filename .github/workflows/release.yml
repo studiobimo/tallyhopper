@@ -26,15 +26,12 @@ on:
 
 permissions: {}
 
-# Never cancel a release in flight; a half-finished one is worse than a slow one.
 concurrency:
   group: release
   cancel-in-progress: false
 
 jobs:
   release:
-    # A called workflow can never hold more than its caller, so the caller has to
-    # grant what it needs. `permissions: {}` above keeps every other job at nothing.
     permissions:
       contents: write
       pull-requests: write
@@ -46,7 +43,6 @@ jobs:
     # release pull request actually tagged anything.
     if: ${{ needs.release.outputs.release-created == 'true' }}
     permissions:
-      # Uploading the jars onto the GitHub Release.
       contents: write
       # Signing the provenance attestation with a short-lived OIDC identity.
       id-token: write
