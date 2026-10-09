@@ -18,7 +18,7 @@ check: lint build ## Everything CI runs
 client-test: ## Screenshot the GUI in a real client (opens a window, so it is not part of check)
 	$(GRADLE) :fabric:runClientGameTest
 
-lock: ## Refresh gradle.lockfile(s) and sha256 dependency verification after version changes
+lock: lock-tools ## Refresh every lockfile and the sha256 dependency verification after a version change
 	$(GRADLE) --write-verification-metadata sha256 --refresh-dependencies resolveAndLockAll buildEnvironment build --write-locks
 
 stray: ## List JVMs a dev run or GameTest left behind
