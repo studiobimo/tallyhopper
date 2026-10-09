@@ -1,10 +1,9 @@
 name: Lint
 
+# No `push` or `merge_group` trigger: every change reaches main through a pull request that
+# already ran these hooks, and the repository has no merge queue.
 on:
-  push:
-    branches: [main]
   pull_request:
-  merge_group:
 
 permissions: {}
 
