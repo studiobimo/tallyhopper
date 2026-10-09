@@ -1,24 +1,24 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
-# To regenerate this file, run: ./gradlew :dependencies --write-locks
+# To regenerate this file, run: ./gradlew :build-logic:dependencies --write-locks
 com.diffplug.durian:durian-collect:1.2.0=runtimeClasspath,testRuntimeClasspath
 com.diffplug.durian:durian-core:1.2.0=runtimeClasspath,testRuntimeClasspath
 com.diffplug.durian:durian-io:1.2.0=runtimeClasspath,testRuntimeClasspath
 com.diffplug.durian:durian-swt.os:4.3.0=runtimeClasspath,testRuntimeClasspath
-com.diffplug.spotless:spotless-lib-extra:4.10.2=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-com.diffplug.spotless:spotless-lib:4.10.2=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-com.diffplug.spotless:spotless-plugin-gradle:8.10.2=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.diffplug.spotless:spotless-lib-extra:4.10.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.diffplug.spotless:spotless-lib:4.10.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.diffplug.spotless:spotless-plugin-gradle:8.10.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.googlecode.concurrent-trees:concurrent-trees:2.6.1=runtimeClasspath,testRuntimeClasspath
 com.googlecode.javaewah:JavaEWAH:1.2.3=runtimeClasspath,testRuntimeClasspath
 com.squareup.okhttp3:okhttp:4.12.0=runtimeClasspath,testRuntimeClasspath
 com.squareup.okio:okio-jvm:3.6.0=runtimeClasspath,testRuntimeClasspath
 com.squareup.okio:okio:3.6.0=runtimeClasspath,testRuntimeClasspath
-commons-codec:commons-codec:1.22.0=runtimeClasspath,testRuntimeClasspath
+commons-codec:commons-codec:1.22.1=runtimeClasspath,testRuntimeClasspath
 dev.equo.ide:solstice:1.8.2=runtimeClasspath,testRuntimeClasspath
 net.ltgt.gradle:gradle-errorprone-plugin:5.1.1=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-org.eclipse.jgit:org.eclipse.jgit:7.7.1.202607240634-r=runtimeClasspath,testRuntimeClasspath
-org.eclipse.platform:org.eclipse.osgi:3.24.200=runtimeClasspath,testRuntimeClasspath
+org.eclipse.jgit:org.eclipse.jgit:7.8.0.202609011348-r=runtimeClasspath,testRuntimeClasspath
+org.eclipse.platform:org.eclipse.osgi:3.24.300=runtimeClasspath,testRuntimeClasspath
 org.jetbrains.kotlin:kotlin-stdlib-common:1.9.10=runtimeClasspath,testRuntimeClasspath
 org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.10=runtimeClasspath,testRuntimeClasspath
 org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.10=runtimeClasspath,testRuntimeClasspath

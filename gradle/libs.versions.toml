@@ -3,14 +3,14 @@
 
 [versions]
 fabric-loom = "1.18.1"
-neoforged-moddev = "2.0.147"
+neoforged-moddev = "2.0.148"
 mixin = "0.17.3+mixin.0.8.7"
 mixinextras = "0.5.3"
-spotless = "8.10.2"
+spotless = "8.10.3"
 palantir-java-format = "2.98.0"
 errorprone-plugin = "5.1.1"
 errorprone = "2.50.0"
-nullaway = "0.14.1"
+nullaway = "0.14.2"
 # Must match the version Minecraft bundles (strict constraint from minecraft-dependencies).
 jspecify = "1.0.0"
 junit = "6.1.3"
