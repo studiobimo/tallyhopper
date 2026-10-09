@@ -118,7 +118,7 @@ The reasoning is in [ADR-0001](docs/adr/0001-mod-not-datapack.md).
 
 ## Development
 
-Requirements: JDK 25 (`brew install --cask temurin@25`) and [uv](https://docs.astral.sh/uv/).
+Requirements: JDK 25 (`brew install --cask temurin@25`) and [mise](https://mise.jdx.dev/getting-started.html), which installs every other tool.
 
 ```sh
 make -C .devtools setup               # pinned tools + git hooks

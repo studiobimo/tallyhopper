@@ -10,7 +10,7 @@ A milestone is done only when all of its **exit criteria** are met.
 - [x] Fabric and NeoForge entry points
 - [x] Spotless, Error Prone + NullAway, JUnit + AssertJ, JaCoCo gate
 - [x] Dependency locking and sha256 dependency verification
-- [x] `.devtools/` (Makefile, uv, pre-commit), agent guards for Claude Code and Codex
+- [x] `.devtools/` (Makefile, mise, lefthook), agent guards for Claude Code and Codex
 - [x] `.java-version` as the single Java version source
 - [x] Governance: README, CONTRIBUTING, CODEOWNERS, templates, Dependabot, release-please config, ADRs
 - [ ] CI wrappers calling the org reusable workflows: `pr-checks`, `ci`, `lint` and
