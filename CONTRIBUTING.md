@@ -4,9 +4,11 @@ Thanks for helping! This project follows a few strict conventions, and tooling e
 
 ## Setup
 
-1. Install **JDK 25** (e.g. `brew install --cask temurin@25`) and **[uv](https://docs.astral.sh/uv/)**.
+1. Install **JDK 25** (e.g. `brew install --cask temurin@25`) and
+   **[mise](https://mise.jdx.dev/getting-started.html)** (`brew install mise`), which installs every
+   lint tool at the version `mise.toml` pins.
 2. Run `make -C .devtools setup`. This installs the pinned tools and the `pre-commit`, `commit-msg`
-   and `pre-push` hooks.
+   and `pre-push` hooks, which [lefthook](https://lefthook.dev/) runs.
 3. Run `make -C .devtools check` to confirm everything passes.
 
 `make -C .devtools help` lists all targets.
@@ -18,7 +20,9 @@ Thanks for helping! This project follows a few strict conventions, and tooling e
 | `common/` | Loader-agnostic code, compiled against vanilla Minecraft only. Most code lives here. |
 | `fabric/`, `neoforge/` | Thin loader entry points and `Services` implementations |
 | `build-logic/` | Shared Gradle convention plugins |
-| `.devtools/` | Makefile, shared `base.mk`, pinned Python tools, hook and guard scripts |
+| `.devtools/` | Makefile, shared `base.mk`, the shared hooks (`lefthook-base.yml`), guard and sync scripts |
+| `mise.toml`, `mise.lock` | Every tool the hooks and CI run, pinned with checksums |
+| `lefthook.yml` | This project's own hooks (Spotless, the Gradle build), on top of the shared ones |
 | `docs/` | Roadmap, ADRs, player-facing docs (mirrored to the wiki once the repo is public) |
 
 <!-- >>> template:workflow -->
@@ -34,7 +38,11 @@ Examples: `feat/short-description`, `fix/what-was-broken`.
 
 `<type>(<scope>): <summary>`. Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`,
 `test`, `build`, `ci`, `chore`, `revert`. Breaking changes use `!` or a `BREAKING CHANGE:` footer.
-The scopes this project uses are listed in `AGENTS.md`.
+The scopes this project uses are listed in `AGENTS.md` and enforced from `.commitlintrc.yaml`:
+a scope is optional, but one that is not listed is rejected. The rest is
+[commitlint's conventional config](https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional):
+a lowercase subject with no full stop, and at most 100 characters in the header and in each
+body line.
 
 PRs are **squash-merged**, so the **PR title** must also be a Conventional Commit.
 It becomes the commit on `main` that release-please reads.

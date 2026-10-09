@@ -16,10 +16,9 @@ jobs:
   lint:
     permissions:
       contents: read
-    uses: studiobimo/.github/.github/workflows/ci-pre-commit.yml@v1
+    uses: studiobimo/.github/.github/workflows/ci-lint.yml@v1
     with:
-      uv-project: .devtools
       # spotlessCheck is already part of the Gradle `check` ci.yml runs. Repeating it
       # here would mean a JDK, a Gradle distribution and a warm build cache in the lint
       # job to re-prove a green result, so skip it and let ci.yml own formatting.
-      skip: spotless
+      exclude: spotless

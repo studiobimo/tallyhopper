@@ -1,0 +1,62 @@
+# This project's git hooks. The ones every studiobimo repo shares are in
+# .devtools/lefthook-base.yml, which the template manages; add the project's own
+# below the markers, under the same hook names. A job here with the same name as one
+# there changes that job.
+#
+#   make -C .devtools setup   # install the tools and wire the hooks
+#   make -C .devtools lint    # the pre-commit hook, over every file
+
+# >>> template:base
+extends:
+  - .devtools/lefthook-base.yml
+
+# The org's own rules, from the same scripts CI runs on the pull request.
+# agent-guard.sh runs them by job name (branch-name, pr-size).
+# v1 is the same floating tag the workflows are called at, so a fix there reaches the
+# hooks and CI together. lefthook looks for a newer v1 at most once a day.
+remotes:
+  - git_url: https://github.com/studiobimo/.github
+    ref: v1
+    refetch_frequency: 24h
+    configs:
+      - lefthook/org.yml
+# <<< template:base
+
+pre-commit:
+  # Files Gradle writes: its lockfiles, the dependency checksums, the wrapper scripts
+  # (gradlew.bat has to keep its CRLF line endings) and the data generators' output.
+  exclude:
+    - 'gradle/verification-metadata.xml'
+    - '*gradle.lockfile'
+    - 'gradlew'
+    - 'gradlew.bat'
+    - 'common/src/generated/**'
+
+  jobs:
+    # Contains ${...} Gradle template placeholders; valid TOML only after processResources.
+    - name: toml
+      exclude:
+        - 'neoforge/src/main/resources/META-INF/neoforge.mods.toml'
+
+    - name: fabric-mod-json
+      glob: 'fabric/src/main/resources/fabric.mod.json'
+      run: >-
+        mise exec -- check-jsonschema
+        --schemafile https://json.schemastore.org/fabric.mod.json {staged_files}
+
+    # Formats the whole project, so it takes no file arguments. CI skips this job:
+    # spotlessCheck is part of the Gradle `check` that ci.yml runs.
+    - name: spotless
+      glob: '*.java'
+      stage_fixed: true
+      run: >-
+        JAVA_HOME="$(/usr/libexec/java_home -v "$(cat .java-version)" 2>/dev/null || echo "$JAVA_HOME")"
+        ./gradlew spotlessApply -q
+
+pre-push:
+  jobs:
+    # Compile, Error Prone and the tests, whatever the push contains.
+    - name: gradle-check
+      run: >-
+        JAVA_HOME="$(/usr/libexec/java_home -v "$(cat .java-version)" 2>/dev/null || echo "$JAVA_HOME")"
+        ./gradlew build -q

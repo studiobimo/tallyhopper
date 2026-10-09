@@ -6,7 +6,3 @@ extend-exclude = [
   ".mise/",
   "*.jar",
 ]
-
-[default.extend-words]
-# Python CA bundle package name
-certifi = "certifi"
