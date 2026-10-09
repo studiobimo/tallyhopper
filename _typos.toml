@@ -2,6 +2,8 @@
 extend-exclude = [
   "gradle/verification-metadata.xml",
   "*.lockfile",
+  "*.lock",
+  ".mise/",
   "*.jar",
 ]
 
