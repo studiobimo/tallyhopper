@@ -94,8 +94,11 @@ jobs:
 
       # The same target a developer runs, so a bump that needs a human produces the
       # same result here as it would locally.
+      #
+      # `-o lock-tools` leaves out the mise.lock refresh `lock` starts with: this job installs
+      # no mise, and a Gradle bump never changes mise.toml.
       - name: Regenerate
-        run: make -C .devtools lock
+        run: make -C .devtools -o lock-tools lock
 
       # `lock` runs a full build, so it touches more than the files we mean to commit.
       # Anything outside this list is a bug or a compromise; either way, stop.
