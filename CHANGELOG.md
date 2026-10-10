@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.2.0](https://github.com/studiobimo/tallyhopper/compare/v0.1.0...v0.2.0) (2026-10-10)
+
+
+### Features
+
+* **common:** flash an observer lamp for each counted item ([#61](https://github.com/studiobimo/tallyhopper/issues/61)) ([f99b452](https://github.com/studiobimo/tallyhopper/commit/f99b452f7eae08f290da4ffbfa4fb60cd6865b29))
+* **common:** redraw the clock face, item icon, sapling slot and screen frame ([#60](https://github.com/studiobimo/tallyhopper/issues/60)) ([7dde3a2](https://github.com/studiobimo/tallyhopper/commit/7dde3a2e79b811b63f01faa1e46c9a6526452c29))
+* **common:** split the rejoin summary into a headline and a detail line ([#58](https://github.com/studiobimo/tallyhopper/issues/58)) ([0263544](https://github.com/studiobimo/tallyhopper/commit/0263544bd6c7dbabba249693464afff8fc894e37))
+
+
+### Bug Fixes
+
+* **ci:** run the dependabot relock without mise ([#80](https://github.com/studiobimo/tallyhopper/issues/80)) ([16aae9e](https://github.com/studiobimo/tallyhopper/commit/16aae9e3ea7fbc61b2664c0e8ab20b3f866227c2))
+* **common:** credit a line of Tally Hoppers once ([#59](https://github.com/studiobimo/tallyhopper/issues/59)) ([ea6be72](https://github.com/studiobimo/tallyhopper/commit/ea6be72fcfef63e95d5adf4124de2e006ff6b4dd))
+* **common:** don't count items a player throws into a Tally Hopper ([#57](https://github.com/studiobimo/tallyhopper/issues/57)) ([2b55345](https://github.com/studiobimo/tallyhopper/commit/2b553451e203eaf8af47909ffa489d95f9375a70))
+* **devtools:** check the new name in git branch -m &lt;old&gt; &lt;new&gt; ([#64](https://github.com/studiobimo/tallyhopper/issues/64)) ([53edbfe](https://github.com/studiobimo/tallyhopper/commit/53edbfe4b9fd3ce106277c0b4c87f42deabd251c))
+* **devtools:** refresh mise.lock from the lock target ([#79](https://github.com/studiobimo/tallyhopper/issues/79)) ([2c5741c](https://github.com/studiobimo/tallyhopper/commit/2c5741cd06daaad2b3720423195d22a2ced60440))
+
+
+### Documentation
+
+* add screenshots and workflow badges to the README ([#62](https://github.com/studiobimo/tallyhopper/issues/62)) ([a22baa9](https://github.com/studiobimo/tallyhopper/commit/a22baa9166b6bda011c8c75775d9f32bcb5a4f7c))
+
 ## 0.1.0 (2026-09-20)
 
 
