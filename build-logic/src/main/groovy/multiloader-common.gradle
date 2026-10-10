@@ -1,3 +1,4 @@
+// Conventions shared by every subproject (common, fabric, neoforge).
 plugins {
     id 'java-library'
     id 'com.diffplug.spotless'
@@ -6,6 +7,17 @@ plugins {
 
 // Precompiled script plugins cannot use the type-safe accessor, so look the catalog up by name.
 def libs = versionCatalogs.named('libs')
+
+// Two values differ from one project to the next and live in gradle.properties:
+//   nullaway_package      the package NullAway enforces nullness in
+//   external_source_path  sources copied in from another repository, as a path under a source
+//                         root (dev/bimo/model); Error Prone and Spotless leave them alone.
+//                         Empty or unset when there are none.
+def nullawayPackage = findProperty('nullaway_package')
+if (!nullawayPackage) {
+    throw new GradleException('Set nullaway_package in gradle.properties (the package NullAway checks).')
+}
+def externalSourcePath = (findProperty('external_source_path') ?: '').toString()
 
 // .java-version is read by Gradle, actions/setup-java (java-version-file), jenv, mise and asdf.
 def javaVersion = rootProject.layout.projectDirectory.file('.java-version').asFile.text.trim() as int
@@ -57,9 +69,9 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs.addAll(['-Xlint:all,-processing,-serial,-classfile', '-Werror'])
     options.errorprone {
         disableWarningsInGeneratedCode = true
-        excludedPaths = '.*/build/generated/.*'
+        excludedPaths = externalSourcePath ? ".*/(build/generated|${externalSourcePath})/.*".toString() : '.*/build/generated/.*'
         // Minecraft is not null-annotated; enforce nullness only in our packages.
-        option('NullAway:AnnotatedPackages', 'dev.bimo.tallyhopper')
+        option('NullAway:AnnotatedPackages', nullawayPackage.toString())
         option('NullAway:JSpecifyMode', 'true')
         error('NullAway')
     }
@@ -74,6 +86,9 @@ tasks.named('compileTestJava', JavaCompile) {
 spotless {
     java {
         target 'src/*/java/**/*.java'
+        if (externalSourcePath) {
+            targetExclude("src/main/java/${externalSourcePath}/**".toString())
+        }
         palantirJavaFormat(libs.findVersion('palantir-java-format').get().requiredVersion)
         removeUnusedImports()
         formatAnnotations()

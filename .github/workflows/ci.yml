@@ -1,5 +1,8 @@
 name: CI
 
+# Thin wrapper around the org's Java/Gradle toolchain workflow. `check` is the
+# same target `make -C .devtools check` runs, so local and CI results match.
+
 on:
   push:
     branches: [main]
@@ -10,6 +13,8 @@ permissions: {}
 
 jobs:
   check:
+    # A called workflow can never hold more than its caller, so the caller has to
+    # grant what it needs. `permissions: {}` above keeps every other job at nothing.
     permissions:
       contents: read
     uses: studiobimo/.github/.github/workflows/ci-java-gradle.yml@v1

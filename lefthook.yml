@@ -22,6 +22,17 @@ remotes:
       - lefthook/org.yml
 # <<< template:base
 
+# >>> template:java
+# Added to the hooks in the base block. A project's own pre-commit jobs go below the closing
+# marker, indented under `jobs:`; a job there with the same name as one here changes it.
+pre-push:
+  jobs:
+    # Compile, Error Prone and the tests, whatever the push contains.
+    - name: gradle-check
+      run: >-
+        JAVA_HOME="$(/usr/libexec/java_home -v "$(cat .java-version)" 2>/dev/null || echo "$JAVA_HOME")"
+        ./gradlew build -q
+
 pre-commit:
   # Files Gradle writes: its lockfiles, the dependency checksums, the wrapper scripts
   # (gradlew.bat has to keep its CRLF line endings) and the data generators' output.
@@ -29,7 +40,7 @@ pre-commit:
     - 'gradle/verification-metadata.xml'
     - '*gradle.lockfile'
     - 'gradlew'
-    - 'gradlew.bat'
+    - '*.bat'
     - 'common/src/generated/**'
 
   jobs:
@@ -52,11 +63,4 @@ pre-commit:
       run: >-
         JAVA_HOME="$(/usr/libexec/java_home -v "$(cat .java-version)" 2>/dev/null || echo "$JAVA_HOME")"
         ./gradlew spotlessApply -q
-
-pre-push:
-  jobs:
-    # Compile, Error Prone and the tests, whatever the push contains.
-    - name: gradle-check
-      run: >-
-        JAVA_HOME="$(/usr/libexec/java_home -v "$(cat .java-version)" 2>/dev/null || echo "$JAVA_HOME")"
-        ./gradlew build -q
+# <<< template:java

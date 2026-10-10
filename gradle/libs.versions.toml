@@ -16,6 +16,7 @@ jspecify = "1.0.0"
 junit = "6.1.3"
 assertj = "3.27.7"
 jacoco = "0.8.15"
+mod-publish = "2.2.1"
 
 [libraries]
 mixin = { module = "net.fabricmc:sponge-mixin", version.ref = "mixin" }
@@ -30,6 +31,7 @@ assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 
 spotless-gradle = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
 errorprone-gradle = { module = "net.ltgt.gradle:gradle-errorprone-plugin", version.ref = "errorprone-plugin" }
+mod-publish-gradle = { module = "me.modmuss50:mod-publish-plugin", version.ref = "mod-publish" }
 
 [plugins]
 fabric-loom = { id = "net.fabricmc.fabric-loom", version.ref = "fabric-loom" }
