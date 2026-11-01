@@ -85,7 +85,7 @@ jobs:
         id: jdk
         run: echo "version=$(cat .java-version)" >> "${GITHUB_OUTPUT}"
 
-      - uses: studiobimo/.github/.github/actions/setup-java-gradle@2baaeb5ba77d1059b36c42660fed28afefe69c05 # v1.4.0
+      - uses: studiobimo/.github/.github/actions/setup-java-gradle@ec030c5472d247433097cbd8a1ef051614954502 # v1.12.1
         with:
           java-version: ${{ steps.jdk.outputs.version }}
           # A pull request must never write the shared Gradle cache, and this one
