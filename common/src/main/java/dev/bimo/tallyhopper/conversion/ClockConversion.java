@@ -29,23 +29,10 @@ import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jspecify.annotations.Nullable;
 
-/**
- * Using a clock on a hopper turns it into a Tally Hopper in place.
- *
- * <ul>
- *   <li>Use: converts the clicked vanilla hopper.
- *   <li>Sneak-use: follows the chain the clicked hopper feeds and converts the hopper at its end.
- * </ul>
- *
- * <p>It costs the same as crafting: one sapling from the player's inventory, while the clock is
- * kept. Contents, custom name, lock and facing carry over. Each loader calls {@link #onUseBlock}
- * from its right-click-block event, before vanilla handles the click.
- */
 public final class ClockConversion {
 
     private ClockConversion() {}
 
-    /** Returns {@link InteractionResult#PASS} when the click isn't a conversion, so vanilla handles it. */
     public static InteractionResult onUseBlock(Player player, Level level, InteractionHand hand, BlockHitResult hit) {
         ItemStack clock = player.getItemInHand(hand);
         BlockPos clicked = hit.getBlockPos();
@@ -54,7 +41,6 @@ public final class ClockConversion {
         if (!clock.is(Items.CLOCK) || player.isSpectator() || !(state.getBlock() instanceof HopperBlock)) {
             return InteractionResult.PASS;
         }
-        // A plain click on a Tally Hopper opens it as usual.
         if (!chain && state.getBlock() instanceof TallyHopperBlock) {
             return InteractionResult.PASS;
         }
@@ -74,13 +60,6 @@ public final class ClockConversion {
         };
     }
 
-    /**
-     * Whether the hopper at {@code pos} feeds a Tally Hopper, directly or down a line of hoppers.
-     *
-     * <p>Two Tally Hoppers on one line both measure the same items, so both would extrapolate them:
-     * the line would hand back one farm's output once per Tally Hopper in it. Only the one nearest
-     * the storage earns, because it is the one that sees everything the line actually delivers.
-     */
     public static boolean feedsATallyHopper(Level level, BlockPos pos) {
         BlockPos downstream = nextHopper(level, pos);
         return downstream != null
@@ -90,7 +69,6 @@ public final class ClockConversion {
                         next -> level.getBlockState(next).getBlock() instanceof TallyHopperBlock);
     }
 
-    /** The hopper that the hopper at {@code pos} pushes into, or {@code null}. Never loads chunks. */
     static @Nullable BlockPos nextHopper(Level level, BlockPos pos) {
         BlockPos target = pos.relative(level.getBlockState(pos).getValue(HopperBlock.FACING));
         if (!level.isLoaded(target) || !(level.getBlockState(target).getBlock() instanceof HopperBlock)) {
@@ -110,9 +88,7 @@ public final class ClockConversion {
         return convertPaying(level, end, player);
     }
 
-    /** Converts the hopper if the player can pay a sapling, and takes the sapling. */
     private static InteractionResult convertPaying(ServerLevel level, BlockPos pos, Player player) {
-        // Checked before the sapling, so a refused conversion never costs anything.
         if (feedsATallyHopper(level, pos)) {
             return refuse(player, "message.tallyhopper.feeds_tally_hopper");
         }
@@ -127,7 +103,6 @@ public final class ClockConversion {
         return InteractionResult.SUCCESS;
     }
 
-    /** The first inventory slot holding a sapling, or -1. */
     private static int findSapling(Player player) {
         Inventory inventory = player.getInventory();
         for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
@@ -138,7 +113,6 @@ public final class ClockConversion {
         return -1;
     }
 
-    /** Replaces a vanilla hopper with a Tally Hopper, carrying over its saved data. */
     static void convert(ServerLevel level, BlockPos pos, Player player) {
         BlockState old = level.getBlockState(pos);
         if (!old.is(Blocks.HOPPER) || !(level.getBlockEntity(pos) instanceof HopperBlockEntity hopper)) {
@@ -149,7 +123,6 @@ public final class ClockConversion {
                 .defaultBlockState()
                 .setValue(HopperBlock.FACING, old.getValue(HopperBlock.FACING))
                 .setValue(HopperBlock.ENABLED, old.getValue(HopperBlock.ENABLED));
-        // Skipping block entity side effects stops the old hopper from spilling its items.
         level.setBlock(pos, converted, Block.UPDATE_ALL | Block.UPDATE_SKIP_BLOCK_ENTITY_SIDEEFFECTS);
         if (level.getBlockEntity(pos) instanceof TallyHopperBlockEntity tally) {
             try (ProblemReporter.ScopedCollector reporter =

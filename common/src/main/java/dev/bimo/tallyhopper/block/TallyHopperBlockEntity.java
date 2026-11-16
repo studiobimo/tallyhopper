@@ -56,37 +56,21 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
-/**
- * A vanilla hopper block entity under its own type.
- *
- * <p>Vanilla hopper logic is static and checks {@code instanceof HopperBlockEntity}: the transfer
- * cooldown handshake between hoppers, minecarts, comparators and item pickup all rely on it.
- * Extending it keeps every one of those behaviors identical. Vanilla hard-wires the hopper type in
- * the constructor, so the type accessors are overridden to report {@code tallyhopper:tally_hopper}
- * instead, which is what gets saved and synced.
- */
 public final class TallyHopperBlockEntity extends HopperBlockEntity {
 
     private static final Component DEFAULT_NAME = Component.translatable("container.tallyhopper.tally_hopper");
 
-    /** How often the clock face is brought up to date. */
     private static final int READY_CHECK_TICKS = 20;
 
     private static final String GUI_STATE_KEY = "tallyhopper_gui";
     private static final String SAPLING_KEY = TallyHopper.MOD_ID + "_sapling";
     private static final String PAID_KEY = TallyHopper.MOD_ID + "_calibration_paid";
 
-    /** How often an open screen is brought up to date. */
     private static final int SYNC_TICKS = 20;
 
     private final Measurement measurement = new Measurement();
     private final Ledger ledger = new Ledger();
 
-    /**
-     * What a calibration run costs, one sapling at a time. It is a container of its own rather than a
-     * sixth hopper slot, so every piece of vanilla hopper logic still sees exactly five slots and can
-     * never push a sapling out or pull one in.
-     */
     private final SimpleContainer saplings = new SimpleContainer(1) {
         @Override
         public void setChanged() {
@@ -97,7 +81,6 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
 
     private boolean calibrationPaid;
 
-    /** Whether the intake being handled right now is farm output worth measuring. */
     private boolean countingIntake = true;
 
     private GuiState clientState = GuiState.EMPTY;
@@ -107,10 +90,6 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         super(pos, state);
     }
 
-    /**
-     * Credits the session once, refills the visible slots from the backlog, runs the vanilla hopper
-     * tick, then measures.
-     */
     public static void serverTick(Level level, BlockPos pos, BlockState state, TallyHopperBlockEntity hopper) {
         if (level instanceof ServerLevel server) {
             hopper.measurement.setWarmUp(
@@ -121,7 +100,6 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
             hopper.credit(session);
         }
         hopper.refillFromBacklog();
-        // Paid for before the vanilla tick, so items taken in on this very tick are already counted.
         if (!hopper.calibrationPaid) {
             hopper.payForCalibration();
         }
@@ -131,7 +109,6 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         if (hopper.isWatching()) {
             hopper.measurement.tick(now);
         }
-        // Before a session starts there is no window to be eligible for, so the last tick waits too.
         if (session != null && hopper.ledger.ticked(now)) {
             hopper.setChanged();
         }
@@ -143,7 +120,6 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         }
     }
 
-    /** Called for every automated insert; see {@code HopperBlockEntityMixin}. */
     public void recordIntake(ItemStack stack, int count) {
         Level level = getLevel();
         if (level != null
@@ -152,8 +128,6 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
                 && isWatching()
                 && Measurement.isCountable(stack)) {
             measurement.recordIntake(stack.getItem(), count, MeasurementClock.now(level));
-            // Only here, after every reason not to count has been ruled out, so the lamp means
-            // exactly "this was tallied": thrown items, hand-fed items and a draining backlog stay dark.
             TallyHopperBlock.flash(level, getBlockPos());
         }
     }
@@ -175,30 +149,18 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         }
     }
 
-    /**
-     * Whether the hopper is measuring its farm. While the backlog drains, backlogged items share the
-     * slots with farm output and slow its intake, so measuring would understate the farm; the rate
-     * measured before stays in place until the backlog is empty.
-     */
     public boolean isMeasuring() {
         return ledger.backlog().isEmpty();
     }
 
-    /**
-     * Whether the hopper is watching its farm right now: it has been paid for and nothing is draining
-     * through it. A hopper keeps watching after it is ready, so its rate follows the farm instead of
-     * staying at whatever the first few minutes happened to look like.
-     */
     public boolean isWatching() {
         return calibrationPaid && isMeasuring();
     }
 
-    /** Whether a sapling has been spent on the measurement this hopper is building. */
     public boolean isCalibrationPaid() {
         return calibrationPaid;
     }
 
-    /** The sapling slot, shown on the screen. It is never part of the hopper's five slots. */
     public SimpleContainer saplings() {
         return saplings;
     }
@@ -217,7 +179,6 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         if (!isMeasuring() || saplings.getItem(0).isEmpty()) {
             return false;
         }
-        // The hopper has already paid for the measurement it is about to throw away, so it pays again.
         calibrationPaid = false;
         payForCalibration();
         measurement.restart();
@@ -229,7 +190,6 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         return true;
     }
 
-    /** Takes one sapling for the current measurement, if one is there and none has been taken yet. */
     private boolean payForCalibration() {
         if (calibrationPaid) {
             return false;
@@ -245,15 +205,7 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         return true;
     }
 
-    /**
-     * Credits this hopper for {@code session}'s offline window at its effective rates. Called once per
-     * session, on the hopper's first tick.
-     *
-     * <p>In terminal mode the credit, and any backlog left from before, goes straight into the storage
-     * the hopper faces; the rest goes to the backlog.
-     */
     public CreditReport credit(OfflineSession.Current session) {
-        // The session is still marked credited, so the chain isn't walked again on every tick.
         Map<Item, Long> earned = ledger.earn(session, feedsATallyHopper() ? Map.of() : creditedRates());
         setChanged();
         if (earned.isEmpty()) {
@@ -293,13 +245,6 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         return report;
     }
 
-    /**
-     * The storage credit is bulk-filled into, or {@code null} in line mode.
-     *
-     * <p>A hopper that faces another hopper feeds a line, such as an item sorter. Filling that hopper
-     * in bulk would jam the sorter's filters, so credit waits in the backlog and flows down the line at
-     * vanilla speed. A hopper facing no storage at all works the same way.
-     */
     public ItemSinks.@Nullable ItemSink terminalSink(ServerLevel level) {
         Direction facing = getBlockState().getValue(HopperBlock.FACING);
         BlockPos target = getBlockPos().relative(facing);
@@ -323,17 +268,10 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         return getLevel() instanceof ServerLevel level && ClockConversion.feedsATallyHopper(level, getBlockPos());
     }
 
-    /**
-     * The rates this hopper would actually credit: what it measured, weighed by how much of the window
-     * it has watched, with the player's overrides in place, and the total held to what a hopper can
-     * physically move. Everything that shows a rate goes through here, so the screen, the command and
-     * the credit itself can never disagree.
-     */
     public Map<Item, Rate> creditedRates() {
         return RateBounds.capTotal(measurement.effectiveRates(), ceiling());
     }
 
-    /** The same bound applied to what the hopper measured alone, without any override. */
     public Map<Item, Rate> provenRates() {
         return RateBounds.capTotal(measurement.provenRates(), ceiling());
     }
@@ -344,7 +282,6 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
                 : RateBounds.HOPPER_ITEMS_PER_HOUR;
     }
 
-    /** What an open screen shows. Built on the server, read on the client. */
     public GuiState guiState() {
         Level level = getLevel();
         if (level != null && level.isClientSide()) {
@@ -392,7 +329,6 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
-    /** Only the screen's summary travels, not the measurement behind it, which is much larger. */
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = new CompoundTag();
@@ -404,10 +340,6 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         return ledger;
     }
 
-    /**
-     * Tops up the five visible slots from the backlog, so anything that pulls from or is pushed to by
-     * this hopper drains it at vanilla speed. Only adds: slots holding other items are left alone.
-     */
     private void refillFromBacklog() {
         Backlog<Item> backlog = ledger.backlog();
         NonNullList<ItemStack> items = getItems();
@@ -438,7 +370,6 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         return measurement;
     }
 
-    /** Changes the overrides, then saves and updates the clock face straight away. */
     public <T> T changeOverrides(Function<Measurement, T> change) {
         T result = change.apply(measurement);
         setChanged();
@@ -457,7 +388,6 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         }
     }
 
-    /** The backlog as an item component, or {@code null} when there is none to carry. */
     public @Nullable StoredBacklog storedBacklog() {
         Backlog<Item> backlog = ledger.backlog();
         return backlog.isEmpty() ? null : new StoredBacklog(backlog.contents());
@@ -484,10 +414,6 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         Ledger.discardBacklog(output);
     }
 
-    /**
-     * Vanilla spills the five slots for us. The sapling slot is not one of them, so it spills here:
-     * nothing a player put into this block may be lost when it breaks.
-     */
     @Override
     public void preRemoveSideEffects(BlockPos pos, BlockState state) {
         super.preRemoveSideEffects(pos, state);
@@ -528,7 +454,6 @@ public final class TallyHopperBlockEntity extends HopperBlockEntity {
         return BuiltInRegistries.BLOCK_ENTITY_TYPE.wrapAsHolder(TallyHopperContent.blockEntityType());
     }
 
-    // Called from the super constructor, so it must not touch instance fields.
     @Override
     public boolean isValidBlockState(BlockState state) {
         return TallyHopperContent.blockEntityType().isValid(state);

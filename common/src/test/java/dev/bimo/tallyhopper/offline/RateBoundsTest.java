@@ -144,7 +144,6 @@ class RateBoundsTest {
     @Test
     @DisplayName("both bounds together: a five-minute burst is worth minutes, not days")
     void aBurstIsWorthWhatItWatched() {
-        // 30,000 items hand-fed in five minutes reads as 360,000 an hour.
         Map<String, Rate> measured =
                 Map.of("cobblestone", new Rate(30_000, Duration.ofMinutes(5).toMillis()));
 

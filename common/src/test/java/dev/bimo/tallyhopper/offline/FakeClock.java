@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.InstantSource;
 
-/** A clock that only moves when a test tells it to. */
 final class FakeClock implements InstantSource {
 
     static final Instant EPOCH = Instant.parse("2026-01-01T00:00:00Z");

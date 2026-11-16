@@ -28,22 +28,10 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-/**
- * {@code /tallyhopper info} and {@code /tallyhopper rate}, for players who want to see or steer what a
- * hopper measured. Nothing needs them: a hopper calibrates on its own.
- *
- * <p>A hopper is targeted by looking at it or by giving its position. Operators may target any loaded
- * hopper and set any rate. Other players must be within {@link #REACH} blocks, and may only set a rate
- * at or below what the hopper can prove — its measured rate, weighed by how long it has watched and
- * held to the per-hopper ceiling — so an override can switch an item off but never mint items the farm
- * didn't make. See {@code docs/adr/0007-bounding-credited-rates.md}.
- */
 public final class TallyHopperCommand {
 
-    /** The root command, {@code /tallyhopper}. */
     public static final String NAME = TallyHopper.MOD_ID;
 
-    /** How far away a hopper can be targeted, by looking or, for non-operators, at all. */
     static final double REACH = 8;
 
     private static final SimpleCommandExceptionType NOT_LOOKING =
@@ -63,7 +51,6 @@ public final class TallyHopperCommand {
 
     private TallyHopperCommand() {}
 
-    /** Finds the hopper a command is aimed at. */
     @FunctionalInterface
     private interface Target {
         BlockPos find(CommandContext<CommandSourceStack> context) throws CommandSyntaxException;
@@ -120,7 +107,6 @@ public final class TallyHopperCommand {
                         "commands.tallyhopper.info.header", pos.getX(), pos.getY(), pos.getZ(), status),
                 false);
 
-        // What would actually be credited, so info can never promise more than the hopper pays out.
         Map<Item, Component> lines = new LinkedHashMap<>();
         hopper.creditedRates()
                 .forEach((item, rate) -> lines.put(
@@ -201,7 +187,6 @@ public final class TallyHopperCommand {
             if (player.getEyePosition().distanceToSqr(Vec3.atCenterOf(pos)) > REACH * REACH) {
                 throw TOO_FAR.create();
             }
-            // Spawn protection and the world border apply here just as they do to using the block.
             if (changing && !player.mayInteract(source.getLevel(), pos)) {
                 throw NO_ACCESS.create();
             }
@@ -216,11 +201,6 @@ public final class TallyHopperCommand {
         return source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
     }
 
-    /**
-     * The most a player who is not an operator may claim for {@code item}: what the hopper can prove
-     * right now, which is its measured rate weighed by how long it has watched and held to the
-     * per-hopper ceiling. A burst read over a few minutes therefore buys only a few minutes' worth.
-     */
     private static long provenPerHour(TallyHopperBlockEntity hopper, Item item) {
         Rate rate = hopper.provenRates().get(item);
         return hopper.measurement().isWarmedUp() && rate != null ? (long) Math.floor(rate.itemsPerHour()) : 0;

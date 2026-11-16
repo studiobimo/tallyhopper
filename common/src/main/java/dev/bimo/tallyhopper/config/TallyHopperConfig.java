@@ -11,13 +11,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * {@code config/tallyhopper.json}: the per-machine numbers behind the energy estimate. They belong to
- * the computer and its power grid rather than to the world, which is why they aren't gamerules.
- *
- * <p>A missing file is written with the defaults. An unreadable one is left alone and the defaults are
- * used, so a typo never costs a player their settings.
- */
 public final class TallyHopperConfig {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -37,12 +30,10 @@ public final class TallyHopperConfig {
         }
     }
 
-    /** Whether the rejoin summary mentions the energy saved. */
     public static boolean showEnergyEstimate() {
         return contents.showEnergyEstimate;
     }
 
-    /** Reads the config, writing it first if it isn't there. Called once from each loader's entry point. */
     public static void load() {
         Path path = Services.PLATFORM.configDir().resolve(TallyHopper.MOD_ID + ".json");
         try {
@@ -60,11 +51,10 @@ public final class TallyHopperConfig {
         }
     }
 
-    /** The file's shape. Gson fills the fields it finds and leaves the defaults for the rest. */
     private static final class Contents {
 
         @SerializedName("_comment")
-        @SuppressWarnings("UnusedVariable") // Gson writes it into the file for the player to read.
+        @SuppressWarnings("UnusedVariable")
         String comment = "Used for the energy estimate in the rejoin summary."
                 + " See docs/methodology.md for the sources of these numbers.";
 
