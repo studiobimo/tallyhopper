@@ -32,6 +32,9 @@ jobs:
     uses: studiobimo/.github/.github/workflows/ci-project.yml@v1
     with:
       full: ${{ inputs.full || false }}
+      # spotlessCheck is part of the Gradle `check` below. Repeating it in baseline would need a
+      # JDK 25 the baseline runner does not have (it runs on Java 17), so skip it there.
+      exclude: spotless
 
   check:
     # A called workflow can never hold more than its caller, so the caller has to
