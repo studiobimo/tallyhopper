@@ -1,0 +1,7 @@
+# Paths the template manages that this repo keeps its own version of.
+# One path per line, each with a comment saying why.
+
+# gradlew.bat is the Gradle wrapper's, and lamp_off.json and lamp_on.json are block model data
+# that differ by one texture name, so jscpd flags them. The ignore patterns in this file also
+# skip import lists, which several classes legitimately share.
+.jscpd.json
