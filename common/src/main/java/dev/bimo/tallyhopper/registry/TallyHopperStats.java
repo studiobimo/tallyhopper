@@ -8,11 +8,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.stats.StatFormatter;
 import net.minecraft.stats.Stats;
 
-/**
- * Lifetime totals on the player's Statistics screen, which is a quiet place to keep them.
- *
- * <p>Each loader calls {@link #register()} once.
- */
 public final class TallyHopperStats {
 
     public static final Identifier ITEMS_CREDITED = id("items_credited");
@@ -20,7 +15,6 @@ public final class TallyHopperStats {
 
     private TallyHopperStats() {}
 
-    /** Registers the stats and gives them their number format, the way vanilla does. */
     public static void register() {
         for (Identifier id : List.of(ITEMS_CREDITED, ENERGY_SAVED_WH)) {
             Registry.register(BuiltInRegistries.CUSTOM_STAT, id, id);

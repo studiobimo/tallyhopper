@@ -26,17 +26,6 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import org.jspecify.annotations.Nullable;
 
-/**
- * The mod's block, item, block entity type and backlog component.
- *
- * <p>Each loader calls the {@code create…} methods from inside its registration phase, in the order
- * block, item, block entity type, and registers the result under the matching key. It also
- * registers {@link dev.bimo.tallyhopper.crafting.ShapelessKeepRecipe#SERIALIZER} under
- * {@link #SHAPELESS_KEEP_KEY}, and the backlog component from {@link #createBacklogComponent()} under
- * {@link #BACKLOG_COMPONENT_KEY}. Objects are
- * created there, not in static initializers, because NeoForge only allows registry objects to be
- * built while its registries are open.
- */
 public final class TallyHopperContent {
 
     public static final Identifier TALLY_HOPPER = Identifier.fromNamespaceAndPath(TallyHopper.MOD_ID, "tally_hopper");
@@ -52,11 +41,9 @@ public final class TallyHopperContent {
 
     public static final ResourceKey<MenuType<?>> MENU_KEY = ResourceKey.create(Registries.MENU, TALLY_HOPPER);
 
-    /** Awarded the first time a hopper credits offline time. */
     public static final Identifier SLEEP_MODE_ADVANCEMENT =
             Identifier.fromNamespaceAndPath(TallyHopper.MOD_ID, "sleep_mode");
 
-    /** Vanilla keeps its own copy of this key private. */
     public static final ResourceKey<CreativeModeTab> REDSTONE_BLOCKS_TAB =
             ResourceKey.create(Registries.CREATIVE_MODE_TAB, Identifier.withDefaultNamespace("redstone_blocks"));
 
@@ -68,7 +55,6 @@ public final class TallyHopperContent {
 
     private TallyHopperContent() {}
 
-    /** Same properties as the vanilla hopper. */
     public static Block createBlock() {
         Block created = new TallyHopperBlock(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.STONE)
@@ -88,7 +74,6 @@ public final class TallyHopperContent {
                         .component(DataComponents.CONTAINER, ItemContainerContents.EMPTY)
                         .useBlockDescriptionPrefix()
                         .setId(ITEM_KEY));
-        // Vanilla does this in Items.registerItem; it makes block.asItem() work. Repeating it is harmless.
         created.registerBlocks(Item.BY_BLOCK, created);
         item = created;
         return created;
@@ -110,7 +95,6 @@ public final class TallyHopperContent {
         return created;
     }
 
-    /** Loader-specific, because the position has to travel with the screen; see {@code MenuTypes}. */
     public static MenuType<TallyHopperMenu> createMenuType() {
         MenuType<TallyHopperMenu> created = Services.MENUS.createMenuType();
         menuType = created;

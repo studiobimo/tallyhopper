@@ -13,7 +13,6 @@ import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 
-/** The Tally Hopper recipe as the game loads it: hopper + clock + sapling, clock kept. */
 public final class CraftingTests {
 
     private CraftingTests() {}
@@ -23,7 +22,6 @@ public final class CraftingTests {
         return helper.getLevel().recipeAccess().getRecipeFor(RecipeType.CRAFTING, input, helper.getLevel());
     }
 
-    /** Any sapling works; the clock comes back into its grid slot and nothing else does. */
     public static void keepsTheClock(GameTestHelper helper) {
         ItemStack[] grid = {new ItemStack(Items.HOPPER), new ItemStack(Items.CLOCK), new ItemStack(Items.CHERRY_SAPLING)
         };
@@ -41,7 +39,6 @@ public final class CraftingTests {
         helper.succeed();
     }
 
-    /** No sapling, no Tally Hopper; and a Tally Hopper can't be crafted back into a hopper. */
     public static void noOtherRecipes(GameTestHelper helper) {
         helper.assertTrue(
                 find(helper, new ItemStack(Items.HOPPER), new ItemStack(Items.CLOCK))

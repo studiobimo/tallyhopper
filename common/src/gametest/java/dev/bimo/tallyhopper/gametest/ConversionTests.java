@@ -22,17 +22,12 @@ import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
-/**
- * Using a clock on a hopper converts it in place for one sapling; sneak-using converts the end of
- * its chain. The clock is always kept.
- */
 public final class ConversionTests {
 
     private ConversionTests() {}
 
     private static final int SAPLINGS = 3;
 
-    /** A survival player holding two clocks, with {@code saplings} oak saplings in the inventory. */
     private static Player player(GameTestHelper helper, boolean sneaking, int saplings) {
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.CLOCK, 2));
@@ -69,7 +64,6 @@ public final class ConversionTests {
         helper.setBlock(pos, Blocks.HOPPER.defaultBlockState().setValue(HopperBlock.FACING, facing));
     }
 
-    /** Contents, custom name and facing survive; one sapling is used; nothing spills. */
     public static void keepsContentsAndFacing(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 1, 2);
         placeHopper(helper, pos, Direction.EAST);
@@ -77,7 +71,6 @@ public final class ConversionTests {
         Component name = Component.literal("Iron farm");
         hopper.applyComponents(
                 DataComponentMap.builder().set(DataComponents.CUSTOM_NAME, name).build(), DataComponentPatch.EMPTY);
-        // Applying components also resets the contents, so name the hopper before filling it.
         hopper.setItem(0, new ItemStack(Items.IRON_INGOT, 17));
         hopper.setItem(3, new ItemStack(Items.POPPY, 5));
         Player player = player(helper, false, SAPLINGS);
@@ -100,7 +93,6 @@ public final class ConversionTests {
         helper.succeed();
     }
 
-    /** Sneak-using the first of ten chained hoppers converts only the tenth. */
     public static void sneakConvertsChainEnd(GameTestHelper helper) {
         for (int x = 0; x < 10; x++) {
             placeHopper(helper, new BlockPos(1 + x, 1, 2), x < 9 ? Direction.EAST : Direction.DOWN);
@@ -118,7 +110,6 @@ public final class ConversionTests {
         helper.succeed();
     }
 
-    /** A chain that loops has no end: nothing converts and nothing is used. */
     public static void sneakStopsOnLoop(GameTestHelper helper) {
         placeHopper(helper, new BlockPos(2, 1, 2), Direction.EAST);
         placeHopper(helper, new BlockPos(3, 1, 2), Direction.SOUTH);
@@ -137,16 +128,11 @@ public final class ConversionTests {
         helper.succeed();
     }
 
-    /**
-     * A hopper that feeds an existing Tally Hopper is refused, and costs nothing. Both would measure
-     * the same items, so converting it would buy a hopper that can never earn.
-     */
     public static void refusesUpstreamOfATallyHopper(GameTestHelper helper) {
         BlockPos upstream = new BlockPos(2, 1, 2);
         BlockPos middle = new BlockPos(3, 1, 2);
         BlockPos downstream = new BlockPos(4, 1, 2);
         placeHopper(helper, upstream, Direction.EAST);
-        // A vanilla hopper in between, so the whole line is walked and not just the next block.
         placeHopper(helper, middle, Direction.EAST);
         helper.setBlock(
                 downstream,
@@ -159,7 +145,6 @@ public final class ConversionTests {
         helper.assertBlockPresent(Blocks.HOPPER, upstream);
         assertPaid(helper, player, 0);
 
-        // With the Tally Hopper gone, the same click converts as usual.
         helper.setBlock(downstream, Blocks.AIR);
         helper.assertTrue(
                 useClock(helper, player, upstream) instanceof InteractionResult.Success,
@@ -169,7 +154,6 @@ public final class ConversionTests {
         helper.succeed();
     }
 
-    /** Without a sapling nothing converts. */
     public static void needsSapling(GameTestHelper helper) {
         BlockPos pos = new BlockPos(2, 1, 2);
         placeHopper(helper, pos, Direction.DOWN);
