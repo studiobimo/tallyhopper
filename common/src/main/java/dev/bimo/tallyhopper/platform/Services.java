@@ -6,12 +6,6 @@ import dev.bimo.tallyhopper.platform.services.MenuTypes;
 import dev.bimo.tallyhopper.platform.services.PlatformHelper;
 import java.util.ServiceLoader;
 
-/**
- * Resolves loader-specific implementations of common interfaces at runtime.
- *
- * <p>Each loader project registers its implementation in
- * {@code META-INF/services/<fully.qualified.InterfaceName>}.
- */
 public final class Services {
 
     public static final PlatformHelper PLATFORM = load(PlatformHelper.class);

@@ -16,9 +16,6 @@ import java.time.Duration;
  */
 public record EnergyEstimate(double kilowattHours, double kilogramsCo2, double litersWater, double treeDays) {
 
-    /**
-     * The EPA figure for an urban tree seedling: 60 kg of CO₂ over 10 years.
-     */
     private static final double TREE_KG_PER_DAY = 60.0 / (10 * 365.25);
 
     public static EnergyEstimate of(Duration offline, EnergyFactors factors) {

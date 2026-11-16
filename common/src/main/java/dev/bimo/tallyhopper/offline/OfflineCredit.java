@@ -25,7 +25,6 @@ public final class OfflineCredit<K> {
 
     public OfflineCredit() {}
 
-    /** Restores the carry saved from {@link #carry()}. */
     public OfflineCredit(Map<K, Long> savedCarry) {
         savedCarry.forEach((item, micros) -> {
             if (micros < 0 || micros >= MICROS_PER_ITEM) {
@@ -37,13 +36,6 @@ public final class OfflineCredit<K> {
         });
     }
 
-    /**
-     * The rates that earn credit: measured rates once the warm-up gate is open, with each per-hopper
-     * override replacing the measured rate for its item.
-     *
-     * <p>Overrides apply even before warm-up, because the player set them on purpose. An override of
-     * zero switches an item off.
-     */
     public static <K> Map<K, Rate> effectiveRates(Map<K, Rate> measured, boolean warmedUp, Map<K, Rate> overrides) {
         Map<K, Rate> rates = new LinkedHashMap<>();
         if (warmedUp) {
@@ -53,11 +45,6 @@ public final class OfflineCredit<K> {
         return rates;
     }
 
-    /**
-     * The whole items each rate earns over {@code elapsed}. Items that earn nothing are left out.
-     *
-     * <p>Pass {@link OfflineWindow#credited()}, which is already clamped and capped.
-     */
     public Map<K, Long> accrue(Map<K, Rate> rates, Duration elapsed) {
         if (elapsed.isNegative()) {
             throw new IllegalArgumentException("elapsed must not be negative: " + elapsed);
@@ -74,7 +61,6 @@ public final class OfflineCredit<K> {
                     .add(BigInteger.valueOf(carryMicros.getOrDefault(item, 0L)));
             BigInteger[] wholeAndCarry = micros.divideAndRemainder(MICROS);
             long whole = SaturatingMath.clamp(wholeAndCarry[0]);
-            // A saturated credit already lost far more than a fraction, so its carry is dropped.
             long carry = whole == Long.MAX_VALUE ? 0 : wholeAndCarry[1].longValueExact();
             if (carry > 0) {
                 carryMicros.put(item, carry);
@@ -88,7 +74,6 @@ public final class OfflineCredit<K> {
         return earned;
     }
 
-    /** Fractions of an item owed per item, in millionths, for saving. */
     public Map<K, Long> carry() {
         return new LinkedHashMap<>(carryMicros);
     }

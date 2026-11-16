@@ -5,30 +5,13 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * The two bounds on what a hopper may credit, so a short burst of hand-fed items can't be turned into
- * an endless supply.
- *
- * <p>A measured rate is an extrapolation, and a rate measured over five minutes is a far weaker claim
- * than the same rate measured over an hour. {@link #weigh} scales a rate by how much of the window was
- * actually watched, so a brief burst earns a brief burst's worth.
- *
- * <p>{@link #capTotal} then holds the total to what a hopper can physically move. Everything a Tally
- * Hopper credits had to pass through its five slots at vanilla speed, so no honest farm can be above
- * that ceiling for long; only a window too short to see the truth can be.
- *
- * <p>All scaling is exact: rates stay fractions and are reduced rather than rounded, so a slow farm
- * keeps a small rate instead of being rounded away to nothing.
- */
 public final class RateBounds {
 
-    /** A vanilla hopper moves one item every eight ticks: 2.5 a second, 9,000 an hour. */
     public static final long HOPPER_ITEMS_PER_HOUR = 9000;
 
     private static final BigInteger MILLIS_PER_HOUR =
             BigInteger.valueOf(Duration.ofHours(1).toMillis());
 
-    /** A fraction this wide still fits in the longs a {@link Rate} is made of. */
     private static final int SAFE_BITS = 62;
 
     private RateBounds() {}
@@ -54,10 +37,6 @@ public final class RateBounds {
         return weighed;
     }
 
-    /**
-     * Scales every rate down together until their total is at or under {@code maxPerHour}, keeping the
-     * mix between items. Rates already under the ceiling are left alone.
-     */
     public static <K> Map<K, Rate> capTotal(Map<K, Rate> rates, long maxPerHour) {
         if (maxPerHour < 0) {
             throw new IllegalArgumentException("maxPerHour must not be negative: " + maxPerHour);
@@ -75,7 +54,6 @@ public final class RateBounds {
         return capped;
     }
 
-    /** What a set of rates comes to per hour, rounded down per item. */
     public static <K> BigInteger totalPerHour(Map<K, Rate> rates) {
         BigInteger total = BigInteger.ZERO;
         for (Rate rate : rates.values()) {
@@ -86,12 +64,6 @@ public final class RateBounds {
         return total;
     }
 
-    /**
-     * {@code rate} multiplied by {@code numerator / denominator}, which is never more than one. The
-     * fraction is reduced and kept exact whenever it fits back into longs, which it does for any rate a
-     * hopper can really see. A fraction too large for that is only reachable by a saturated rate, and
-     * falls back to whole items per hour, rounded down.
-     */
     private static Rate scale(Rate rate, BigInteger numerator, BigInteger denominator) {
         BigInteger items = BigInteger.valueOf(rate.items()).multiply(numerator);
         BigInteger perMillis = BigInteger.valueOf(rate.perMillis()).multiply(denominator);
