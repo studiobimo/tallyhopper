@@ -18,7 +18,6 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Items;
 
-/** Fabric entry point; delegates to common code. */
 public final class TallyHopperFabric implements ModInitializer {
 
     @Override

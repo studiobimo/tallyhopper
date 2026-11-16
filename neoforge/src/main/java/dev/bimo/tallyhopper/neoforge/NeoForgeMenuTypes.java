@@ -8,7 +8,6 @@ import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.inventory.MenuType;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 
-/** Carries the hopper's position in NeoForge's extra menu data. */
 public final class NeoForgeMenuTypes implements MenuTypes {
 
     @Override

@@ -13,7 +13,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 
-/** Carries the hopper's position with Fabric's extended menu type. */
 public final class FabricMenuTypes implements MenuTypes {
 
     @Override

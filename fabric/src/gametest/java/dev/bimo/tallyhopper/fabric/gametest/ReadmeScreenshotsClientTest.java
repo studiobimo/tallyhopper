@@ -32,22 +32,12 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ChestBlock;
 
-/**
- * Takes the pictures in the README: two Tally Hoppers on chests, one ready with its lamp lit and one
- * still calibrating, and the chat message a player gets back after a night away.
- *
- * <p>The night away is real as far as the mod can tell: the world is closed, the heartbeat it saved is
- * moved eight hours back, and the world is opened again. Everything after that is the mod's own
- * rejoin path, so the message in the picture is the one players see.
- */
 public final class ReadmeScreenshotsClientTest implements FabricClientGameTest {
 
     private static final Duration AWAY = Duration.ofHours(8);
 
     @Override
     public void runTest(ClientGameTestContext context) {
-        // The hoppers run the first session in the past, so their last tick lines up with the rewound
-        // heartbeat; the second session is back on the real clock, eight hours later.
         MeasurementClock.useClock(() -> Instant.now().minus(AWAY));
         TestWorldSave save;
         AtomicReference<BlockPos> ready = new AtomicReference<>();
@@ -66,7 +56,6 @@ public final class ReadmeScreenshotsClientTest implements FabricClientGameTest {
                                         .defaultBlockState()
                                         .setValue(TallyHopperBlock.READY, true)
                                         .setValue(TallyHopperBlock.LIT, true));
-                // A hand-set rate, so it is ready now and credits in full when the world opens again.
                 if (level.getBlockEntity(lit) instanceof TallyHopperBlockEntity hopper) {
                     hopper.changeOverrides(measurement -> {
                         measurement.setOverride(Items.COBBLESTONE, 600);
@@ -93,7 +82,6 @@ public final class ReadmeScreenshotsClientTest implements FabricClientGameTest {
 
         try (TestSingleplayerContext singleplayer = save.open()) {
             singleplayer.getConnection().waitForChunksRender();
-            // The hopper credits as its chunk loads; the summary waits for the others, then speaks.
             BlockPos chest = ready.get().below();
             for (int waited = 0;
                     !singleplayer
@@ -113,14 +101,12 @@ public final class ReadmeScreenshotsClientTest implements FabricClientGameTest {
         }
     }
 
-    /** Puts a chest facing the camera under {@code pos}, for a Tally Hopper to face into. */
     private static ServerLevel onAChest(ServerLevel level, BlockPos pos) {
         level.setBlockAndUpdate(
                 pos.below(), Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, Direction.SOUTH));
         return level;
     }
 
-    /** Stands the player at a spot, looking at the middle of the gap between the two hoppers. */
     private static void lookAt(ServerPlayer player, double x, double y, double z, double targetX, BlockPos target) {
         double dx = targetX - x;
         double dy = target.getY() + 0.1 - (y + player.getEyeHeight());
@@ -130,7 +116,6 @@ public final class ReadmeScreenshotsClientTest implements FabricClientGameTest {
         player.connection.teleport(x, y, z, yaw, pitch);
     }
 
-    /** Moves the heartbeat a closed world saved back by {@code away}, as if it had been shut that long ago. */
     private static void rewindHeartbeat(Path world, Duration away) {
         try (Stream<Path> files = Files.walk(world)) {
             Path session = files.filter(file -> file.endsWith(Path.of("tallyhopper", "session.dat")))

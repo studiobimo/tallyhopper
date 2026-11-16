@@ -46,7 +46,6 @@ import net.minecraft.world.level.storage.loot.functions.CopyComponentsFunction;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.level.storage.loot.providers.number.ints.ContextIntProviders;
 
-/** Generates the mod's recipes, loot table and tags into {@code common/src/generated}. */
 public final class TallyHopperDataGenerator implements DataGeneratorEntrypoint {
 
     @Override
@@ -58,7 +57,6 @@ public final class TallyHopperDataGenerator implements DataGeneratorEntrypoint {
         pack.addProvider(BlockTagProvider::new);
     }
 
-    // This entrypoint lives in a separate datagen mod; generate files for the real one.
     @Override
     public String getEffectiveModId() {
         return TallyHopper.MOD_ID;
@@ -78,7 +76,6 @@ public final class TallyHopperDataGenerator implements DataGeneratorEntrypoint {
             return new RecipeProvider(recipes, advancements) {
                 @Override
                 public void buildRecipes() {
-                    // Hopper + clock + any sapling. The sapling is used up; the clock stays in the grid.
                     ResourceKey<Recipe<?>> key = ResourceKey.create(Registries.RECIPE, TallyHopperContent.TALLY_HOPPER);
                     ShapelessRecipe base = new ShapelessRecipe(
                             new Recipe.CommonInfo(true),
@@ -107,7 +104,6 @@ public final class TallyHopperDataGenerator implements DataGeneratorEntrypoint {
             super(output, registries);
         }
 
-        // Onboarding: the first credit explains itself. It is granted in code, so the criterion never fires.
         @Override
         public void generateAdvancement(HolderLookup.Provider registries, Consumer<AdvancementHolder> consumer) {
             Advancement.Builder.advancement()
@@ -133,8 +129,6 @@ public final class TallyHopperDataGenerator implements DataGeneratorEntrypoint {
             super(output, registries);
         }
 
-        // Drops itself with its custom name and backlog; its five slots spill on break like a hopper's.
-        // Unlike a hopper it always survives explosions, since the backlog would go with it.
         @Override
         public void generate() {
             Block block = TallyHopperContent.block();
@@ -159,7 +153,6 @@ public final class TallyHopperDataGenerator implements DataGeneratorEntrypoint {
 
         @Override
         protected void addTags(HolderLookup.Provider registries) {
-            // The block requires the correct tool, so without this it would never drop.
             builder(BlockTags.MINEABLE_WITH_PICKAXE).add(TallyHopperContent.BLOCK_KEY);
         }
     }

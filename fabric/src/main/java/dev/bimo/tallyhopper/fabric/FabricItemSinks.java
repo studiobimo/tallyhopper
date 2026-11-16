@@ -10,7 +10,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import org.jspecify.annotations.Nullable;
 
-/** Delivers through Fabric's Transfer API. */
 public final class FabricItemSinks implements ItemSinks {
 
     @Override
