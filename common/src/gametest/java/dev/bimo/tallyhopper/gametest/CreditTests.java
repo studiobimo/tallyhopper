@@ -62,13 +62,6 @@ import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.storage.TagValueInput;
 import org.jspecify.annotations.Nullable;
 
-/**
- * Offline credit: delivery into storage, the backlog and its draining, line mode, crediting exactly
- * once, eligibility, scale, and keeping the backlog when the block is broken.
- *
- * <p>Tests credit a made-up session directly instead of restarting the server. The window starts at
- * the hopper's last tick, as it would for a hopper that was running when the world closed.
- */
 public final class CreditTests {
 
     private CreditTests() {}
@@ -77,14 +70,18 @@ public final class CreditTests {
 
     private static final int LINE_FLOW_TICKS = 800;
 
-    /** Real sessions count up from 1, so made-up ones count down from the top to never collide. */
     private static final AtomicLong SESSION_IDS = new AtomicLong(Long.MAX_VALUE);
 
     static TallyHopperBlockEntity placeTallyHopper(GameTestHelper helper, BlockPos pos, Direction facing) {
         helper.setBlock(pos, TallyHopperContent.block().defaultBlockState().setValue(HopperBlock.FACING, facing));
         TallyHopperBlockEntity hopper = helper.getBlockEntity(pos, TallyHopperBlockEntity.class);
-        // A hopper only watches its farm once a sapling has paid for the run, as a player's would.
         hopper.saplings().setItem(0, new ItemStack(Items.OAK_SAPLING, 16));
+        return hopper;
+    }
+
+    static TallyHopperBlockEntity placeRatedHopper(GameTestHelper helper, Item item, long perHour) {
+        TallyHopperBlockEntity hopper = placeTallyHopper(helper, HOPPER, Direction.EAST);
+        setRate(hopper, item, perHour);
         return hopper;
     }
 
@@ -95,7 +92,6 @@ public final class CreditTests {
         });
     }
 
-    /** A session in which the world was closed for {@code away}, starting {@code sinceLastTick} after the hopper's last tick. */
     static OfflineSession.Current session(GameTestHelper helper, Duration sinceLastTick, Duration away) {
         Instant closed = MeasurementClock.now(helper.getLevel()).plus(sinceLastTick);
         Duration cap = away.compareTo(SessionClock.DEFAULT_MAX_OFFLINE) > 0 ? away : SessionClock.DEFAULT_MAX_OFFLINE;
@@ -117,7 +113,6 @@ public final class CreditTests {
         }
     }
 
-    /** Credit fills both halves of a double chest; what was already in it stays exactly as it was. */
     public static void fillsDoubleChest(GameTestHelper helper) {
         BlockPos right = new BlockPos(3, 2, 2);
         BlockPos left = new BlockPos(3, 2, 3);
@@ -139,8 +134,7 @@ public final class CreditTests {
         ChestBlockEntity secondHalf = helper.getBlockEntity(left, ChestBlockEntity.class);
         firstHalf.setItem(0, named.copy());
         firstHalf.setItem(5, new ItemStack(Items.DIRT, 10));
-        TallyHopperBlockEntity hopper = placeTallyHopper(helper, HOPPER, Direction.EAST);
-        setRate(hopper, Items.COBBLESTONE, 1000);
+        TallyHopperBlockEntity hopper = placeRatedHopper(helper, Items.COBBLESTONE, 1000);
 
         helper.runAfterDelay(1, () -> {
             CreditReport report = hopper.credit(session(helper, Duration.ofHours(3)));
@@ -152,7 +146,6 @@ public final class CreditTests {
                     count(firstHalf, Items.COBBLESTONE) + count(secondHalf, Items.COBBLESTONE),
                     3000,
                     "cobblestone in the chest");
-            // The hopper faces the first half, so only a joined double chest can fill the second.
             helper.assertTrue(count(secondHalf, Items.COBBLESTONE) > 0, "the second half was filled too");
             helper.assertTrue(ItemStack.matches(firstHalf.getItem(0), named), "the named stick is untouched");
             helper.assertTrue(
@@ -161,18 +154,12 @@ public final class CreditTests {
         });
     }
 
-    /**
-     * A full chest sends everything to the backlog. A hopper minecart pulling from below drains it
-     * through the visible slots, past the 320 items those slots hold at once.
-     */
     public static void fullTargetBacklogsAndMinecartDrains(GameTestHelper helper) {
         BlockPos chestPos = new BlockPos(3, 2, 2);
         helper.setBlock(chestPos, Blocks.CHEST);
         ChestBlockEntity chest = helper.getBlockEntity(chestPos, ChestBlockEntity.class);
         fill(chest, Items.STONE);
-        TallyHopperBlockEntity hopper = placeTallyHopper(helper, HOPPER, Direction.EAST);
-        setRate(hopper, Items.COBBLESTONE, 200);
-        // Something for the minecart to rest on, right under the hopper.
+        TallyHopperBlockEntity hopper = placeRatedHopper(helper, Items.COBBLESTONE, 200);
         helper.setBlock(new BlockPos(2, 0, 2), Blocks.STONE);
         AtomicReference<@Nullable MinecartHopper> minecart = new AtomicReference<>();
 
@@ -196,10 +183,6 @@ public final class CreditTests {
                 .thenSucceed();
     }
 
-    /**
-     * Facing another hopper, credit waits in the backlog and flows down the line one item at a time:
-     * the next hopper is never filled in bulk, so a sorter's filter hoppers can't jam.
-     */
     public static void lineModeFlowsAtVanillaSpeed(GameTestHelper helper) {
         BlockPos next = new BlockPos(3, 2, 2);
         BlockPos last = new BlockPos(4, 2, 2);
@@ -227,7 +210,6 @@ public final class CreditTests {
                     helper.assertTrue(held <= 1, "the next hopper holds " + held + "; a vanilla line holds at most 1");
                 })
                 .thenExecute(() -> {
-                    // A hopper moves one item every 8 ticks.
                     int arrived = count(chest, Items.COBBLESTONE);
                     int vanilla = LINE_FLOW_TICKS / 8;
                     helper.assertTrue(
@@ -237,18 +219,12 @@ public final class CreditTests {
                 .thenSucceed();
     }
 
-    /**
-     * Two Tally Hoppers on one line credit one farm's output once, not twice. Only the hopper nearest
-     * the storage earns; the one upstream keeps measuring but is paid nothing, because both watched
-     * the same items go past.
-     */
     public static void chainedHoppersCreditOnce(GameTestHelper helper) {
         BlockPos upstreamPos = new BlockPos(2, 2, 2);
         BlockPos middle = new BlockPos(3, 2, 2);
         BlockPos downstreamPos = new BlockPos(4, 2, 2);
         BlockPos chest = new BlockPos(5, 2, 2);
         TallyHopperBlockEntity upstream = placeTallyHopper(helper, upstreamPos, Direction.EAST);
-        // A vanilla hopper in between, so the whole line is walked and not just the next block.
         helper.setBlock(middle, Blocks.HOPPER.defaultBlockState().setValue(HopperBlock.FACING, Direction.EAST));
         TallyHopperBlockEntity downstream = placeTallyHopper(helper, downstreamPos, Direction.EAST);
         helper.setBlock(chest, Blocks.CHEST);
@@ -258,10 +234,8 @@ public final class CreditTests {
         helper.runAfterDelay(1, () -> {
             helper.assertTrue(upstream.feedsATallyHopper(), "the upstream hopper should see the one downstream");
             helper.assertFalse(downstream.feedsATallyHopper(), "the downstream hopper feeds a chest");
-            // The screen says so too, so a player is never shown a rate they will not be paid.
             GuiState upstreamScreen = upstream.guiState();
             helper.assertTrue(upstreamScreen.isPassthrough(), "the upstream screen doesn't say it is a passthrough");
-            // It is not asking for a sapling either: one would buy a run that is never paid out.
             helper.assertFalse(upstreamScreen.needsSapling(), "the upstream screen still asks for a sapling");
             helper.assertFalse(downstream.guiState().isPassthrough(), "the downstream screen claims passthrough");
 
@@ -273,7 +247,6 @@ public final class CreditTests {
                     100,
                     "cobblestone in the chest");
 
-            // Take the downstream hopper away and the upstream one earns for the line again.
             helper.setBlock(downstreamPos, Blocks.AIR);
             helper.assertValueEqual(
                     upstream.credit(session(helper, Duration.ofHours(1))).backlogged(),
@@ -283,7 +256,6 @@ public final class CreditTests {
         });
     }
 
-    /** A session credits once, even across a save and reload of the block entity. */
     public static void creditsEachSessionOnce(GameTestHelper helper) {
         TallyHopperBlockEntity hopper = placeTallyHopper(helper, HOPPER, Direction.DOWN);
         setRate(hopper, Items.COBBLESTONE, 100);
@@ -293,7 +265,6 @@ public final class CreditTests {
             helper.assertValueEqual(hopper.credit(session).backlogged(), 100L, "first credit");
             helper.assertTrue(!hopper.ledger().needsCredit(session), "the session is marked credited");
 
-            // What a restart does: the block entity is saved, then loaded from that save.
             CompoundTag saved = hopper.saveWithoutMetadata(helper.getLevel().registryAccess());
             TallyHopperBlockEntity reloaded = placeTallyHopper(helper, new BlockPos(4, 2, 2), Direction.DOWN);
             reloaded.loadWithComponents(TagValueInput.create(
@@ -307,10 +278,6 @@ public final class CreditTests {
         });
     }
 
-    /**
-     * A hopper that was ticking when the world closed (a loaded or force-loaded chunk) is eligible;
-     * one that stopped more than two minutes before is not.
-     */
     public static void onlyRunningHoppersAreEligible(GameTestHelper helper) {
         TallyHopperBlockEntity running = placeTallyHopper(helper, HOPPER, Direction.DOWN);
         TallyHopperBlockEntity unloaded = placeTallyHopper(helper, new BlockPos(4, 2, 2), Direction.DOWN);
@@ -327,11 +294,9 @@ public final class CreditTests {
         });
     }
 
-    /** 100 days at a million items an hour: no crash, the backlog stops at its cap, the save stays small. */
     public static void hundredDaysAtAMillion(GameTestHelper helper) {
         helper.setBlock(new BlockPos(3, 2, 2), Blocks.CHEST);
-        TallyHopperBlockEntity hopper = placeTallyHopper(helper, HOPPER, Direction.EAST);
-        setRate(hopper, Items.COBBLESTONE, 1_000_000);
+        TallyHopperBlockEntity hopper = placeRatedHopper(helper, Items.COBBLESTONE, 1_000_000);
         setRate(hopper, Items.IRON_INGOT, 1_000_000);
 
         helper.runAfterDelay(1, () -> {
@@ -339,7 +304,6 @@ public final class CreditTests {
             CreditReport report = hopper.credit(session(helper, Duration.ofDays(100)));
             Duration took = Duration.ofNanos(System.nanoTime() - started);
 
-            // Both overrides are far over the hopper's ceiling, so the two items share it evenly.
             long perItem = RateBounds.HOPPER_ITEMS_PER_HOUR / 2 * 24 * 100;
             helper.assertValueEqual(report.earned().getOrDefault(Items.COBBLESTONE, 0L), perItem, "cobblestone earned");
             helper.assertValueEqual(report.delivered(), 27L * 64, "delivered into the chest");
@@ -354,13 +318,11 @@ public final class CreditTests {
         });
     }
 
-    /** Breaking the block keeps the backlog on the dropped item, and placing it puts the backlog back. */
     public static void breakingKeepsTheBacklog(GameTestHelper helper) {
         TallyHopperBlockEntity hopper = placeTallyHopper(helper, HOPPER, Direction.DOWN);
         setRate(hopper, Items.COBBLESTONE, 500);
 
         helper.runAfterDelay(1, () -> hopper.credit(session(helper, Duration.ofHours(1))));
-        // Wait a tick so the visible slots refill; those spill like a hopper's.
         helper.runAfterDelay(3, () -> {
             helper.assertValueEqual(count(hopper, Items.COBBLESTONE), 5 * 64, "cobblestone in the slots");
             helper.getLevel().destroyBlock(helper.absolutePos(HOPPER), true);
@@ -388,7 +350,6 @@ public final class CreditTests {
         });
     }
 
-    /** In creative, breaking drops nothing, except a Tally Hopper with a backlog, which drops itself. */
     public static void creativeBreakKeepsTheBacklog(GameTestHelper helper) {
         TallyHopperBlockEntity hopper = placeTallyHopper(helper, HOPPER, Direction.DOWN);
         setRate(hopper, Items.COBBLESTONE, 500);
@@ -410,7 +371,6 @@ public final class CreditTests {
         });
     }
 
-    /** A Tally Hopper item carrying a backlog says so in its tooltip. */
     // The tooltip hook is deprecated in 26.3; see TallyHopperItem for why it is still the one to use.
     @SuppressWarnings("deprecation")
     public static void backlogShowsInTheTooltip(GameTestHelper helper) {
@@ -432,9 +392,7 @@ public final class CreditTests {
         helper.succeed();
     }
 
-    /** After crediting, the player is told, and their statistics and the Sleep Mode advancement follow. */
     // makeMockServerPlayerInLevel is deprecated for removal, but it is the only way to get a player that
-    // is actually in the player list, which is who a summary is sent to.
     @SuppressWarnings("removal")
     public static void rejoinSummaryAwardsStatsAndAdvancement(GameTestHelper helper) {
         TallyHopperBlockEntity hopper = placeTallyHopper(helper, HOPPER, Direction.DOWN);
@@ -448,8 +406,6 @@ public final class CreditTests {
                 .thenExecute(() -> {
                     int credited = player.getStats().getValue(Stats.CUSTOM.get(TallyHopperStats.ITEMS_CREDITED));
                     helper.assertTrue(credited >= 120, "items credited statistic is " + credited);
-                    // The energy statistic follows the real session's window, which is empty in a test,
-                    // so only that it was recorded can be checked here.
                     helper.assertTrue(
                             player.getStats().getValue(Stats.CUSTOM.get(TallyHopperStats.ENERGY_SAVED_WH)) >= 0,
                             "energy saved statistic");
@@ -469,14 +425,9 @@ public final class CreditTests {
                 .thenSucceed();
     }
 
-    /**
-     * A rate far above what a hopper can move earns only the ceiling, however it was arrived at. This
-     * is what stops a hand-fed burst during calibration from paying out forever.
-     */
     public static void creditStopsAtTheCeiling(GameTestHelper helper) {
         helper.setBlock(new BlockPos(3, 2, 2), Blocks.CHEST);
-        TallyHopperBlockEntity hopper = placeTallyHopper(helper, HOPPER, Direction.EAST);
-        setRate(hopper, Items.COBBLESTONE, 1_000_000);
+        TallyHopperBlockEntity hopper = placeRatedHopper(helper, Items.COBBLESTONE, 1_000_000);
 
         helper.runAfterDelay(1, () -> {
             CreditReport report = hopper.credit(session(helper, Duration.ofHours(1)));
@@ -489,10 +440,6 @@ public final class CreditTests {
         });
     }
 
-    /**
-     * The gamerules are registered and start at their defaults. Changing them would affect the other
-     * tests, which share one world, so only the defaults are checked here.
-     */
     public static void gameRulesHaveDefaults(GameTestHelper helper) {
         GameRules rules = helper.getLevel().getGameRules();
         helper.assertValueEqual(rules.get(TallyHopperGameRules.MAX_OFFLINE_HOURS), 24, "max offline hours");
@@ -506,7 +453,6 @@ public final class CreditTests {
         for (Identifier id : TallyHopperGameRules.ALL.keySet()) {
             helper.assertTrue(BuiltInRegistries.GAME_RULE.containsKey(id), id + " is registered");
         }
-        // Querying through /gamerule returns the value.
         CommandSourceStack operator = helper.getLevel()
                 .getServer()
                 .createCommandSourceStack()

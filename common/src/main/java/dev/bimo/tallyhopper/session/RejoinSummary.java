@@ -23,19 +23,10 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
-/**
- * The one thing a Tally Hopper says on its own: a single chat line, once, when credit was applied.
- *
- * <p>Hoppers credit as their chunks load, so reports pile up for a couple of seconds and are then sent
- * as one grouped line, with the details on hover. The {@code tallyhopper:rejoin_summary} gamerule
- * turns it off.
- */
 public final class RejoinSummary {
 
-    /** How long to wait for more hoppers before sending, so one line covers them all. */
     public static final int SETTLE_TICKS = 40;
 
-    /** At most this many hoppers are listed on hover; the rest are counted in the total. */
     private static final int LISTED_HOPPERS = 10;
 
     private final List<Component> lines = new ArrayList<>();
@@ -47,7 +38,6 @@ public final class RejoinSummary {
     private long refused;
     private int waited;
 
-    /** Adds one hopper's credit. */
     void add(BlockPos pos, CreditReport report) {
         hoppers++;
         long earned = 0;
@@ -72,16 +62,13 @@ public final class RejoinSummary {
         return hoppers == 0;
     }
 
-    /** Whether enough ticks have passed since the last credit to send one line for all of them. */
     boolean isSettled() {
         return !isEmpty() && waited++ >= SETTLE_TICKS;
     }
 
-    /** Sends the summary to everyone online, and records their statistics and advancement. */
     void send(MinecraftServer server, OfflineWindow window) {
         List<ServerPlayer> players = server.getPlayerList().getPlayers();
         if (players.isEmpty()) {
-            // Nobody to tell yet; wait for someone to join.
             waited = 0;
             return;
         }
@@ -109,11 +96,6 @@ public final class RejoinSummary {
         waited = 0;
     }
 
-    /**
-     * Two lines: what was earned, then how it landed. The headline is the only thing a player has to
-     * read, so it carries the colour; everything that only matters when something went wrong sits
-     * under it in dark grey.
-     */
     private Component message(OfflineWindow window, EnergyEstimate energy) {
         Component headline = Component.translatable("message.tallyhopper.summary.items", number(items))
                 .withStyle(ChatFormatting.GREEN);
@@ -148,7 +130,6 @@ public final class RejoinSummary {
         }
         landed.withStyle(ChatFormatting.DARK_GRAY);
 
-        // An empty root, so the prefix's colours stay on the prefix instead of bleeding into the rest.
         return Component.empty()
                 .append(prefix())
                 .append(earned)
@@ -156,7 +137,6 @@ public final class RejoinSummary {
                 .append(landed);
     }
 
-    /** The mod's one piece of chat branding, reusing the block's own translated name. */
     private static Component prefix() {
         return Component.literal("[")
                 .withStyle(ChatFormatting.DARK_GRAY)
@@ -180,7 +160,6 @@ public final class RejoinSummary {
                 .withStyle(Style.EMPTY.withHoverEvent(new HoverEvent.ShowText(hover)));
     }
 
-    /** Whole hours and minutes, e.g. {@code 8h 01m}. Minutes are padded here so the text needs no format. */
     private static Component duration(Duration credited) {
         long hours = credited.toHours();
         long minutes = credited.toMinutesPart();

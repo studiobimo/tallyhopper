@@ -37,35 +37,25 @@ import net.minecraft.world.level.block.entity.DispenserBlockEntity;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
-/**
- * A Tally Hopper measures what its farm makes, and only that.
- *
- * <p>The GameTest mods measure in game time, one tick being 50 ms, so rates here are per game hour.
- */
 public final class MeasurementTests {
 
     private MeasurementTests() {}
 
     private static final BlockPos HOPPER = new BlockPos(2, 1, 2);
 
-    /** The dispenser fires once every this many ticks: once a second, 3600 items per hour. */
     private static final int FARM_PERIOD = 20;
 
     private static final long FARM_RATE = 3600;
 
-    /** Past the five-minute warm-up (6000 ticks), plus room for the clock face to update. */
     private static final int FARM_CHECK_TICK = 6100;
 
-    /** Where a hopper's first hotbar slot sits in a {@link HopperMenu}: 5 hopper slots, 27 inventory. */
     private static final int MENU_HOTBAR_START = 5 + 27;
 
-    /** More than the five slots hold, so some is still waiting after the hopper refills from it. */
     private static final long DRAINING_BACKLOG = 500;
 
     private static TallyHopperBlockEntity placeTallyHopper(GameTestHelper helper, Direction facing) {
         helper.setBlock(HOPPER, TallyHopperContent.block().defaultBlockState().setValue(HopperBlock.FACING, facing));
         TallyHopperBlockEntity hopper = helper.getBlockEntity(HOPPER, TallyHopperBlockEntity.class);
-        // A hopper only watches its farm once a sapling has paid for the run, as a player's would.
         hopper.saplings().setItem(0, new ItemStack(Items.OAK_SAPLING, 16));
         return hopper;
     }
@@ -76,10 +66,6 @@ public final class MeasurementTests {
         helper.getLevel().addFreshEntity(item);
     }
 
-    /**
-     * A dispenser clock drops one cobblestone a second onto a Tally Hopper feeding a chest. After the
-     * warm-up, the measured rate is within 5% of 3600/h and the clock face reads ready.
-     */
     public static void dispenserFarm(GameTestHelper helper) {
         BlockPos dispenserPos = new BlockPos(2, 3, 2);
         BlockPos trigger = new BlockPos(1, 3, 2);
@@ -89,7 +75,6 @@ public final class MeasurementTests {
         for (int slot = 0; slot < dispenser.getContainerSize(); slot++) {
             dispenser.setItem(slot, new ItemStack(Items.COBBLESTONE, 64));
         }
-        // An air gap, so the hopper catches dropped items instead of pulling from the dispenser.
         TallyHopperBlockEntity hopper = placeTallyHopper(helper, Direction.EAST);
         helper.setBlock(new BlockPos(3, 1, 2), Blocks.CHEST);
 
@@ -120,7 +105,6 @@ public final class MeasurementTests {
         });
     }
 
-    /** Clicking and shift-clicking items in through the GUI counts nothing; a dropped item does count. */
     public static void guiInsertsNotCounted(GameTestHelper helper) {
         TallyHopperBlockEntity hopper = placeTallyHopper(helper, Direction.DOWN);
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
@@ -134,7 +118,6 @@ public final class MeasurementTests {
         helper.assertValueEqual(hopper.countItem(Items.STONE), 17, "stone put in through the GUI");
         helper.assertValueEqual(hopper.measurement().counted(Items.STONE), 0L, "stone counted from the GUI");
 
-        // The same hopper still counts what its farm drops into it.
         helper.spawnItem(Items.STONE, HOPPER.above());
         helper.succeedWhen(() -> {
             helper.assertItemEntityNotPresent(Items.STONE);
@@ -142,18 +125,12 @@ public final class MeasurementTests {
         });
     }
 
-    /**
-     * A stack a player throws in by hand earns nothing. The drop key and throwing a stack out of a
-     * screen both reach {@code Player.drop} with {@code thrownFromHand}, which marks the item entity
-     * with its thrower; the hopper still picks it up, but the measurement ignores it.
-     */
     public static void thrownItemsNotCounted(GameTestHelper helper) {
         TallyHopperBlockEntity hopper = placeTallyHopper(helper, Direction.DOWN);
         ServerPlayer player = (ServerPlayer) helper.makeMockServerPlayer(GameType.SURVIVAL);
         Vec3 standing = helper.absoluteVec(Vec3.atBottomCenterOf(HOPPER.above(3)));
         player.snapTo(standing.x, standing.y, standing.z, 0, 90);
 
-        // The lamp means "this was tallied", so nothing thrown may light it.
         AtomicBoolean throwing = new AtomicBoolean(true);
         AtomicBoolean litForAThrow = new AtomicBoolean();
         helper.onEachTick(() -> {
@@ -164,10 +141,8 @@ public final class MeasurementTests {
 
         helper.startSequence()
                 .thenExecute(() -> {
-                    // The drop key hands the stack to exactly this call.
                     onHopper(helper, player.drop(new ItemStack(Items.DIAMOND, 3), true, Prediction.PREDICTED));
 
-                    // Throwing a stack out of the hopper's own screen goes down the same path.
                     HopperMenu menu = new HopperMenu(1, player.getInventory(), hopper);
                     player.getInventory().setItem(0, new ItemStack(Items.DIAMOND, 4));
                     menu.clicked(MENU_HOTBAR_START, 1, ContainerInput.THROW, player);
@@ -181,7 +156,6 @@ public final class MeasurementTests {
                     helper.assertValueEqual(hopper.measurement().counted(Items.DIAMOND), 0L, "thrown diamonds counted");
                     helper.assertFalse(litForAThrow.get(), "the lamp flashed for a thrown item");
                     throwing.set(false);
-                    // The same hopper still counts what a farm drops into it.
                     helper.spawnItem(Items.EMERALD, HOPPER.above());
                 })
                 .thenWaitUntil(() -> helper.assertValueEqual(
@@ -189,7 +163,6 @@ public final class MeasurementTests {
                 .thenSucceed();
     }
 
-    /** A counted item lights the observer's lamp for its two-tick pulse, and then the lamp goes dark. */
     public static void countedItemsFlashTheLamp(GameTestHelper helper) {
         TallyHopperBlockEntity hopper = placeTallyHopper(helper, Direction.DOWN);
         AtomicBoolean seenLit = new AtomicBoolean();
@@ -215,7 +188,6 @@ public final class MeasurementTests {
                 .thenSucceed();
     }
 
-    /** Puts a thrown item on the hopper, so the test doesn't depend on where a throw happens to land. */
     private static void onHopper(GameTestHelper helper, @Nullable ItemEntity thrown) {
         if (thrown == null) {
             throw helper.assertionException(Component.literal("nothing was thrown"));
@@ -224,13 +196,11 @@ public final class MeasurementTests {
         thrown.setDeltaMovement(Vec3.ZERO);
     }
 
-    /** The items a player has just thrown, which spawn at their eye height. */
     private static List<ItemEntity> thrownNear(GameTestHelper helper, Entity thrower) {
         return helper.getLevel()
                 .getEntitiesOfClass(ItemEntity.class, thrower.getBoundingBox().inflate(4));
     }
 
-    /** A hopper watches nothing until a sapling pays for the run, and then spends exactly one. */
     public static void calibrationNeedsSapling(GameTestHelper helper) {
         helper.setBlock(
                 HOPPER, TallyHopperContent.block().defaultBlockState().setValue(HopperBlock.FACING, Direction.DOWN));
@@ -256,12 +226,9 @@ public final class MeasurementTests {
                 .thenSucceed();
     }
 
-    /** The padlock on the screen spends a sapling and measures again, and does nothing without one. */
     public static void recalibrateSpendsASapling(GameTestHelper helper) {
         TallyHopperBlockEntity hopper = placeTallyHopper(helper, Direction.DOWN);
-        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
-        TallyHopperMenu menu =
-                new TallyHopperMenu(1, player.getInventory(), hopper, hopper.saplings(), helper.absolutePos(HOPPER));
+        OpenMenu gui = openMenu(helper, hopper);
         helper.startSequence()
                 .thenIdle(20)
                 .thenExecute(() -> {
@@ -269,7 +236,7 @@ public final class MeasurementTests {
                             hopper.saplings().getItem(0).getCount(), 15, "saplings after the first run");
                     helper.assertFalse(hopper.measurement().observed().isZero(), "nothing was watched");
                     helper.assertTrue(
-                            menu.clickMenuButton(player, TallyHopperMenu.RECALIBRATE_BUTTON),
+                            gui.menu().clickMenuButton(gui.player(), TallyHopperMenu.RECALIBRATE_BUTTON),
                             "the padlock did nothing");
                     helper.assertTrue(hopper.measurement().observed().isZero(), "the measurement was kept");
                     helper.assertValueEqual(
@@ -278,20 +245,14 @@ public final class MeasurementTests {
                 })
                 .thenIdle(5)
                 .thenExecute(() -> helper.assertFalse(
-                        menu.clickMenuButton(player, TallyHopperMenu.RECALIBRATE_BUTTON),
+                        gui.menu().clickMenuButton(gui.player(), TallyHopperMenu.RECALIBRATE_BUTTON),
                         "recalibrated with an empty sapling slot"))
                 .thenSucceed();
     }
 
-    /**
-     * A hopper with a backlog is not watching its farm, so the padlock is refused and no sapling is
-     * spent: pressing it would otherwise buy a run that cannot start, behind a bar stuck at zero.
-     */
     public static void recalibrateRefusesWhileDraining(GameTestHelper helper) {
         TallyHopperBlockEntity hopper = placeTallyHopper(helper, Direction.DOWN);
-        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
-        TallyHopperMenu menu =
-                new TallyHopperMenu(1, player.getInventory(), hopper, hopper.saplings(), helper.absolutePos(HOPPER));
+        OpenMenu gui = openMenu(helper, hopper);
         helper.startSequence()
                 .thenIdle(20)
                 .thenExecute(() -> {
@@ -308,7 +269,7 @@ public final class MeasurementTests {
                     helper.assertFalse(state.isCalibrating(), "the screen claims to be calibrating");
                     helper.assertTrue(state.isWaitingForBacklog(), "the screen doesn't say what it waits for");
                     helper.assertFalse(
-                            menu.clickMenuButton(player, TallyHopperMenu.RECALIBRATE_BUTTON),
+                            gui.menu().clickMenuButton(gui.player(), TallyHopperMenu.RECALIBRATE_BUTTON),
                             "the padlock recalibrated while the backlog drains");
                     helper.assertValueEqual(
                             hopper.saplings().getItem(0).getCount(), 15, "saplings after the refused press");
@@ -319,7 +280,7 @@ public final class MeasurementTests {
                 .thenExecute(() -> {
                     helper.assertTrue(hopper.isWatching(), "not watching once the backlog has drained");
                     helper.assertTrue(
-                            menu.clickMenuButton(player, TallyHopperMenu.RECALIBRATE_BUTTON),
+                            gui.menu().clickMenuButton(gui.player(), TallyHopperMenu.RECALIBRATE_BUTTON),
                             "the padlock did nothing once the backlog had drained");
                     helper.assertValueEqual(
                             hopper.saplings().getItem(0).getCount(), 14, "saplings after recalibrating");
@@ -328,7 +289,6 @@ public final class MeasurementTests {
                 .thenSucceed();
     }
 
-    /** Breaking the hopper spills the saplings, because nothing a player put in may be lost. */
     public static void saplingsDropWhenBroken(GameTestHelper helper) {
         TallyHopperBlockEntity hopper = placeTallyHopper(helper, Direction.DOWN);
         helper.startSequence()
@@ -342,7 +302,6 @@ public final class MeasurementTests {
                 .thenSucceed();
     }
 
-    /** A named item is unique, so only its plain copies are counted. */
     public static void onlyDefaultComponentsCounted(GameTestHelper helper) {
         TallyHopperBlockEntity hopper = placeTallyHopper(helper, Direction.DOWN);
         ItemStack named = new ItemStack(Items.DIAMOND, 3);
@@ -357,16 +316,11 @@ public final class MeasurementTests {
         });
     }
 
-    /**
-     * Overrides through {@code /tallyhopper rate}: a player may only lower a rate, an operator may set
-     * any rate from anywhere, and a non-zero override makes the hopper ready.
-     */
     public static void rateOverrideCommand(GameTestHelper helper) {
         TallyHopperBlockEntity hopper = placeTallyHopper(helper, Direction.DOWN);
         BlockPos abs = helper.absolutePos(HOPPER);
         String at = abs.getX() + " " + abs.getY() + " " + abs.getZ();
 
-        // A survival player two blocks above the hopper, looking straight down at it.
         ServerPlayer player = (ServerPlayer) helper.makeMockServerPlayer(GameType.SURVIVAL);
         Vec3 above = helper.absoluteVec(Vec3.atBottomCenterOf(HOPPER.above(2)));
         player.snapTo(above.x, above.y, above.z, 0, 90);
@@ -425,5 +379,14 @@ public final class MeasurementTests {
             return;
         }
         throw helper.assertionException(Component.literal("/" + command + " should be refused: " + what));
+    }
+
+    private record OpenMenu(Player player, TallyHopperMenu menu) {}
+
+    private static OpenMenu openMenu(GameTestHelper helper, TallyHopperBlockEntity hopper) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        return new OpenMenu(
+                player,
+                new TallyHopperMenu(1, player.getInventory(), hopper, hopper.saplings(), helper.absolutePos(HOPPER)));
     }
 }

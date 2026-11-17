@@ -20,18 +20,10 @@ import net.minecraft.world.level.block.entity.ComparatorBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
-/**
- * Proves a Tally Hopper behaves exactly like a vanilla hopper.
- *
- * <p>Each test builds the same rig twice, side by side: once around a vanilla hopper and once around
- * a Tally Hopper. Every tick it compares what both rigs report, so any difference in timing, not
- * just in the final result, fails the test.
- */
 public final class HopperParityTests {
 
     private HopperParityTests() {}
 
-    /** One copy of a rig. {@code tested} is the hopper block under test. */
     record Rig(GameTestHelper helper, int dx, Block tested) {
 
         BlockPos pos(int x, int y, int z) {
@@ -68,11 +60,6 @@ public final class HopperParityTests {
         }
     }
 
-    /**
-     * Builds {@code setup} around a vanilla hopper and a Tally Hopper, then checks for {@code ticks}
-     * ticks that {@code observe} reports the same thing for both, and finally runs {@code done} on
-     * the Tally Hopper rig.
-     */
     static void sideBySide(
             GameTestHelper helper,
             int ticks,
@@ -95,7 +82,6 @@ public final class HopperParityTests {
                 .thenSucceed();
     }
 
-    /** A full hopper pushes one item every 8 ticks into the chest it faces. */
     public static void push(GameTestHelper helper) {
         sideBySide(
                 helper,
@@ -109,7 +95,6 @@ public final class HopperParityTests {
                 rig -> rig.helper().assertValueEqual(rig.count(rig.pos(0, 1, 0)), 10, "items in chest"));
     }
 
-    /** A hopper pulls from the container above it. */
     public static void pull(GameTestHelper helper) {
         sideBySide(
                 helper,
@@ -123,7 +108,6 @@ public final class HopperParityTests {
                 rig -> rig.helper().assertValueEqual(rig.count(rig.pos(0, 1, 0)), 10, "items in hopper"));
     }
 
-    /** A hopper picks up item entities that land on it. */
     public static void pickup(GameTestHelper helper) {
         sideBySide(
                 helper,
@@ -142,7 +126,6 @@ public final class HopperParityTests {
                 rig -> rig.helper().assertValueEqual(rig.count(rig.pos(0, 1, 0)), 3, "items picked up"));
     }
 
-    /** A powered hopper is locked: it neither pushes nor pulls. */
     public static void redstoneLock(GameTestHelper helper) {
         sideBySide(
                 helper,
@@ -160,7 +143,6 @@ public final class HopperParityTests {
                 rig -> rig.helper().assertValueEqual(rig.count(rig.pos(0, 1, 0)), 0, "items pushed while locked"));
     }
 
-    /** A comparator reads the same signal from both hoppers while they empty. */
     public static void comparator(GameTestHelper helper) {
         sideBySide(
                 helper,
@@ -169,7 +151,6 @@ public final class HopperParityTests {
                     rig.helper().setBlock(rig.pos(0, 1, 0), Blocks.CHEST);
                     rig.helper().setBlock(rig.pos(1, 1, 0), Blocks.SMOOTH_STONE);
                     rig.hopper(rig.pos(0, 2, 0), Direction.DOWN);
-                    // A comparator's FACING points at its input.
                     BlockState comparator =
                             Blocks.COMPARATOR.defaultBlockState().setValue(ComparatorBlock.FACING, Direction.WEST);
                     rig.helper().setBlock(rig.pos(1, 2, 0), comparator);
@@ -187,10 +168,6 @@ public final class HopperParityTests {
                                 "comparator should still read the partly emptied hopper"));
     }
 
-    /**
-     * Vanilla hopper → hopper under test → vanilla hopper → chest. Hoppers hand items to each other
-     * with a cooldown that depends on {@code instanceof HopperBlockEntity}; this catches any break.
-     */
     public static void chain(GameTestHelper helper) {
         sideBySide(
                 helper,

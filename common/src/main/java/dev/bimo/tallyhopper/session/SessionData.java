@@ -11,7 +11,6 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 import org.jspecify.annotations.Nullable;
 
-/** The {@link SessionClock} state, saved with the world in {@code data/tallyhopper/session.dat}. */
 final class SessionData extends SavedData {
 
     private static final Codec<SessionData> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -19,7 +18,6 @@ final class SessionData extends SavedData {
                     Codec.LONG.fieldOf("session_id").forGetter(SessionData::sessionId))
             .apply(i, SessionData::new));
 
-    // No data fixer: this is our own format. Both loaders accept a null fixer type.
     @SuppressWarnings("NullAway")
     static final SavedDataType<SessionData> TYPE = new SavedDataType<>(
             Identifier.fromNamespaceAndPath(TallyHopper.MOD_ID, "session"), SessionData::new, CODEC, null);
@@ -42,7 +40,6 @@ final class SessionData extends SavedData {
         return sessionId;
     }
 
-    /** Copies the clock's state in, to be written with the next save. */
     void update(SessionClock clock) {
         lastHeartbeat = clock.lastHeartbeat();
         sessionId = clock.sessionId();

@@ -6,10 +6,12 @@ import dev.bimo.tallyhopper.client.TallyHopperScreen;
 import dev.bimo.tallyhopper.platform.Services;
 import dev.bimo.tallyhopper.registry.TallyHopperContent;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -22,15 +24,7 @@ public final class TallyHopperScreenClientTest implements FabricClientGameTest {
             singleplayer.getConnection().waitForChunksRender();
 
             AtomicReference<BlockPos> placed = new AtomicReference<>();
-            singleplayer.getServer().runOnServer(server -> {
-                ServerPlayer player = server.getPlayerList().getPlayers().getFirst();
-                BlockPos pos = player.blockPosition().above(3);
-                player.level().setBlockAndUpdate(pos, TallyHopperContent.block().defaultBlockState());
-                placed.set(pos);
-                if (player.level().getBlockEntity(pos) instanceof TallyHopperBlockEntity hopper) {
-                    Services.MENUS.open(player, hopper);
-                }
-            });
+            singleplayer.getServer().runOnServer(server -> placed.set(placeAndOpenHopper(server)));
 
             context.waitForScreen(TallyHopperScreen.class);
             context.waitTicks(5);
@@ -42,9 +36,7 @@ public final class TallyHopperScreenClientTest implements FabricClientGameTest {
                     hopper.saplings().setItem(0, new ItemStack(Items.OAK_SAPLING, 8));
                 }
             });
-            context.waitFor(client -> client.level != null
-                    && client.level.getBlockEntity(pos) instanceof TallyHopperBlockEntity hopper
-                    && hopper.guiState().isCalibrating());
+            waitForHopper(context, pos, hopper -> hopper.guiState().isCalibrating());
             context.waitTicks(5);
             context.takeScreenshot("tally_hopper_calibrating");
 
@@ -52,9 +44,7 @@ public final class TallyHopperScreenClientTest implements FabricClientGameTest {
                     .getServer()
                     .runCommand("tallyhopper rate set %d %d %d minecraft:cobblestone 600"
                             .formatted(pos.getX(), pos.getY(), pos.getZ()));
-            context.waitFor(client -> client.level != null
-                    && client.level.getBlockEntity(pos) instanceof TallyHopperBlockEntity hopper
-                    && hopper.guiState().ready());
+            waitForHopper(context, pos, hopper -> hopper.guiState().ready());
             context.waitTicks(5);
             context.takeScreenshot("tally_hopper_ready");
 
@@ -63,36 +53,12 @@ public final class TallyHopperScreenClientTest implements FabricClientGameTest {
                     .runOnServer(server -> server.overworld()
                             .setBlockAndUpdate(
                                     pos.below(), TallyHopperContent.block().defaultBlockState()));
-            context.waitFor(client -> client.level != null
-                    && client.level.getBlockEntity(pos) instanceof TallyHopperBlockEntity hopper
-                    && hopper.guiState().isPassthrough());
+            waitForHopper(context, pos, hopper -> hopper.guiState().isPassthrough());
             context.waitTicks(5);
             context.takeScreenshot("tally_hopper_passthrough");
 
             context.setScreen(() -> null);
-            singleplayer.getServer().runOnServer(server -> {
-                ServerPlayer player = server.getPlayerList().getPlayers().getFirst();
-                BlockPos base = player.blockPosition();
-                BlockPos calibrating = base.offset(-1, 1, -3);
-                BlockPos ready = base.offset(1, 1, -3);
-                server.overworld()
-                        .setBlockAndUpdate(
-                                calibrating, TallyHopperContent.block().defaultBlockState());
-                server.overworld()
-                        .setBlockAndUpdate(
-                                ready,
-                                TallyHopperContent.block()
-                                        .defaultBlockState()
-                                        .setValue(TallyHopperBlock.READY, true)
-                                        .setValue(TallyHopperBlock.LIT, true));
-                if (server.overworld().getBlockEntity(ready) instanceof TallyHopperBlockEntity hopper) {
-                    hopper.changeOverrides(measurement -> {
-                        measurement.setOverride(Items.COBBLESTONE, 600);
-                        return true;
-                    });
-                }
-                player.connection.teleport(base.getX() + 0.5, base.getY(), base.getZ() + 0.5, 180, 12);
-            });
+            singleplayer.getServer().runOnServer(TallyHopperScreenClientTest::buildDayNightScene);
             singleplayer.getServer().runCommand("time set noon");
             context.waitTicks(40);
             context.takeScreenshot("tally_hopper_block_day");
@@ -100,5 +66,45 @@ public final class TallyHopperScreenClientTest implements FabricClientGameTest {
             context.waitTicks(40);
             context.takeScreenshot("tally_hopper_block_night");
         }
+    }
+
+    private static void waitForHopper(
+            ClientGameTestContext context, BlockPos pos, Predicate<TallyHopperBlockEntity> condition) {
+        context.waitFor(client -> client.level != null
+                && client.level.getBlockEntity(pos) instanceof TallyHopperBlockEntity hopper
+                && condition.test(hopper));
+    }
+
+    private static BlockPos placeAndOpenHopper(MinecraftServer server) {
+        ServerPlayer player = server.getPlayerList().getPlayers().getFirst();
+        BlockPos pos = player.blockPosition().above(3);
+        player.level().setBlockAndUpdate(pos, TallyHopperContent.block().defaultBlockState());
+        if (player.level().getBlockEntity(pos) instanceof TallyHopperBlockEntity hopper) {
+            Services.MENUS.open(player, hopper);
+        }
+        return pos;
+    }
+
+    private static void buildDayNightScene(MinecraftServer server) {
+        ServerPlayer player = server.getPlayerList().getPlayers().getFirst();
+        BlockPos base = player.blockPosition();
+        BlockPos calibrating = base.offset(-1, 1, -3);
+        BlockPos ready = base.offset(1, 1, -3);
+        server.overworld()
+                .setBlockAndUpdate(calibrating, TallyHopperContent.block().defaultBlockState());
+        server.overworld()
+                .setBlockAndUpdate(
+                        ready,
+                        TallyHopperContent.block()
+                                .defaultBlockState()
+                                .setValue(TallyHopperBlock.READY, true)
+                                .setValue(TallyHopperBlock.LIT, true));
+        if (server.overworld().getBlockEntity(ready) instanceof TallyHopperBlockEntity hopper) {
+            hopper.changeOverrides(measurement -> {
+                measurement.setOverride(Items.COBBLESTONE, 600);
+                return true;
+            });
+        }
+        player.connection.teleport(base.getX() + 0.5, base.getY(), base.getZ() + 0.5, 180, 12);
     }
 }
