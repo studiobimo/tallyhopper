@@ -26,20 +26,12 @@ public final class Backlog<K> {
         setCap(cap);
     }
 
-    /** Restores a saved backlog. Contents over the cap are kept. */
     public Backlog(Map<K, Long> saved, long cap) {
         this(cap);
         saved.forEach((item, count) -> put(item, requireNonNegative(count)));
     }
 
-    /**
-     * Adds credit up to the cap and returns how many items were refused.
-     *
-     * <p>When everything doesn't fit, the room left is shared in proportion to each item's credit,
-     * so one item type can't crowd out the rest.
-     */
     public long addAll(Map<K, Long> credit) {
-        // Summed exactly: a saturated total would make an over-cap credit look like it fits.
         BigInteger requested = BigInteger.ZERO;
         for (long count : credit.values()) {
             requested = requested.add(BigInteger.valueOf(requireNonNegative(count)));
@@ -59,7 +51,6 @@ public final class Backlog<K> {
             shares.put(entry.getKey(), share);
             granted += share;
         }
-        // Rounding down leaves fewer spare items than item types; hand them out one each.
         for (Map.Entry<K, Long> entry : shares.entrySet()) {
             if (granted == room) {
                 break;
@@ -73,7 +64,6 @@ public final class Backlog<K> {
         return SaturatingMath.clamp(requested.subtract(BigInteger.valueOf(granted)));
     }
 
-    /** Removes up to {@code max} of an item, for refilling a visible slot. Returns how many. */
     public long take(K item, long max) {
         requireNonNegative(max);
         long held = get(item);
@@ -87,7 +77,6 @@ public final class Backlog<K> {
         return taken;
     }
 
-    /** The item stored longest, which is the next to hand out, or {@code null} when empty. */
     public @Nullable K peek() {
         return counts.isEmpty() ? null : counts.keySet().iterator().next();
     }
@@ -108,12 +97,10 @@ public final class Backlog<K> {
         return cap;
     }
 
-    /** Changes the cap. Items already stored above a lower cap are kept. */
     public void setCap(long cap) {
         this.cap = requireNonNegative(cap);
     }
 
-    /** A snapshot for saving and display, in insertion order. */
     public Map<K, Long> contents() {
         return new LinkedHashMap<>(counts);
     }

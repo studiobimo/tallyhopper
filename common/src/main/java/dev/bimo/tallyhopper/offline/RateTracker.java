@@ -30,7 +30,6 @@ public final class RateTracker<K> {
     public static final Duration MAX_TICK_GAP = Duration.ofSeconds(1);
     public static final Duration DEFAULT_WARM_UP = Duration.ofMinutes(5);
 
-    /** Bounds memory and save size when a hopper only ticks in short bursts. */
     static final int MAX_BUCKETS = 240;
 
     private static final long BUCKET_MILLIS = Duration.ofMinutes(1).toMillis();
@@ -43,7 +42,6 @@ public final class RateTracker<K> {
 
     public RateTracker() {}
 
-    /** Restores a tracker from {@link #buckets()}. The first tick after a restore is a pause. */
     public RateTracker(List<Bucket<K>> saved) {
         saved.stream().sorted(Comparator.comparingLong(Bucket::minute)).forEach(bucket -> {
             buckets.addLast(new MutableBucket<>(bucket.minute(), bucket.activeMillis(), bucket.counts()));
@@ -52,7 +50,6 @@ public final class RateTracker<K> {
         trim();
     }
 
-    /** Called every time the hopper ticks. */
     public void tick(Instant now) {
         Instant previous = lastTick;
         lastTick = now;
@@ -68,7 +65,6 @@ public final class RateTracker<K> {
         }
     }
 
-    /** Counts items that entered through the hopper's intake during the current tick. */
     public void record(K item, long count) {
         if (count < 0) {
             throw new IllegalArgumentException("count must not be negative: " + count);
@@ -82,17 +78,14 @@ public final class RateTracker<K> {
         }
     }
 
-    /** How much running time the current rates are based on. */
     public Duration observed() {
         return Duration.ofMillis(observedMillis);
     }
 
-    /** Whether enough time was observed for the rates to be trusted with credit. */
     public boolean isWarmedUp(Duration minObservation) {
         return observed().compareTo(minObservation) >= 0;
     }
 
-    /** The measured rate of each item seen in the window. Empty until any time is observed. */
     public Map<K, Rate> rates() {
         if (observedMillis == 0) {
             return Map.of();
@@ -106,7 +99,6 @@ public final class RateTracker<K> {
         return rates;
     }
 
-    /** A snapshot for saving, oldest first. */
     public List<Bucket<K>> buckets() {
         List<Bucket<K>> snapshot = new ArrayList<>(buckets.size());
         for (MutableBucket<K> bucket : buckets) {
@@ -118,7 +110,6 @@ public final class RateTracker<K> {
     private MutableBucket<K> bucketFor(Instant now) {
         long minute = Math.floorDiv(now.toEpochMilli(), BUCKET_MILLIS);
         MutableBucket<K> newest = buckets.peekLast();
-        // A clock that went backwards keeps filling the newest bucket, so buckets stay in order.
         if (newest != null && newest.minute >= minute) {
             return newest;
         }
@@ -128,7 +119,6 @@ public final class RateTracker<K> {
         return created;
     }
 
-    /** Drops the oldest buckets that the window no longer needs. */
     private void trim() {
         while (buckets.size() > 1) {
             MutableBucket<K> oldest = buckets.getFirst();

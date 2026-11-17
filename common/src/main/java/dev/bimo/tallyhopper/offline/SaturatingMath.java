@@ -2,12 +2,6 @@ package dev.bimo.tallyhopper.offline;
 
 import java.math.BigInteger;
 
-/**
- * Non-negative {@code long} arithmetic that clamps at {@link Long#MAX_VALUE} instead of wrapping.
- *
- * <p>A wrapped counter would turn a huge credit into a negative one, which is worse than a capped
- * one. Callers only pass non-negative values.
- */
 public final class SaturatingMath {
 
     private static final BigInteger MAX = BigInteger.valueOf(Long.MAX_VALUE);

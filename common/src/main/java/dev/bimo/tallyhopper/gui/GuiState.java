@@ -65,47 +65,26 @@ public record GuiState(
         overridden = List.copyOf(overridden);
     }
 
-    /** Whether the hopper is watching its farm, which the screen shows as a filling bar. */
     public boolean isCalibrating() {
         return paid && !ready && observedSeconds < warmUpSeconds && !isDraining();
     }
 
-    /**
-     * Whether a backlog is flowing through the hopper. It shares the slots with farm output while it
-     * does, so the hopper stops watching, and the padlock is refused until it is empty.
-     */
     public boolean isDraining() {
         return backlog > 0;
     }
 
-    /**
-     * Whether the hopper has been paid for but cannot watch yet, because a backlog is draining. The
-     * bar would sit at zero for as long as that takes, so the screen says what it is waiting for
-     * instead of claiming to be calibrating.
-     */
     public boolean isWaitingForBacklog() {
         return paid && !ready && isDraining();
     }
 
-    /**
-     * Whether the hopper is waiting for the sapling a calibration run costs. A passthrough hopper is
-     * not: nothing it measures would ever be credited, so it is not asking for one.
-     */
     public boolean needsSapling() {
         return !paid && !ready && !feedsTallyHopper;
     }
 
-    /**
-     * Whether this hopper only passes items along. Another Tally Hopper further down the line measures
-     * the same items and is the one that earns, so this one's own rate is never paid out. Items still
-     * flow through exactly as before, which is why the screen says "passthrough" rather than showing
-     * an error.
-     */
     public boolean isPassthrough() {
         return feedsTallyHopper;
     }
 
-    /** How far calibration has come, from 0 to 1. */
     public float progress() {
         if (ready) {
             return 1.0F;

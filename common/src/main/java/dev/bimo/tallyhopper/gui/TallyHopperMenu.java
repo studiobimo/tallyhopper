@@ -14,22 +14,15 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-/**
- * The Tally Hopper's menu: a hopper's five slots, the sapling a calibration run costs, and the
- * position of the block, so the screen can read what the block entity syncs.
- */
 public final class TallyHopperMenu extends AbstractContainerMenu {
 
     public static final int SLOTS = 5;
 
-    /** The button the padlock on the screen presses; see {@link #clickMenuButton}. */
     public static final int RECALIBRATE_BUTTON = 0;
 
-    /** The ghost sapling an empty calibration slot shows, the way an empty armour slot shows its piece. */
     private static final Identifier EMPTY_SLOT_SAPLING =
             Identifier.fromNamespaceAndPath(TallyHopper.MOD_ID, "container/slot/sapling");
 
-    /** Where the five hopper slots start, and where the sapling slot sits. */
     private static final int SLOTS_X = 80;
 
     private static final int SLOTS_Y = 48;
@@ -40,7 +33,6 @@ public final class TallyHopperMenu extends AbstractContainerMenu {
     private final Container saplings;
     private final BlockPos pos;
 
-    /** Client side: both containers are filled by the server, so empty ones stand in. */
     public TallyHopperMenu(int containerId, Inventory inventory, BlockPos pos) {
         this(containerId, inventory, new SimpleContainer(SLOTS), new SimpleContainer(1), pos);
     }
@@ -75,10 +67,6 @@ public final class TallyHopperMenu extends AbstractContainerMenu {
         return pos;
     }
 
-    /**
-     * The padlock on the screen. Recalibrating costs the player a sapling and can only lower a rate to
-     * what the farm actually produces, so anyone who can open the hopper may press it.
-     */
     @Override
     public boolean clickMenuButton(Player player, int id) {
         if (id != RECALIBRATE_BUTTON || player.level().isClientSide()) {
@@ -99,7 +87,6 @@ public final class TallyHopperMenu extends AbstractContainerMenu {
         hopper.stopOpen(player);
     }
 
-    // The same rules as a vanilla hopper's menu, with the sapling slot treated like any other.
     @Override
     public ItemStack quickMoveStack(Player player, int slotIndex) {
         ItemStack moved = ItemStack.EMPTY;
@@ -113,7 +100,6 @@ public final class TallyHopperMenu extends AbstractContainerMenu {
                     return ItemStack.EMPTY;
                 }
             } else if (stack.is(ItemTags.SAPLINGS) && moveItemStackTo(stack, SLOTS, inventoryStart, false)) {
-                // A sapling goes to the calibration slot first, and to the hopper only if that is full.
             } else if (!moveItemStackTo(stack, 0, SLOTS, false)) {
                 return ItemStack.EMPTY;
             }
@@ -126,7 +112,6 @@ public final class TallyHopperMenu extends AbstractContainerMenu {
         return moved;
     }
 
-    /** Only for the screen, so it can grey the padlock out when there is nothing to spend. */
     public boolean hasSapling() {
         return !saplings.getItem(0).isEmpty();
     }

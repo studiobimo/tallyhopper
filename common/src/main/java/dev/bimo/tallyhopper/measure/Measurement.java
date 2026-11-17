@@ -20,13 +20,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 
-/**
- * What one Tally Hopper has measured: a {@link RateTracker} keyed by item, the player's per-item
- * overrides, and saving and loading for both.
- *
- * <p>Only stacks with default components are counted. A randomly enchanted bow or a named item is
- * unique, so extrapolating it would fabricate items that never existed.
- */
 public final class Measurement {
 
     private static final String BUCKETS_KEY = TallyHopper.MOD_ID + "_rate";
@@ -45,19 +38,15 @@ public final class Measurement {
     private Duration warmUp = RateTracker.DEFAULT_WARM_UP;
     private final Map<Item, Long> overridesPerHour = new LinkedHashMap<>();
 
-    /** Whether a stack may be counted and later extrapolated. */
     public static boolean isCountable(ItemStack stack) {
         return !stack.isEmpty() && stack.getComponentsPatch().isEmpty();
     }
 
-    /** The hopper ticked at {@code now}. */
     public void tick(Instant now) {
         tracker.tick(now);
     }
 
-    /** Items entered through an intake path at {@code now}. */
     public void recordIntake(Item item, long count, Instant now) {
-        // Intake can arrive before this hopper's own tick, from a neighbor that ticked first.
         tracker.tick(now);
         tracker.record(item, count);
     }
@@ -66,10 +55,6 @@ public final class Measurement {
         return tracker.rates();
     }
 
-    /**
-     * Forgets what was measured and watches the farm again from nothing, for a player who changed
-     * their farm and doesn't want to wait for the window to roll over. Overrides are left alone.
-     */
     public void restart() {
         tracker = new RateTracker<>();
     }
@@ -78,7 +63,6 @@ public final class Measurement {
         return tracker.observed();
     }
 
-    /** How long the hopper must watch before its measured rate counts; set from a gamerule. */
     public Duration warmUp() {
         return warmUp;
     }
@@ -91,10 +75,6 @@ public final class Measurement {
         return tracker.isWarmedUp(warmUp);
     }
 
-    /**
-     * Whether this hopper would earn offline credit: it has watched long enough, or the player set a
-     * non-zero override.
-     */
     public boolean isReady() {
         return isWarmedUp() || overridesPerHour.values().stream().anyMatch(perHour -> perHour > 0);
     }
@@ -112,20 +92,14 @@ public final class Measurement {
         return OfflineCredit.effectiveRates(provenRates(), isWarmedUp(), overrides);
     }
 
-    /**
-     * What this hopper can prove on its own: its measured rates, weighed down while it has watched for
-     * less than the window. This is the ceiling a player who is not an operator may override up to.
-     */
     public Map<Item, Rate> provenRates() {
         return RateBounds.weigh(measuredRates(), observed(), RateTracker.WINDOW);
     }
 
-    /** The overrides in items per hour. */
     public Map<Item, Long> overrides() {
         return Collections.unmodifiableMap(overridesPerHour);
     }
 
-    /** Replaces the measured rate of {@code item}. Zero switches the item off. */
     public void setOverride(Item item, long perHour) {
         if (perHour < 0) {
             throw new IllegalArgumentException("perHour must not be negative: " + perHour);
@@ -133,19 +107,16 @@ public final class Measurement {
         overridesPerHour.put(item, perHour);
     }
 
-    /** Returns whether {@code item} had an override. */
     public boolean clearOverride(Item item) {
         return overridesPerHour.remove(item) != null;
     }
 
-    /** Returns how many overrides were removed. */
     public int clearOverrides() {
         int removed = overridesPerHour.size();
         overridesPerHour.clear();
         return removed;
     }
 
-    /** How many of an item the current window counted. */
     public long counted(Item item) {
         long total = 0;
         for (RateTracker.Bucket<Item> bucket : tracker.buckets()) {
@@ -167,12 +138,10 @@ public final class Measurement {
                     input.read(BUCKETS_KEY, BUCKET_CODEC.listOf()).orElse(List.of());
             tracker = new RateTracker<>(buckets);
         } catch (IllegalArgumentException e) {
-            // A corrupt measurement is not worth losing the hopper's contents over; measure again.
             TallyHopper.LOG.warn("Discarding an unreadable Tally Hopper measurement", e);
             tracker = new RateTracker<>();
         }
         overridesPerHour.clear();
-        // Vanilla reports entries that fail to decode (a removed item, say) and keeps the rest.
         input.read(OVERRIDES_KEY, OVERRIDES_CODEC).ifPresent(overridesPerHour::putAll);
     }
 }
