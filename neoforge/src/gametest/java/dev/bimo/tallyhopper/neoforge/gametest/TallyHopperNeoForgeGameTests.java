@@ -8,12 +8,10 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
-/** Registers the shared GameTest functions. The test instances come from the data pack. */
 @Mod(TallyHopper.MOD_ID + "_gametest")
 public final class TallyHopperNeoForgeGameTests {
 
     public TallyHopperNeoForgeGameTests(IEventBus modBus) {
-        // The GameTest server ticks as fast as it can, so measure in game time.
         MeasurementClock.useGameTime();
         modBus.addListener(TallyHopperNeoForgeGameTests::register);
     }

@@ -8,7 +8,6 @@ class TallyHopperTest {
 
     @Test
     void modIdIsAValidResourceNamespace() {
-        // Minecraft namespaces allow only [a-z0-9_.-]; anything else fails registry keys at runtime.
         assertThat(TallyHopper.MOD_ID).matches("[a-z0-9_.-]+");
     }
 }

@@ -14,12 +14,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-/**
- * Opens the Tally Hopper's screen in a real client and photographs it in each state it has: waiting
- * for a sapling, calibrating, ready, and passthrough. Then photographs the block itself by day and by
- * night, one hopper calibrating with its lamp dark and one ready with its lamp lit, so the clock face
- * and the lamp's glow can be checked by eye. Rendering is the one thing only a real client can show.
- */
 public final class TallyHopperScreenClientTest implements FabricClientGameTest {
 
     @Override
@@ -43,7 +37,6 @@ public final class TallyHopperScreenClientTest implements FabricClientGameTest {
             context.takeScreenshot("tally_hopper_needs_sapling");
 
             BlockPos pos = placed.get();
-            // A sapling buys one calibration run; the hopper spends it on its next tick.
             singleplayer.getServer().runOnServer(server -> {
                 if (server.overworld().getBlockEntity(pos) instanceof TallyHopperBlockEntity hopper) {
                     hopper.saplings().setItem(0, new ItemStack(Items.OAK_SAPLING, 8));
@@ -59,15 +52,12 @@ public final class TallyHopperScreenClientTest implements FabricClientGameTest {
                     .getServer()
                     .runCommand("tallyhopper rate set %d %d %d minecraft:cobblestone 600"
                             .formatted(pos.getX(), pos.getY(), pos.getZ()));
-            // The hopper syncs to open screens once a second.
             context.waitFor(client -> client.level != null
                     && client.level.getBlockEntity(pos) instanceof TallyHopperBlockEntity hopper
                     && hopper.guiState().ready());
             context.waitTicks(5);
             context.takeScreenshot("tally_hopper_ready");
 
-            // A second Tally Hopper under this one takes over earning, so this one becomes a
-            // passthrough: the status word changes and the padlock is hidden.
             singleplayer
                     .getServer()
                     .runOnServer(server -> server.overworld()
@@ -88,7 +78,6 @@ public final class TallyHopperScreenClientTest implements FabricClientGameTest {
                 server.overworld()
                         .setBlockAndUpdate(
                                 calibrating, TallyHopperContent.block().defaultBlockState());
-                // Lit without a scheduled tick to end the flash, so it holds for the camera.
                 server.overworld()
                         .setBlockAndUpdate(
                                 ready,
@@ -96,7 +85,6 @@ public final class TallyHopperScreenClientTest implements FabricClientGameTest {
                                         .defaultBlockState()
                                         .setValue(TallyHopperBlock.READY, true)
                                         .setValue(TallyHopperBlock.LIT, true));
-                // An override keeps it ready, or its next clock-face check would set it back.
                 if (server.overworld().getBlockEntity(ready) instanceof TallyHopperBlockEntity hopper) {
                     hopper.changeOverrides(measurement -> {
                         measurement.setOverride(Items.COBBLESTONE, 600);

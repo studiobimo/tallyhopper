@@ -27,7 +27,6 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
 
-/** NeoForge entry point; delegates to common code. */
 @Mod(TallyHopper.MOD_ID)
 public final class TallyHopperNeoForge {
 
@@ -48,7 +47,6 @@ public final class TallyHopperNeoForge {
                 ServerStoppingEvent.class, event -> OfflineSession.onServerStopping(event.getServer()));
     }
 
-    // NeoForge fires this once per registry, blocks first and items second.
     private static void register(RegisterEvent event) {
         event.register(Registries.CUSTOM_STAT, helper -> TallyHopperStats.register());
         event.register(Registries.GAME_RULE, helper -> TallyHopperGameRules.ALL.forEach(helper::register));
@@ -92,7 +90,6 @@ public final class TallyHopperNeoForge {
         }
     }
 
-    // NeoForge exposes vanilla hoppers to pipes and other mods' transfer code; do the same for ours.
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(
                 Capabilities.Item.BLOCK,

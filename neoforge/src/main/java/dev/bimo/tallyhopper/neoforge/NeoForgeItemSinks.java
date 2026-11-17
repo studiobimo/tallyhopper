@@ -10,7 +10,6 @@ import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import org.jspecify.annotations.Nullable;
 
-/** Delivers through NeoForge's item {@link ResourceHandler} capability. */
 public final class NeoForgeItemSinks implements ItemSinks {
 
     @Override
@@ -22,10 +21,8 @@ public final class NeoForgeItemSinks implements ItemSinks {
         return (item, count) -> {
             ItemResource resource = ItemResource.of(item);
             long inserted = 0;
-            // The handler counts in ints; a credit can be larger.
             while (inserted < count) {
                 int batch = (int) Math.min(Integer.MAX_VALUE, count - inserted);
-                // Stacking fills matching stacks before empty slots, like a hopper does.
                 int accepted = ResourceHandlerUtil.insertStacking(handler, resource, batch, null);
                 inserted += accepted;
                 if (accepted < batch) {
