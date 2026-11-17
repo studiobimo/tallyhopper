@@ -117,7 +117,6 @@ class OfflineWindowTest {
     void hopperNeverEarnsTimeBeforeItsOwnLastTick() {
         OfflineWindow window = OfflineWindow.between(T0, T0.plus(Duration.ofHours(8)), DAY);
 
-        // It ran for an hour into the window, e.g. because a crash lost the session data.
         assertThat(window.creditFor(T0.plus(Duration.ofHours(1)))).isEqualTo(Duration.ofHours(7));
         assertThat(window.creditFor(T0.plus(Duration.ofHours(9)))).isZero();
     }

@@ -10,10 +10,6 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.Item;
 
-/**
- * A backlog carried on a Tally Hopper item, like a shulker box carries its contents. Breaking the
- * block puts it here and placing the item puts it back, so moving a hopper never loses credit.
- */
 public record StoredBacklog(Map<Item, Long> counts) {
 
     public static final Codec<StoredBacklog> CODEC =
@@ -24,7 +20,6 @@ public record StoredBacklog(Map<Item, Long> counts) {
                     .map(StoredBacklog::new, StoredBacklog::counts);
 
     public StoredBacklog {
-        // Kept in order: the oldest item is handed out first.
         counts = Collections.unmodifiableMap(new LinkedHashMap<>(counts));
     }
 }

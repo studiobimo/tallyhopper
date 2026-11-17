@@ -14,11 +14,9 @@ class EnergyEstimateTest {
     void eightHoursAtTheDefaultFactors() {
         EnergyEstimate estimate = EnergyEstimate.of(Duration.ofHours(8), EnergyFactors.DEFAULTS);
 
-        // 150 W for 8 h is 1.2 kWh.
         assertThat(estimate.kilowattHours()).isCloseTo(1.2, org.assertj.core.data.Offset.offset(TOLERANCE));
         assertThat(estimate.kilogramsCo2()).isCloseTo(1.2 * 0.394, org.assertj.core.data.Offset.offset(TOLERANCE));
         assertThat(estimate.litersWater()).isCloseTo(1.2 * 7.6, org.assertj.core.data.Offset.offset(TOLERANCE));
-        // 60 kg over 10 years is about 16.4 g a day.
         assertThat(estimate.treeDays()).isCloseTo(28.79, org.assertj.core.data.Offset.offset(0.01));
     }
 

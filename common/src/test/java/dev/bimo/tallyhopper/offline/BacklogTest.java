@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 
 class BacklogTest {
 
-    /** A credit map with a fixed iteration order, so tie-breaks are predictable. */
     private static Map<String, Long> credit(Object... itemsAndCounts) {
         Map<String, Long> map = new LinkedHashMap<>();
         for (int i = 0; i < itemsAndCounts.length; i += 2) {

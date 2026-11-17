@@ -30,20 +30,12 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jspecify.annotations.Nullable;
 
-/**
- * A hopper that measures what passes through it. Everything a hopper does is inherited unchanged.
- *
- * <p>{@link #READY} drives the clock face: calibrating until the rate is measured, then ready.
- * {@link #LIT} drives the observer's lamp beside it, which flashes for each item the hopper counts.
- */
 public final class TallyHopperBlock extends HopperBlock {
 
     public static final BooleanProperty READY = BooleanProperty.create("ready");
 
-    /** Vanilla's own {@code lit}, as a furnace or redstone lamp uses it. */
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
-    /** How long the lamp stays on: the observer's pulse, two game ticks. */
     public static final int FLASH_TICKS = 2;
 
     public TallyHopperBlock(Properties properties) {
@@ -57,14 +49,6 @@ public final class TallyHopperBlock extends HopperBlock {
         builder.add(READY, LIT);
     }
 
-    /**
-     * Lights the lamp for {@link #FLASH_TICKS}, the way an observer lights when it sees a change.
-     *
-     * <p>Kept as cheap as a lamp can be. The change goes to clients only: no neighbour updates, no
-     * redstone signal and no world light, since the glow is the model's own {@code light_emission}.
-     * A lamp already lit is left alone rather than extended, so a steady stream reads as separate
-     * blinks and no hopper changes state more often than every other tick, whatever feeds it.
-     */
     public static void flash(Level level, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
         if (state.getBlock() instanceof TallyHopperBlock block && !state.getValue(LIT)) {
@@ -73,7 +57,6 @@ public final class TallyHopperBlock extends HopperBlock {
         }
     }
 
-    /** The end of a flash. Vanilla hoppers never schedule ticks, so this is the only one there is. */
     @Override
     protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         if (state.getValue(LIT)) {
@@ -81,14 +64,6 @@ public final class TallyHopperBlock extends HopperBlock {
         }
     }
 
-    /**
-     * Tells a player who has just placed a hopper that feeds another Tally Hopper that it will not earn.
-     *
-     * <p>Placement is allowed rather than refused. The same arrangement is reachable by placing the two
-     * in the other order, or by re-aiming a hopper afterwards, so refusing here would only make the
-     * state harder to reach, not impossible — and a mod that quietly refuses to place a block a player
-     * is holding is worse than one that explains itself. The chain is walked once, on this placement.
-     */
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity by, ItemStack stack) {
         super.setPlacedBy(level, pos, state, by, stack);
@@ -98,10 +73,6 @@ public final class TallyHopperBlock extends HopperBlock {
         }
     }
 
-    /**
-     * In creative, breaking drops nothing, so a hopper with a backlog drops itself carrying it, the way
-     * a shulker box with contents does. Its five slots spill as usual.
-     */
     @Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide()
@@ -120,7 +91,6 @@ public final class TallyHopperBlock extends HopperBlock {
         return super.playerWillDestroy(level, pos, state, player);
     }
 
-    /** Opens the Tally Hopper's own screen instead of the vanilla hopper one. */
     @Override
     protected InteractionResult useWithoutItem(
             BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {

@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 
 class HopperChainTest {
 
-    /** Hopper {@code i} pushes into the hopper in {@code links.get(i)}. */
     private final Map<Integer, Integer> links = new HashMap<>();
 
     private HopperChain.Result<Integer> walkFrom(int start) {
@@ -73,7 +72,6 @@ class HopperChainTest {
         assertThat(HopperChain.anyInChain(0, links::get, Set.of(9)::contains)).isFalse();
     }
 
-    /** A chain too long to follow is answered from the part that was walked, and never hangs. */
     @Test
     void answersALongChainFromWhatItWalked() {
         for (int i = 0; i < 20; i++) {

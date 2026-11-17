@@ -16,7 +16,6 @@ class RateTrackerTest {
     private final FakeClock time = new FakeClock();
     private final RateTracker<String> tracker = new RateTracker<>();
 
-    /** Ticks at 20 TPS for {@code duration}, recording one {@code item} every {@code every} ticks. */
     private void run(Duration duration, String item, int every) {
         long ticks = duration.dividedBy(TICK);
         for (long i = 1; i <= ticks; i++) {
@@ -31,7 +30,6 @@ class RateTrackerTest {
     @Test
     void measuresItemsPerHourOfRunningTime() {
         tracker.tick(time.instant());
-        // One item every 72 ticks (3.6 s) is 1000 items per hour.
         run(Duration.ofMinutes(30), "iron", 72);
 
         assertThat(tracker.rates().get("iron").itemsPerHour()).isCloseTo(1000, within(1.0));
@@ -77,7 +75,6 @@ class RateTrackerTest {
     void windowRollsOverTheLastHourOfRunningTime() {
         tracker.tick(time.instant());
         run(Duration.ofMinutes(60), "iron", 72);
-        // A quiet minute, so no bucket holds both farms.
         run(Duration.ofMinutes(1), "iron", 0);
         run(Duration.ofMinutes(60), "gold", 36);
 

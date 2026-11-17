@@ -27,19 +27,6 @@ import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 
-/**
- * The Tally Hopper's screen, built from the parts vanilla already uses: the villager screen's bar for
- * calibration, the brewing stand's apparatus for the saplings it burns through, and the padlock
- * button.
- *
- * <p>The brewing stand's coil, bubbles and base are drawn straight out of vanilla's own texture
- * rather than copied into this mod, so a resource pack restyles this screen along with the brewing
- * stand. That one region carries the sapling slot's frame with it.
- *
- * <p>The panel says only what a glance needs; the numbers behind it are a tooltip on the bar. Rates
- * are still set through the {@code /tallyhopper rate} command, so the server decides in one place who
- * may change what.
- */
 public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopperMenu> {
 
     private static final Identifier BACKGROUND =
@@ -48,7 +35,6 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
     private static final Identifier BAR_BACKGROUND =
             Identifier.withDefaultNamespace("container/villager/experience_bar_background");
 
-    /** The plain white bar, tinted while calibrating, and the green one vanilla fills a trade with. */
     private static final Identifier BAR_CALIBRATING =
             Identifier.withDefaultNamespace("container/villager/experience_bar_result");
 
@@ -58,15 +44,9 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
     private static final Identifier FUEL = Identifier.withDefaultNamespace("container/brewing_stand/fuel_length");
     private static final Identifier BUBBLES = Identifier.withDefaultNamespace("container/brewing_stand/bubbles");
 
-    /** Vanilla's brewing stand background, which the apparatus is lifted from. */
     private static final Identifier BREWING_STAND =
             Identifier.withDefaultNamespace("textures/gui/container/brewing_stand.png");
 
-    /**
-     * The apparatus in that texture: the blaze slot's frame, the coil, the bubbles and the base. It
-     * stops one pixel short of the ingredient slot's frame, and one row short of the tubes that run
-     * down to the bottles.
-     */
     private static final int STAND_U = 16;
 
     private static final int STAND_V = 14;
@@ -75,7 +55,6 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
     private static final int STAND_X = 7;
     private static final int STAND_Y = 23;
 
-    /** Where vanilla draws each moving part, kept as offsets into the region above. */
     private static final int FUEL_X = STAND_X + (60 - STAND_U);
 
     private static final int FUEL_Y = STAND_Y + (44 - STAND_V);
@@ -87,16 +66,13 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
     private static final int BUBBLES_WIDTH = 12;
     private static final int BUBBLES_HEIGHT = 29;
 
-    /** The heights vanilla's bubbles cycle through, which makes them look like they rise. */
     private static final int[] BUBBLE_HEIGHTS = {29, 24, 20, 16, 11, 6, 0};
 
-    /** How many saplings fill the meter, as twenty blaze powder fill a brewing stand's. */
     private static final int FUEL_FULL = 16;
 
     private static final int BAR_X = 80;
     private static final int BAR_Y = 37;
 
-    /** Narrower than the villager screen's bar, so it is drawn as its two rounded halves. */
     private static final int BAR_WIDTH = 88;
 
     private static final int BAR_SPRITE_WIDTH = 102;
@@ -110,25 +86,16 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
 
     private static final int TEXT_COLOR = 0xFF404040;
 
-    /**
-     * A lighter grey for a hopper that is only passing items along: quieter than the other statuses
-     * without becoming a warning. It sits at 4.7:1 against the panel, above the 4.5:1 AA floor, so
-     * there is no room to lighten it past #535353.
-     */
     private static final int PASSTHROUGH_COLOR = 0xFF505050;
 
     private static final int CALIBRATING_TINT = 0xFFFFD83D;
 
-    /** A passthrough hopper's bar is greyed: the measurement is real, but none of it is ever paid. */
     private static final int PASSTHROUGH_TINT = 0xFF9E9E9E;
 
-    /** How many item rates the tooltip lists before the rest are counted. */
     private static final int LISTED_RATES = 4;
 
-    /** A rate measured over less of this earns its share of it, so a burst is worth a burst. */
     private static final long WINDOW_SECONDS = RateTracker.WINDOW.toSeconds();
 
-    /** A vanilla hopper moves one item every eight ticks, which is 2.5 a second. */
     private static final double ITEMS_PER_SECOND = 2.5;
 
     private @Nullable LockIconButton lock;
@@ -146,11 +113,6 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
         addRenderableWidget(button);
     }
 
-    /**
-     * Presses the menu's button, the way the lectern and the stonecutter do. The server spends the
-     * sapling and starts the measurement again; greying the padlock out here only spares the player a
-     * press the server would refuse anyway.
-     */
     private void recalibrate() {
         if (minecraft != null && minecraft.gameMode != null) {
             minecraft.gameMode.handleInventoryButtonClick(menu.containerId, TallyHopperMenu.RECALIBRATE_BUTTON);
@@ -168,18 +130,11 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
         LockIconButton button = lock;
         if (button != null) {
             button.setLocked(state.ready());
-            // Measuring again cannot help a hopper whose rate is never paid out, so rather than offer
-            // a dead button the panel offers none at all. The status word carries the meaning.
             button.visible = !state.isPassthrough();
             button.active = menu.hasSapling() && !state.isDraining();
         }
     }
 
-    /**
-     * The brewing stand's apparatus, straight from vanilla's texture: the sapling slot's frame, the
-     * coil, the bubble trail and the base with the fuel groove under it. The saplings left fill that
-     * groove, and the bubbles only rise while the hopper is actually watching its farm.
-     */
     private void extractStand(GuiGraphicsExtractor graphics, GuiState state) {
         graphics.blit(
                 RenderPipelines.GUI_TEXTURED,
@@ -225,10 +180,6 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
         }
     }
 
-    /**
-     * The villager screen's bar: yellow while it fills, green once the rate can be trusted, grey while
-     * the hopper is a passthrough, where a full green bar would promise credit that never arrives.
-     */
     private void extractBar(GuiGraphicsExtractor graphics, GuiState state) {
         barHalves(graphics, BAR_BACKGROUND, BAR_WIDTH, 0);
         int filled = Math.round(BAR_WIDTH * state.progress());
@@ -236,17 +187,12 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
             return;
         }
         if (state.isPassthrough()) {
-            // The plain sprite, not the green one: tinting green only ever yields a darker green.
             barHalves(graphics, BAR_CALIBRATING, filled, PASSTHROUGH_TINT);
             return;
         }
         barHalves(graphics, state.ready() ? BAR_READY : BAR_CALIBRATING, filled, state.ready() ? 0 : CALIBRATING_TINT);
     }
 
-    /**
-     * Draws {@code width} pixels of a bar sprite as its left and right halves, so a bar narrower than
-     * vanilla's keeps both rounded ends instead of being cut off square.
-     */
     private void barHalves(GuiGraphicsExtractor graphics, Identifier sprite, int width, int tint) {
         int half = BAR_WIDTH / 2;
         int left = Math.min(width, half);
@@ -254,7 +200,6 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
             blitBar(graphics, sprite, 0, leftPos + BAR_X, left, tint);
         }
         if (width > half) {
-            // The right half is the sprite's own right half, so its rounded end is kept.
             blitBar(graphics, sprite, BAR_SPRITE_WIDTH - half, leftPos + BAR_X + half, width - half, tint);
         }
     }
@@ -314,8 +259,6 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
     }
 
     private static Component status(GuiState state) {
-        // Named first: while another Tally Hopper earns for this line, nothing else about this one's
-        // own measurement is the answer to "what is this hopper doing?".
         if (state.isPassthrough()) {
             return Component.translatable("gui.tallyhopper.status.passthrough");
         }
@@ -333,14 +276,6 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
                 : Component.translatable("gui.tallyhopper.status.idle");
     }
 
-    /**
-     * What the bar's tooltip says: the numbers that used to sit on the panel itself.
-     *
-     * <p>Three weights, so a glance finds the right line. The status heads it in the colour of the
-     * state it names; the rates are the tooltip's point and stay white, with a hand-set one in aqua
-     * to mark that a player put it there; everything that is context rather than a number is dark
-     * grey and italic.
-     */
     private List<Component> details(GuiState state) {
         List<Component> lines = new ArrayList<>();
         lines.add(status(state).copy().withStyle(statusStyle(state)));
@@ -358,7 +293,6 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
             long percent = Math.max(1, state.observedSeconds() * 100L / WINDOW_SECONDS);
             lines.add(note("gui.tallyhopper.weighed", number(percent)));
         }
-        // Where credit goes. A passthrough hopper has already said so in its status and note above.
         if (!state.isPassthrough()) {
             lines.add(note(state.terminal() ? "gui.tallyhopper.mode.terminal" : "gui.tallyhopper.mode.line"));
         }
@@ -378,7 +312,6 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
         return lines;
     }
 
-    /** The colour of the state the status names, so the word and its meaning arrive together. */
     private static ChatFormatting statusStyle(GuiState state) {
         if (state.isPassthrough()) {
             return ChatFormatting.GRAY;
@@ -392,7 +325,6 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
         return ChatFormatting.GRAY;
     }
 
-    /** Context rather than a number: dark grey and italic, so it reads under the lines that matter. */
     private static Component note(String key, Object... args) {
         return Component.translatable(key, args).withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC);
     }
@@ -411,7 +343,6 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
                             byHand ? "gui.tallyhopper.rate.override" : "gui.tallyhopper.rate.measured",
                             rate.getKey().getDefaultInstance().getHoverName(),
                             number(rate.getValue()))
-                    // A passthrough hopper's rates are real but never paid, so they read as context.
                     .withStyle(
                             state.isPassthrough()
                                     ? ChatFormatting.DARK_GRAY
@@ -427,7 +358,6 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
     }
 
     private List<Component> lockLines(GuiState state) {
-        // A draining backlog is named first: unlike a missing sapling, it is not the player's to fix.
         if (state.isDraining()) {
             return List.of(Component.translatable("gui.tallyhopper.recalibrate.draining")
                     .withStyle(ChatFormatting.GRAY));
@@ -438,7 +368,6 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
                         .withStyle(ChatFormatting.GRAY));
     }
 
-    /** Roughly how long the backlog takes to leave through the hopper, at vanilla speed. */
     private static Component drainTime(long backlog) {
         long seconds = Math.round(backlog / ITEMS_PER_SECOND);
         return seconds >= 60
@@ -446,7 +375,6 @@ public final class TallyHopperScreen extends AbstractContainerScreen<TallyHopper
                 : Component.translatable("gui.tallyhopper.drain.seconds", number(seconds));
     }
 
-    /** Where this line of hoppers ends, so the player knows where instant filling would happen. */
     private Optional<Component> chainHint() {
         Level level = minecraft == null ? null : minecraft.level;
         if (level == null) {

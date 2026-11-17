@@ -17,13 +17,6 @@ import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.item.crafting.display.RecipeDisplay;
 import net.minecraft.world.level.Level;
 
-/**
- * A vanilla shapeless recipe that hands one ingredient back instead of using it up.
- *
- * <p>The Tally Hopper recipe needs the clock as a tool, not a cost: it stays in the grid after
- * crafting. The JSON is a normal {@code crafting_shapeless} recipe plus a {@code kept} ingredient.
- * Everything else, including how the recipe book shows it, is the wrapped vanilla recipe.
- */
 public record ShapelessKeepRecipe(ShapelessRecipe base, Ingredient kept) implements CraftingRecipe {
 
     public static final MapCodec<ShapelessKeepRecipe> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
@@ -45,7 +38,6 @@ public record ShapelessKeepRecipe(ShapelessRecipe base, Ingredient kept) impleme
         for (int slot = 0; slot < input.size(); slot++) {
             ItemStack stack = input.getItem(slot);
             if (!stack.isEmpty() && kept.test(stack)) {
-                // A copy of the exact stack, so a renamed clock comes back renamed.
                 remaining.set(slot, stack.copyWithCount(1));
             }
         }
