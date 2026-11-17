@@ -45,7 +45,16 @@ a lowercase subject with no full stop, and at most 100 characters in the header 
 body line.
 
 PRs are **squash-merged**, so the **PR title** must also be a Conventional Commit.
-It becomes the commit on `main` that release-please reads.
+It becomes the commit the project's release tooling reads.
+
+### Issues: titled like the commit that closes them
+
+An issue's title follows the same format: `fix: the export drops the last row`,
+`feat(api): paginate the search results`, `docs: explain the release flow`. Every issue starts
+from a form (bug report, feature request or task), and each form starts the title with its type.
+The `issue-title` workflow lints the finished title with the same commitlint rules; while it
+fails, the issue carries the `needs-conventional-title` label and one comment saying what to
+change, and both go once the title is fixed.
 
 ### Pull requests: at most 20 files
 
@@ -63,15 +72,27 @@ gh stack sync                          # after a lower layer merges
 Each layer is measured against the layer below it. The limit is enforced in the `pre-push` hook,
 in CI, and for AI agents through a PreToolUse hook (`.devtools/scripts/agent-guard.sh`).
 
+### CI: baseline and validate
+
+Every pull request gets two required checks. `ci / baseline` runs on every push, drafts
+included: the pre-commit hooks over every file, and the title, branch, size and commits.
+`ci / validate` runs `make -C .devtools ci`, and is deferred while the pull request is a draft or
+the middle of a stack; it runs, as a passing check, once the pull request is ready. Into `develop`
+it narrows the tests to what changed, into `main` it runs them all, and the `ci:full` label runs
+them all at once (a target that only a full run executes goes in `FULL_CI_TARGETS`). Editing the
+title re-checks it. A manual run of the CI workflow takes a `full` input.
+
 ### Files the template manages
 
 Some files, and the regions of others between `>>> template:<name>` and `<<< template:<name>`
 markers, are kept in step with `studiobimo/project-template`. Change them there, not here; then
 `make -C .devtools sync` brings the change in. `make -C .devtools drift` shows what differs, and a
 weekly workflow opens an issue when something does. A deliberate difference goes in
-`.template-ignore`, with a comment saying why.
+`.template-ignore`, with a comment saying why. Entries the manifest marks `required` cannot be
+ignored, and a change to `.template-ignore` or `.template-profiles` needs the fleet's owners to
+review it.
 
-Projects only receive a change at a release, and release-please releases only `fix`, `feat` and
+Projects only receive a change at a release, and a release is cut only for `fix`, `feat` and
 breaking commits. A change to a managed file titled `chore`, `docs` or `ci` merges but never reaches
 `sync`, so title it `fix` or `feat`.
 <!-- <<< template:workflow -->
